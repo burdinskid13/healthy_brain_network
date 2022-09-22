@@ -1,9 +1,9 @@
-.. hbn_cerebellum documentation master file, created by
+.. healthy_brain_network documentation master file, created by
    sphinx-quickstart.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-hbn_cerebellum documentation!
+healthy_brain_network documentation!
 ==============================================
 
 Contents:

@@ -16,7 +16,6 @@ Jupyter= "*"
 pandas = "*"
 numpy = "*"
 matplotlib = "*"
-hbn = {editable = true,path = "."}
 plotly = "*"
 nilearn = "*"
 h5py = "*"
