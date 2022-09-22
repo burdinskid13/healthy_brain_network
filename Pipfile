@@ -1,0 +1,31 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pylint = "*"
+
+[packages]
+ipykernel = "*"
+scipy = "*"
+seaborn = "*"
+nibabel= "*"
+scikit-learn= "==1.1.2"
+Jupyter= "*"
+pandas = "*"
+numpy = "*"
+matplotlib = "*"
+hbn = {editable = true,path = "."}
+plotly = "*"
+nilearn = "*"
+h5py = "*"
+deepdish = "*"
+umap-learn = "*"
+wordcloud = "*"
+xlrd = "*"
+openpyxl = "*"
+pydra-ml = "*"
+
+[requires]
+python_version = "3.10"
