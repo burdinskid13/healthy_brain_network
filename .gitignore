@@ -77,9 +77,9 @@ target/
 ./gec_visualization.ipynb
 
 # exclude data from source control by default
-/data/
-/features/
-/models/
+data/
+features/
+models/
 
 # Mac OS-specific storage files
 .DS_Store
