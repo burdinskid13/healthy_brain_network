@@ -1,4 +1,4 @@
-hbn_cerebellum
+Healthy Brain Networks
 ==============================
 
 cerebellar fingerprints for neurodevelopmental disorders
