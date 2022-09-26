@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import pandas as pd
+import glob
+import shutil
 import click
 from pydra_ml.classifier import gen_workflow, run_workflow
 
@@ -115,13 +117,14 @@ def test_regressor(tmpdir=Defaults.RAW_DIR):
     assert hasattr(results[2][1].output.model, "predict")
     assert isinstance(results[2][1].output.model.predict(np.ones((1, 10))), np.ndarray)
 
-@click.command()
-@click.option("--spec_file")
+# @click.command()
+# @click.option("--spec_file")
 
 def run(
-    spec_file='regression-Child_Measures-Language_Tasks-all-CGAS_Score-spec.json', 
+    spec_file='regression-Child_Measures-Cognitive_Testing-all-CGAS_Score.json', 
     tmpdir='/Users/maedbhking/pydra-ml/cache-wf/'
     ):
+
     # load json
     spec_fpath = os.path.join(Defaults.BASE_DIR, "models", spec_file)
     spec_info = io.read_json(spec_fpath)
@@ -129,16 +132,24 @@ def run(
     # get features
     csv_file = os.path.join(Defaults.BASE_DIR, "features", spec_info['filename'])
     dataframe = pd.read_csv(csv_file)
+    spec_info['filename'] = csv_file # full path to csv file
 
     spec_info['x_indices'] = range(1,len(dataframe.columns)-1)
 
     wf = gen_workflow(spec_info, cache_dir=tmpdir)
     results = run_workflow(wf, "cf", {"n_procs": 1})
+
+    # move model output to new directory + add model spec file
+    out_dir = glob.glob(os.path.join(os.getcwd(), '*out-localspec*'))
+    shutil.copy(spec_fpath, out_dir[0])
+    shutil.move(out_dir[0], Defaults.MODEL_DIR)
+    shutil.rmtree("messages")
+
     # assert results[0][0]["ml_wf.clf_info"][-1][1] == "MLPRegressor"
-    assert results[0][0]["ml_wf.permute"]
-    assert results[0][1].output.score[0][0] < results[1][1].output.score[0][0]
-    assert hasattr(results[2][1].output.model, "predict")
-    assert isinstance(results[2][1].output.model.predict(np.ones((1, 10))), np.ndarray)
+    # assert results[0][0]["ml_wf.permute"]
+    # assert results[0][1].output.score[0][0] < results[1][1].output.score[0][0]
+    # assert hasattr(results[2][1].output.model, "predict")
+    # assert isinstance(results[2][1].output.model.predict(np.ones((1, 10))), np.ndarray)
 
 if __name__ == "__main__":
     run()

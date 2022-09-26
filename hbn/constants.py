@@ -14,8 +14,9 @@ class Defaults:
     PROCESSED_DIR = DATA_DIR / "processed"
     FIG_DIR = BASE_DIR / "reports" / "figures"
     PHENO_DIR = RAW_DIR / "phenotype"
+    MODEL_DIR = INTERIM_DIR / "models"
 
-    dirs = [RAW_DIR, INTERIM_DIR, PROCESSED_DIR, FIG_DIR]
+    dirs = [RAW_DIR, INTERIM_DIR, PROCESSED_DIR, FIG_DIR, MODEL_DIR]
     for dirn in dirs:
         if not os.path.isdir(dirn):
             os.makedirs(dirn)

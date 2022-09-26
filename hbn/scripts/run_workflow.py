@@ -72,7 +72,7 @@ def _get_iterables():
     """
     # get assessments + domains
     assessments = ['Child Measures', 'Parent Measures', 'Teacher Measures']
-    targets = ['DX_01_Cat_binarize', 'Sex_binarize', 'DX_01_Cat_factorize', 'CGAS_Score']
+    targets = ['DX_01_Cat_binarize', 'Sex_binarize', 'CGAS_Score'] # 'DX_01_Cat_factorize',
     spec_info = []
     for assess in assessments:
         domains = build_features.get_domains(assess)[assess]
@@ -101,9 +101,17 @@ def make_model_specs():
     clfs = {'categorical': [
                     [["sklearn.impute", "SimpleImputer"],
                     ["sklearn.preprocessing", "StandardScaler"],
-                    ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]]
+                    ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]],
                     ],
-            'numeric': [["sklearn.linear_model","RidgeCV",{"fit_intercept": True,"normalize": True}]]
+            'numeric': [
+                ["sklearn.linear_model","RidgeCV",{"fit_intercept": False}],
+                ]
+            }
+
+    metrics = {'categorical': 
+                ['roc_auc_score', 'f1_score', 'precision_score', 'recall_score'],
+               'numeric': 
+               ["explained_variance_score", "mean_squared_error", "mean_absolute_error"]
             }
 
     # loop over feature filenames
@@ -116,25 +124,28 @@ def make_model_specs():
         # get classifier
         clf = clfs[target_type]
 
+        # get metrics
+        metric = metrics[target_type]
+
         # define spec file
         spec_info = {
                 "filename": feature_spec['filename'], 
                 "x_indices": [],
                 "target_vars": [feature_spec['target']],
                 "group_var": None,
-                "n_splits": 25,
+                "n_splits": 15,
                 "test_size": 0.2,
                 "clf_info": clf,
                 "permute": [True, False],
-                "gen_feature_importance": False,
+                "gen_feature_importance": True,
                 "gen_permutation_importance": False,
                 "permutation_importance_n_repeats": 5,
                 "permutation_importance_scoring": None,
-                "gen_shap": True,
+                "gen_shap": False,
                 "nsamples": "auto",
                 "l1_reg": "aic",
                 "plot_top_n_shap": 10,
-                "metrics": ["explained_variance_score"]
+                "metrics": metric
                 }
         
         if target_type=='categorical':
@@ -159,6 +170,8 @@ def run():
 
     # Third step
     make_model_specs()
+
+    # running models
 
 if __name__ == "__main__":
     run()
