@@ -25,6 +25,7 @@ wordcloud = "*"
 xlrd = "*"
 openpyxl = "*"
 pydra-ml = "*"
+hbn = {path = "."}
 
 [requires]
 python_version = "3.9.12"
