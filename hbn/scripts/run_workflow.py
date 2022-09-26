@@ -205,8 +205,8 @@ def run():
     """ Entire processing workflow for processing phenotypic data from parsing data to running predictive models
     """
 
-    # First Step
-    parse_phenotypic_data()
+    # # First Step
+    # parse_phenotypic_data()
 
     # Second Step
     make_feature_specs()
