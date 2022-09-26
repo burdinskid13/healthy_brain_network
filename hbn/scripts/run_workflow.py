@@ -3,6 +3,10 @@ import re
 import glob
 from pathlib import Path
 
+import pandas as pd
+import shutil
+from pydra_ml.classifier import gen_workflow, run_workflow
+
 from hbn.data import make_dataset
 from hbn.features import build_features
 from hbn import io
@@ -158,6 +162,45 @@ def make_model_specs():
         io.save_dict_as_JSON(fpath=os.path.join(Defaults.BASE_DIR, "models", spec_name), data_dict=spec_info)
         print(f'save model specs to file for {spec_name}')
 
+def run_models(
+    specs=None, 
+    tmpdir='/Users/maedbhking/pydra-ml/cache-wf/'):
+    """ run predictive models using pydra-ml. must provide `spec_file` json and `filename` in `spec_file` must be a csv of features saved in ../features/
+
+    Args:
+        spec_file (str or None or list of str): default is None
+        tmpdir (str): default is '/Users/maedbhking/pydra-ml/cache-wf/'
+    Returns: 
+        saves (pickled) model to ../data/interim/
+    """
+    # figure out spec files
+    if specs is None:
+        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", '*json'))
+    elif specs is str:
+        specs = [specs]
+    
+    # loop over model specs
+    for spec_file in specs:
+        # load json
+        spec_fpath = os.path.join(Defaults.BASE_DIR, "models", spec_file)
+        spec_info = io.read_json(spec_fpath)
+
+        # get features
+        csv_file = os.path.join(Defaults.BASE_DIR, "features", spec_info['filename'])
+        dataframe = pd.read_csv(csv_file)
+        spec_info['filename'] = csv_file # full path to csv file
+
+        spec_info['x_indices'] = range(1,len(dataframe.columns)-1)
+
+        wf = gen_workflow(spec_info, cache_dir=tmpdir)
+        results = run_workflow(wf, "cf", {"n_procs": 1})
+
+        # move model output to new directory + add model spec file
+        out_dir = glob.glob(os.path.join(os.getcwd(), '*out-localspec*'))
+        shutil.copy(spec_fpath, out_dir[0])
+        shutil.move(out_dir[0], Defaults.MODEL_DIR)
+        shutil.rmtree("messages")
+
 def run():
     """ Entire processing workflow for processing phenotypic data from parsing data to running predictive models
     """
@@ -172,6 +215,7 @@ def run():
     make_model_specs()
 
     # running models
+    run_models()
 
 if __name__ == "__main__":
     run()
