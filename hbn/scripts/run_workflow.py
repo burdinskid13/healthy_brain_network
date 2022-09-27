@@ -1,6 +1,8 @@
+from email.policy import default
 import os
 import re
 import glob
+import click
 from pathlib import Path
 
 import pandas as pd
@@ -162,9 +164,9 @@ def make_model_specs():
         io.save_dict_as_JSON(fpath=os.path.join(Defaults.BASE_DIR, "models", spec_name), data_dict=spec_info)
         print(f'save model specs to file for {spec_name}')
 
-def run_models(
+def run_model_pipeline(
     specs=None, 
-    tmpdir='/Users/maedbhking/pydra-ml/cache-wf/'):
+    cachedir='/Users/maedbhking/pydra-ml/cache-wf/'):
     """ run predictive models using pydra-ml. must provide `spec_file` json and `filename` in `spec_file` must be a csv of features saved in ../features/
 
     Args:
@@ -192,7 +194,7 @@ def run_models(
 
         spec_info['x_indices'] = range(1,len(dataframe.columns)-1)
 
-        wf = gen_workflow(spec_info, cache_dir=tmpdir)
+        wf = gen_workflow(spec_info, cache_dir=cachedir)
         results = run_workflow(wf, "cf", {"n_procs": 1})
 
         # move model output to new directory + add model spec file
@@ -201,21 +203,40 @@ def run_models(
         shutil.move(out_dir[0], Defaults.MODEL_DIR)
         shutil.rmtree("messages")
 
-def run():
+@click.command()
+@click.option("--parse-data/--no-parse-data", default=False)
+@click.option("--feature-specs/--no-feature-specs", default=True)
+@click.option("--model-specs/--no-model-specs", default=True)
+@click.option("--run-models/--no-run-models", default=True)
+@click.option("--run-locally/--no-run-locally", default=False)
+
+def run(
+    parse_data=False,
+    feature_specs=True,
+    model_specs=True,
+    run_models=True,
+    run_locally=False
+    ):
     """ Entire processing workflow for processing phenotypic data from parsing data to running predictive models
     """
-
-    # # First Step
-    # parse_phenotypic_data()
+    # First Step
+    if parse_data:
+        parse_phenotypic_data()
 
     # Second Step
-    make_feature_specs()
+    if feature_specs:
+        make_feature_specs()
 
     # Third step
-    make_model_specs()
+    if model_specs:
+        make_model_specs()
 
     # running models
-    run_models()
+    if run_models:
+        if run_locally:
+            run_model_pipeline(cachedir=Defaults.CACHE_DIR_LOCAL)
+        else:
+            run_model_pipeline(cachedir=Defaults.CACHE_DIR_SAVIO)
 
 if __name__ == "__main__":
     run()

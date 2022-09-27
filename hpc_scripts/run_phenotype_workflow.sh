@@ -22,4 +22,4 @@ source $(pipenv --venv)/bin/activate
 cd /global/scratch/users/maedbhking/projects/healthy_brain_network/hbn/scripts
 
 # run workflow
-python3 run_workflow.py
+python3 run_workflow.py --feature_specs=True --model_specs=True --run_models=True
