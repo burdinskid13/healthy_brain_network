@@ -271,7 +271,7 @@ def run(
     parse_data=False,
     feature_specs=False,
     model_specs=False,
-    run_models_first=False,
+    run_models_first=True,
     run_models_second=True,
     run_locally=False,
     ):
