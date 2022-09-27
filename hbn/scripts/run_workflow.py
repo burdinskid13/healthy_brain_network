@@ -182,6 +182,7 @@ def run_model_pipeline_firstlevel(
     # figure out spec files
     if specs is None:
         specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", '*json'))
+        print(specs)
     elif specs is str:
         specs = [specs]
     
@@ -199,13 +200,13 @@ def run_model_pipeline_firstlevel(
         spec_info['x_indices'] = range(1,len(dataframe.columns)-1)
 
         wf = gen_workflow(spec_info, cache_dir=cachedir)
-        results = run_workflow(wf, "cf", {"n_procs": 1})
+        run_workflow(wf, "cf", {"n_procs": 1})
 
         # move model output to new directory + add model spec file
         out_dir = glob.glob(os.path.join(os.getcwd(), '*out-localspec*'))
         shutil.copy(spec_fpath, out_dir[0])
-        shutil.move(out_dir[0], Defaults.MODEL_DIR)
-        shutil.rmtree("messages")
+        # shutil.move(out_dir[0], Defaults.MODEL_DIR)
+        # shutil.rmtree("messages")
 
 
 def run_model_pipeline_secondlevel():
