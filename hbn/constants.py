@@ -17,8 +17,10 @@ class Defaults:
     MODEL_DIR = INTERIM_DIR / "models"
     CACHE_DIR_LOCAL = '/Users/maedbhking/pydra-ml/cache-wf/'
     CACHE_DIR_SAVIO = '/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/'
+    FEATURE_DIR = BASE_DIR / 'features'
+    MODEL_SPEC_DIR = BASE_DIR / 'models'
 
-    dirs = [RAW_DIR, INTERIM_DIR, PROCESSED_DIR, FIG_DIR, MODEL_DIR, CACHE_DIR_LOCAL, CACHE_DIR_SAVIO]
+    dirs = [RAW_DIR, INTERIM_DIR, PROCESSED_DIR, FIG_DIR, MODEL_DIR, CACHE_DIR_LOCAL, CACHE_DIR_SAVIO, FEATURE_DIR, MODEL_SPEC_DIR]
     for dirn in dirs:
         if not os.path.isdir(dirn):
             try:
