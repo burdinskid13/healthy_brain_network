@@ -1,30 +1,49 @@
-from email.policy import default
 import os
 import re
 import glob
 import click
 from pathlib import Path
 
-import pandas as pd
-import shutil
-from pydra_ml.classifier import gen_workflow, run_workflow
-
-from hbn.data import make_dataset
-from hbn.features import build_features
 from hbn import io
 from hbn.constants import Defaults
 
 def parse_phenotypic_data():
     """
     """
+    from hbn.data import make_dataset
+
     # parse phenotypic data
     assessments = ['Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures']
     for assessment in assessments:
         make_dataset.parse_phenotypic_data(assessment=assessment)
 
+
 def make_feature_specs():
     """make feature sets (json spec files + feature csv files)
     """
+    from hbn.features import build_features
+
+    def _get_iterables():
+        """clunky code - need to rewrite
+        """
+        # get assessments + domains
+        assessments = ['Child Measures', 'Parent Measures', 'Teacher Measures']
+        targets = ['DX_01_Cat_binarize', 'Sex_binarize', 'CGAS_Score'] # 'DX_01_Cat_factorize',
+        spec_info = []
+        for assess in assessments:
+            domains = build_features.get_domains(assess)[assess]
+            for target in targets:
+                target_type = 'categorical'
+                if target=='CGAS_Score':
+                    target_type = 'numeric'
+                for domain in domains:
+                    spec_info.append({'assessment': assess,
+                                'domains': domain,
+                                'measures': 'all',
+                                'target': target,
+                                'target_type': target_type
+                                })
+        return spec_info
 
     for data in _get_iterables():
 
@@ -73,27 +92,6 @@ def make_feature_specs():
             df_processed.to_csv(feature_fpath, index=False)
             print(f'spec file and features saved to disk for {spec_file}')
 
-def _get_iterables():
-    """clunky code - need to rewrite
-    """
-    # get assessments + domains
-    assessments = ['Child Measures', 'Parent Measures', 'Teacher Measures']
-    targets = ['DX_01_Cat_binarize', 'Sex_binarize', 'CGAS_Score'] # 'DX_01_Cat_factorize',
-    spec_info = []
-    for assess in assessments:
-        domains = build_features.get_domains(assess)[assess]
-        for target in targets:
-            target_type = 'categorical'
-            if target=='CGAS_Score':
-                target_type = 'numeric'
-            for domain in domains:
-                spec_info.append({'assessment': assess,
-                            'domains': domain,
-                            'measures': 'all',
-                            'target': target,
-                            'target_type': target_type
-                            })
-    return spec_info
 
 def make_model_specs():
     """make model specs (json spec files)
@@ -164,7 +162,8 @@ def make_model_specs():
         io.save_dict_as_JSON(fpath=os.path.join(Defaults.BASE_DIR, "models", spec_name), data_dict=spec_info)
         print(f'save model specs to file for {spec_name}')
 
-def run_model_pipeline(
+
+def run_model_pipeline_firstlevel(
     specs=None, 
     cachedir='/Users/maedbhking/pydra-ml/cache-wf/'):
     """ run predictive models using pydra-ml. must provide `spec_file` json and `filename` in `spec_file` must be a csv of features saved in ../features/
@@ -175,6 +174,11 @@ def run_model_pipeline(
     Returns: 
         saves (pickled) model to ../data/interim/
     """
+    # load libraries
+    import pandas as pd
+    import shutil
+    from pydra_ml.classifier import gen_workflow, run_workflow
+
     # figure out spec files
     if specs is None:
         specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", '*json'))
@@ -203,19 +207,72 @@ def run_model_pipeline(
         shutil.move(out_dir[0], Defaults.MODEL_DIR)
         shutil.rmtree("messages")
 
+
+def run_model_pipeline_secondlevel():
+    """TEMPORARY - NEEDS TO BE REWRITTEN TO BE MORE FLEXIBLE
+    """
+    import pickle as pk
+    import pandas as pd
+    import numpy as np
+
+    # grab model output
+    model_output_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, "*out-localspec*"))
+    
+    for output_dir in model_output_dirs:
+
+        model_name = Path(output_dir).name.replace('out-localspec-', '')
+
+        with open(os.path.join(output_dir, f"results-{model_name}.pkl"), "rb") as fp:
+            res = pk.load(fp)
+        
+        # load spec info from file
+        spec_fname = glob.glob(os.path.join(output_dir, '*json'))[0]
+        spec_info = io.read_json(os.path.join(output_dir, spec_fname))
+
+        clf = Path(spec_fname).name.split('-')[0]
+
+        # get output file
+        model_fpath = os.path.join(Defaults.MODEL_DIR, f'{clf}-all-phenotypic-models-performance.csv')
+
+        # get data and null models
+        data = res[0][1]
+        null = res[1][1]
+
+        # make dataframe
+        df_data = pd.DataFrame(np.array(data.output.score), columns=spec_info['metrics'])
+        df_data['data'] = "model-data"
+
+        df_null = pd.DataFrame(np.array(null.output.score), columns=spec_info['metrics'])
+        df_null['data'] = "model-null"
+
+        df_concat = pd.concat([df_data, df_null], axis=0)
+        df_concat = df_concat.rename_axis('splits').reset_index() 
+        df_concat['target'] = spec_info['target_vars'][0]
+        df_concat['features'] = '-'.join(spec_info['filename'].split('-')[1:-1]) 
+        df_concat['model'] = model_name
+
+        # save out to existing file (if it exists)
+        df = pd.DataFrame()
+        if os.path.exists(model_fpath):
+            df = pd.read_csv(model_fpath)
+        df_out = pd.concat([df, df_concat])
+        df_out.to_csv(model_fpath, index=False)
+
 @click.command()
 @click.option("--parse-data/--no-parse-data", default=False)
 @click.option("--feature-specs/--no-feature-specs", default=True)
 @click.option("--model-specs/--no-model-specs", default=True)
-@click.option("--run-models/--no-run-models", default=True)
+@click.option("--run-models-first/--no-run-models-first", default=True)
+@click.option("--run-models-second/--no-run-models-second", default=True)
 @click.option("--run-locally/--no-run-locally", default=False)
 
 def run(
     parse_data=False,
-    feature_specs=True,
-    model_specs=True,
-    run_models=True,
-    run_locally=False
+    feature_specs=False,
+    model_specs=False,
+    run_models_first=False,
+    run_models_second=True,
+    run_locally=False,
     ):
     """ Entire processing workflow for processing phenotypic data from parsing data to running predictive models
     """
@@ -231,12 +288,18 @@ def run(
     if model_specs:
         make_model_specs()
 
-    # running models
-    if run_models:
-        if run_locally:
-            run_model_pipeline(cachedir=Defaults.CACHE_DIR_LOCAL)
-        else:
-            run_model_pipeline(cachedir=Defaults.CACHE_DIR_SAVIO)
+    # get cache dir for model output
+    cachedir = Defaults.CACHE_DIR_SAVIO
+    if run_locally:
+        cachedir = Defaults.CACHE_DIR_LOCAL
+
+    # running models (first level)
+    if run_models_first:
+        run_model_pipeline_firstlevel(cachedir=cachedir)
+    
+    # running models (second level)
+    if run_models_second:
+        run_model_pipeline_secondlevel()
 
 if __name__ == "__main__":
     run()
