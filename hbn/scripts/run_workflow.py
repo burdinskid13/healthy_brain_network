@@ -7,6 +7,9 @@ from pathlib import Path
 from hbn import io
 from hbn.constants import Defaults
 
+import warnings
+warnings.filterwarnings("ignore")
+
 def parse_phenotypic_data():
     """
     """
