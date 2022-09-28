@@ -184,7 +184,7 @@ def run_model_pipeline_firstlevel(
 
     # figure out spec files
     if specs is None:
-        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", 'regression*json'))
+        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", 'classifier*json'))
     elif specs is str:
         specs = [specs]
     
