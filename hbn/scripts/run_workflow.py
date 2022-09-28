@@ -265,8 +265,8 @@ def run_model_pipeline_secondlevel():
 
 @click.command()
 @click.option("--parse-data/--no-parse-data", default=False)
-@click.option("--feature-specs/--no-feature-specs", default=True)
-@click.option("--model-specs/--no-model-specs", default=True)
+@click.option("--feature-specs/--no-feature-specs", default=False)
+@click.option("--model-specs/--no-model-specs", default=False)
 @click.option("--run-models-first/--no-run-models-first", default=True)
 @click.option("--run-models-second/--no-run-models-second", default=True)
 @click.option("--run-locally/--no-run-locally", default=False)
