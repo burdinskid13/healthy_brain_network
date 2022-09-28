@@ -1,7 +1,29 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+
+def plotting_style():
+    plt.style.use('seaborn-poster') # ggplot
+    params = {'axes.labelsize': 30,
+            'axes.titlesize': 25,
+            'legend.fontsize': 25,
+            'xtick.labelsize': 25,
+            'ytick.labelsize': 25,
+            # 'figure.figsize': (10,5),
+            'font.weight': 'regular',
+            # 'font.size': 'regular',
+            'font.family': 'sans-serif',
+            'lines.markersize': 20,
+            'font.serif': 'Helvetica Neue',
+            'lines.linewidth': 4,
+            'axes.grid': False,
+            'axes.spines.top': False,
+            'axes.spines.right': False}
+    plt.rcParams.update(params)
+    sns.set_context(rc={'lines.markeredgewidth': 0.1})
+    np.set_printoptions(formatter={'float_kind':'{:f}'.format})
 
 def wordcloud(dataframe, column):
     """print a word cloud from `column` of a `dataframe`
