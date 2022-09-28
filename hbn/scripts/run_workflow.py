@@ -184,7 +184,7 @@ def run_model_pipeline_firstlevel(
 
     # figure out spec files
     if specs is None:
-        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", '*json'))
+        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", 'regression*json'))
         print(specs)
     elif specs is str:
         specs = [specs]
@@ -202,6 +202,7 @@ def run_model_pipeline_firstlevel(
 
         spec_info['x_indices'] = range(1,len(dataframe.columns)-1)
 
+        print(f'running {spec_file}...\n')
         wf = gen_workflow(spec_info, cache_dir=cachedir)
         run_workflow(wf, "cf", {"n_procs": 1})
 
