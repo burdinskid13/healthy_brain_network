@@ -106,9 +106,7 @@ def make_model_specs():
 
     # hardcode classifiers
     clfs = {'categorical': [
-                    [["sklearn.impute", "SimpleImputer"],
-                    ["sklearn.preprocessing", "StandardScaler"],
-                    ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]],
+                    ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}],
                     ],
             'numeric': [
                 ["sklearn.linear_model","RidgeCV",{"fit_intercept": False}],
@@ -140,7 +138,7 @@ def make_model_specs():
                 "x_indices": [],
                 "target_vars": [feature_spec['target']],
                 "group_var": None,
-                "n_splits": 15,
+                "n_splits": 50,
                 "test_size": 0.2,
                 "clf_info": clf,
                 "permute": [True, False],
@@ -184,7 +182,7 @@ def run_model_pipeline_firstlevel(
 
     # figure out spec files
     if specs is None:
-        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", 'classifier*json'))
+        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", '*json'))
     elif specs is str:
         specs = [specs]
     
@@ -265,7 +263,7 @@ def run_model_pipeline_secondlevel():
 @click.command()
 @click.option("--parse-data/--no-parse-data", default=False)
 @click.option("--feature-specs/--no-feature-specs", default=False)
-@click.option("--model-specs/--no-model-specs", default=False)
+@click.option("--model-specs/--no-model-specs", default=True)
 @click.option("--run-models-first/--no-run-models-first", default=True)
 @click.option("--run-models-second/--no-run-models-second", default=True)
 @click.option("--run-locally/--no-run-locally", default=False)
