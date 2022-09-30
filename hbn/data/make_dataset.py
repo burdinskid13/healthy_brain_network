@@ -40,7 +40,7 @@ def get_clinical_diagnosis(
 
     # make new `factorize` and `binarize` columns for `DX` targets
     dx_col = False
-    if 'DX' in target:
+    if  (target is not None) and ('DX' in target):
         if isinstance(target, (str)) and ('factorize' in target):
             col = target.replace('_factorize', '')
             dx_col = True
@@ -53,15 +53,19 @@ def get_clinical_diagnosis(
             labels, _ = dx[col].factorize()
             dx[f'{col}_factorize'] = labels
 
-    # optionally add demographics
-    if demographics:
-        dx = _add_demographics(dataframe=dx)
-
     # optionally add CGAS score (another clinical diagnosis) or Sex
-    if target=='CGAS_Score':
+    if target is None:
+        pass
+    elif target=='CGAS_Score':
         df_score = _add_CGAS_Score(dx)
         dx = df_score[['Identifiers', 'CGAS_Score']].merge(dx, on='Identifiers')
     elif target=='Sex_binarize':
+        demographics = False
+        print(f"not returning all possible demographics, except for {target}")
+        dx = _add_demographics(dataframe=dx)
+
+    # optionally add demographics
+    if demographics:
         dx = _add_demographics(dataframe=dx)
 
     # return dataframe containing only `Identifiers` and `<target>`
