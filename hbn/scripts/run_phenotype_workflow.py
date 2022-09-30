@@ -31,7 +31,7 @@ def make_feature_specs():
         """
         # get assessments + domains
         assessments = ['Child Measures', 'Parent Measures', 'Teacher Measures']
-        targets = ['DX_01_Cat_binarize', 'Sex_binarize', 'CGAS_Score'] # 'DX_01_Cat_factorize',
+        targets = ['DX_01_Cat_binarize'] # 'DX_01_Cat_factorize', 'Sex_binarize', 'CGAS_Score'
         spec_info = []
         for assess in assessments:
             domains = build_features.get_domains(assess)[assess]
@@ -40,12 +40,14 @@ def make_feature_specs():
                 if target=='CGAS_Score':
                     target_type = 'numeric'
                 for domain in domains:
-                    spec_info.append({'assessment': assess,
-                                'domains': domain,
-                                'measures': 'all',
-                                'target': target,
-                                'target_type': target_type
-                                })
+                    measures = build_features.get_measures(assess, domain)[domain]
+                    for measure in measures:
+                        spec_info.append({'assessment': assess,
+                                    'domains': domain,
+                                    'measures': measure, # 'all'
+                                    'target': target,
+                                    'target_type': target_type
+                                    })
         return spec_info
 
     for data in _get_iterables():
@@ -182,7 +184,7 @@ def run_model_pipeline_firstlevel(
 
     # figure out spec files
     if specs is None:
-        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", '*json'))
+        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", 'classifier*json'))
     elif specs is str:
         specs = [specs]
     

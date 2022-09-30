@@ -293,3 +293,31 @@ def get_domains(assessment='Child Measures'):
         domains = info['Measure'].unique()
 
     return {assessment: domains}
+
+def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
+    """get measures for `assessment` and `domain`. See `Assessment_List_2019.xlsx` for `assessment` and `domain`
+
+    Args:
+        assessment (str): options: 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
+        domain (str): specific for each assessment. 
+    Returns:
+        list of str: list of domains
+    """
+    fname = '_'.join(assessment.split())
+
+    # master info file
+    fpath = os.path.join(Defaults.PHENO_DIR, f'Assessment_List_Jan2019_{fname}.csv')
+
+    if not os.path.isfile(fpath):
+        make_dataset.assessment_list(assessment=assessment)
+    
+    # read in corrected assessment list
+    info = pd.read_csv(fpath)
+
+    # return measures if both domain and measures are present
+    if sum(info.columns.isin(['Domain', 'Measure']))==2:
+        measures = info[info['Domain']==domain]['Measure'].tolist()
+    else:
+        measures = info['Measure']
+
+    return {domain: measures}
