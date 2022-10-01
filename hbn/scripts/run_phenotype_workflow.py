@@ -73,7 +73,7 @@ def make_feature_specs():
                     "target": data['target'],
                     "target_type": data['target_type'],
                     "preprocessing": {"numeric": [["sklearn.impute", "SimpleImputer", {"strategy": "mean"}], ["sklearn.preprocessing", "StandardScaler", {}]]},
-                    "min_num_participants": 4000
+                    "min_num_participants": 2000
                     }
 
         # get features (X and y) - make csv file
@@ -168,12 +168,14 @@ def make_model_specs():
 
 def run_model_pipeline_firstlevel(
     specs=None, 
-    cachedir='/Users/maedbhking/pydra-ml/cache-wf/'):
+    cachedir='/Users/maedbhking/pydra-ml/cache-wf/',
+    include_pattern='*classifier*DX_01_Cat_binarize*json'):
     """ run predictive models using pydra-ml. must provide `spec_file` json and `filename` in `spec_file` must be a csv of features saved in ../features/
 
     Args:
         spec_file (str or None or list of str): default is None
         tmpdir (str): default is '/Users/maedbhking/pydra-ml/cache-wf/'
+        include_pattern (str): include pattern for models to run
     Returns: 
         saves (pickled) model to ../data/interim/
     """
@@ -184,7 +186,7 @@ def run_model_pipeline_firstlevel(
 
     # figure out spec files
     if specs is None:
-        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", 'classifier*json'))
+        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", include_pattern))
     elif specs is str:
         specs = [specs]
     
@@ -264,9 +266,9 @@ def run_model_pipeline_secondlevel():
 
 @click.command()
 @click.option("--parse-data/--no-parse-data", default=False)
-@click.option("--feature-specs/--no-feature-specs", default=False)
+@click.option("--feature-specs/--no-feature-specs", default=True)
 @click.option("--model-specs/--no-model-specs", default=True)
-@click.option("--run-models-first/--no-run-models-first", default=False)
+@click.option("--run-models-first/--no-run-models-first", default=True)
 @click.option("--run-models-second/--no-run-models-second", default=True)
 @click.option("--run-locally/--no-run-locally", default=False)
 

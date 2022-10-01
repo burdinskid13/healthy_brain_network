@@ -2,6 +2,8 @@ from codecs import ascii_decode
 import os
 import numpy as np
 import pandas as pd
+import logging
+from pathlib import Path
 import glob
 import re
 import warnings
@@ -61,13 +63,20 @@ def get_data(
 
         # loop over measures
         for measure in measure_dir:
-            df = pd.read_csv(measure)
+            
+            # only read in files that exist
+            if os.path.isfile(measure):
+                df = pd.read_csv(measure)
 
-            if len(df)>=min_num_participants:
-                df_all = df_all.merge(df, on='Identifiers')
-                print(f'reading {measure} into dataframe')
+                if len(df)>=min_num_participants:
+                    df_all = df_all.merge(df, on='Identifiers')
+                    print(f'reading {measure} into dataframe')
+                else:
+                    logger = setup_logger('first_logger', 'too-few-features.log')
+                    logger.info(Path(measure).name)
             else:
-                print(f'fewer than {min_num_participants} in {measure}, not included as features')
+                super_logger = setup_logger('second_logger', 'features-nonexistent.log')
+                super_logger.info(Path(measure).name)
 
     # add clinical + demographic info as `target`
     if 'CGAS' in target:
@@ -321,3 +330,17 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
         measures = info['Measure']
 
     return {domain: measures}
+
+def setup_logger(name, log_file, level=logging.INFO):
+    """To setup as many loggers as you want"""
+
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+
+    handler = logging.FileHandler(log_file)        
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+
+    return logger
