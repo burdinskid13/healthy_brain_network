@@ -6,6 +6,16 @@ cerebellar fingerprints for neurodevelopmental disorders
 Project Organization
 ------------
 
+This project uses [`pipenv`](https://github.com/pypa/pipenv) for virtual environment and python package management.
+
+Install the required version of python:
+
+    $ pyenv install 3.9.12
+
+Ensure pipenv is installed globally:
+
+    $ brew install pipenv
+
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
     ├── README.md          <- The top-level README for developers using this project.
@@ -17,7 +27,9 @@ Project Organization
     │
     ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
     │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
+    ├── models             <- Trained and serialized models, model predictions, model summaries and model spec files
+    │
+    ├── features           <- Feature spec files and csv files containing features (X) and target (y)
     │
     ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
     │                         the creator's initials, and a short `-` delimited description, e.g.
@@ -28,8 +40,8 @@ Project Organization
     ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
     │   └── figures        <- Generated graphics and figures to be used in reporting
     │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
+    ├── Pipfile            <- The file for reproducing the analysis environment, e.g.
+    │                         generated with `pipenv install` (install env) and `pipenv shell` (activate env)
     │
     ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
     ├── hbn                <- Source code for use in this project.
