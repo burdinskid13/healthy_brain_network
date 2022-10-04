@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=workflow_phenotype_hbn
+#SBATCH --job-name=workflow_phenotype_hbn_second_lvl
 #
 # Account:
 #SBATCH --account=fc_cerebellum
