@@ -6,30 +6,40 @@ cerebellar fingerprints for neurodevelopmental disorders
 Project Organization
 ------------
 
-This project uses [`pipenv`](https://github.com/pypa/pipenv) for virtual environment and python package management.
+This project uses [`pipenv`](https://github.com/pypa/pipenv) for virtual environment and python package management
 
-Install the required version of python:
+To install a virtualenv from the Pipfile:
 
-    $ pyenv install 3.9.12
+    $ cd /om2/user/maedbh/healthy_brain_network
+    $ pipenv install
 
-Ensure pipenv is installed globally:
+To activate a virtualenv in order to access libraries:
+    $ pipenv shell
 
-    $ brew install pipenv
+### Data
+
+> stored on OpenMind at `/nese/mit/group/sig/projects/hbn/phenotype`
+
+    ├── data
+    │   ├── interim        <- Intermediate data that has been transformed.
+    │   ├── processed      <- The final, canonical data sets for modeling.
+    │   └── raw            <- The original, immutable data dump.
+
+### Code
+
+> stored on OpenMind at `/om2/user/maedbh/healthy_brain_network`
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
     ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
     │
     ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
     │
     ├── models             <- Trained and serialized models, model predictions, model summaries and model spec files
     │
     ├── features           <- Feature spec files and csv files containing features (X) and target (y)
+    │
+    ├── hpc_scripts        <- Bash scripts for running jobs on openmind
     │
     ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
     │                         the creator's initials, and a short `-` delimited description, e.g.

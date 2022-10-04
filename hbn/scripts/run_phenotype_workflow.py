@@ -211,7 +211,6 @@ def run_model_pipeline_firstlevel(
         out_dir = glob.glob(os.path.join(os.getcwd(), '*out-localspec*'))
         shutil.copy(spec_fpath, out_dir[0])
         shutil.move(out_dir[0], Defaults.MODEL_DIR)
-        # shutil.rmtree("messages")
 
 
 def run_model_pipeline_secondlevel():
