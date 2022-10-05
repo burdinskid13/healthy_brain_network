@@ -22,4 +22,4 @@ source $(pipenv --venv)/bin/activate
 cd /global/scratch/users/maedbhking/projects/healthy_brain_network/hbn/scripts
 
 # run workflow
-python3 run_phenotype_workflow.py
+python3 run_phenotype_workflow.py --no-feature-specs --model-specs --run-models-first --run-models-second
