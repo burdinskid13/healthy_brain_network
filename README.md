@@ -7,7 +7,7 @@ Project Organization
 ------------
 
 This project uses [`pipenv`](https://github.com/pypa/pipenv) for virtual environment and python package management
-    > see [OpenMind setup](https://maedbhk.github.io/MIT-Projects/openmind/setup.html) for more detailed instructions on getting setup on OpenMind
+    > see [OpenMind Setup](https://maedbhk.github.io/MIT-Projects/openmind/setup.html) for more detailed instructions on getting setup on OpenMind
 
 To install a virtualenv from the Pipfile:
     $ pipenv install
