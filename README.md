@@ -26,7 +26,7 @@ To activate a virtualenv in order to access libraries:
 
 ### Code
 
-> stored on OpenMind at `/om2/user/maedbh/healthy_brain_network` (but clone the repo to your own path `/om2/user/<username>/`)
+> Clone the repo to your own path on OpenMind at `/om2/user/<username>/` (example: `/om2/user/maedbh/healthy_brain_network`)
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
