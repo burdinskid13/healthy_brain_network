@@ -10,10 +10,10 @@ This project uses [`pipenv`](https://github.com/pypa/pipenv) for virtual environ
 > see [OpenMind Setup](https://maedbhk.github.io/MIT-Projects/openmind/setup.html) for more detailed instructions on getting setup on OpenMind
 
 To install a virtualenv from the Pipfile:
-    $ pipenv install
+    > $ pipenv install
 
 To activate a virtualenv in order to access libraries:
-    $ pipenv shell
+    > $ pipenv shell
 
 ### Data
 
