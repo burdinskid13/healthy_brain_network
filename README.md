@@ -7,10 +7,9 @@ Project Organization
 ------------
 
 This project uses [`pipenv`](https://github.com/pypa/pipenv) for virtual environment and python package management
+    > see [openmind setup](https://maedbhk.github.io/MIT-Projects/openmind/setup.html) for more detailed instructions on getting setup on OpenMind
 
 To install a virtualenv from the Pipfile:
-
-    $ cd /om2/user/maedbh/healthy_brain_network
     $ pipenv install
 
 To activate a virtualenv in order to access libraries:
@@ -27,7 +26,7 @@ To activate a virtualenv in order to access libraries:
 
 ### Code
 
-> stored on OpenMind at `/om2/user/maedbh/healthy_brain_network`
+> stored on OpenMind at `/om2/user/maedbh/healthy_brain_network` (but clone the repo to your own path `/om2/user/<username>/`)
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
