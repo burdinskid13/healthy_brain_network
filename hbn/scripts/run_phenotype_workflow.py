@@ -1,6 +1,7 @@
 import os
 import re
 import glob
+from stat import FILE_ATTRIBUTE_INTEGRITY_STREAM
 import click
 from pathlib import Path
 
@@ -225,43 +226,57 @@ def run_model_pipeline_secondlevel():
     
     for output_dir in model_output_dirs:
 
-        model_name = Path(output_dir).name.replace('out-localspec-', '')
+        # model_name = Path(output_dir).name.replace('out-localspec-', '')
 
-        with open(os.path.join(output_dir, f"results-{model_name}.pkl"), "rb") as fp:
-            res = pk.load(fp)
+        # with open(os.path.join(output_dir, f"results-{model_name}.pkl"), "rb") as fp:
+        #     res = pk.load(fp)
         
-        # load spec info from file
-        spec_fname = glob.glob(os.path.join(output_dir, '*json'))[0]
-        spec_info = io.read_json(os.path.join(output_dir, spec_fname))
+        # # load spec info from file
+        # spec_fname = glob.glob(os.path.join(output_dir, '*json'))[0]
+        # spec_info = io.read_json(os.path.join(output_dir, spec_fname))
 
-        clf = Path(spec_fname).name.split('-')[0]
+        # # extract feature importance
+        # feature_splits = np.array(res[1][1].output.feature_importance)
+        # feature_names = np.array(res[1][1].output.feature_names)
 
-        # get output file
-        model_fpath = os.path.join(Defaults.MODEL_DIR, f'{clf}-all-phenotypic-models-performance.csv')
+        # n_splits, n_feats = feature_splits.shape
 
-        # get data and null models
-        data = res[0][1]
-        null = res[1][1]
+        # feature_names_mat = np.tile(np.reshape(feature_names, (n_feats,1)), n_splits).T
+        # feature_splits_sort_idx = np.argsort(feature_splits)
 
-        # make dataframe
-        df_data = pd.DataFrame(np.array(data.output.score), columns=spec_info['metrics'])
-        df_data['data'] = "model-data"
+        # features_sorted = np.take_along_axis(feature_names_mat, feature_splits_sort_idx, axis=1)
+        # features_sorted = features_sorted[:,::-1] # reverse order
 
-        df_null = pd.DataFrame(np.array(null.output.score), columns=spec_info['metrics'])
-        df_null['data'] = "model-null"
+        # feature importances
 
-        df_concat = pd.concat([df_data, df_null], axis=0)
-        df_concat = df_concat.rename_axis('splits').reset_index() 
-        df_concat['target'] = spec_info['target_vars'][0]
-        df_concat['features'] = '-'.join(spec_info['filename'].split('-')[1:-1]) 
-        df_concat['model'] = model_name
+        # clf = Path(spec_fname).name.split('-')[0]
 
-        # save out to existing file (if it exists)
-        df = pd.DataFrame()
-        if os.path.exists(model_fpath):
-            df = pd.read_csv(model_fpath)
-        df_out = pd.concat([df, df_concat])
-        df_out.to_csv(model_fpath, index=False)
+        # # get output file
+        # model_fpath = os.path.join(Defaults.MODEL_DIR, f'{clf}-all-phenotypic-models-performance.csv')
+
+        # # get data and null models
+        # null = res[0][1]
+        # data = res[1][1]
+
+        # # make dataframe
+        # df_data = pd.DataFrame(np.array(data.output.score), columns=spec_info['metrics'])
+        # df_data['data'] = "model-data"
+
+        # df_null = pd.DataFrame(np.array(null.output.score), columns=spec_info['metrics'])
+        # df_null['data'] = "model-null"
+
+        # df_concat = pd.concat([df_data, df_null], axis=0)
+        # df_concat = df_concat.rename_axis('splits').reset_index() 
+        # df_concat['target'] = spec_info['target_vars'][0]
+        # df_concat['features'] = '-'.join(spec_info['filename'].split('-')[1:-1]) 
+        # df_concat['model'] = model_name
+
+        # # save out to existing file (if it exists)
+        # df = pd.DataFrame()
+        # if os.path.exists(model_fpath):
+        #     df = pd.read_csv(model_fpath)
+        # df_out = pd.concat([df, df_concat])
+        # df_out.to_csv(model_fpath, index=False)
 
 @click.command()
 @click.option("--parse-data/--no-parse-data", default=False)
