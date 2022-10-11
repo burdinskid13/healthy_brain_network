@@ -12,6 +12,7 @@ Predictive Modeling
 ------------
 * The following command runs the Python predictive modeling script: `hbn/scripts/run_phenotype_workflow.py`
     * See `hpc_scripts/run_phenotype_workflow_openmind.sh` for running an example slurm script on OpenMind
+    * Note that `run_phenotype_workflow.run_model_pipeline_secondlevel` is still under construction. Set input arg to `--no-run-models-second` for now
 
 Project Organization
 ------------
