@@ -6,21 +6,22 @@ import colorsys
 
 class Defaults:
 
-    # set base directories
-    BASE_DIR = Path(__file__).absolute().parent.parent # Path(__file__).absolute().parent.parent
-    DATA_DIR = BASE_DIR / 'data'
-    RAW_DIR = DATA_DIR / "raw"
-    INTERIM_DIR = DATA_DIR / "interim"
-    PROCESSED_DIR = DATA_DIR / "processed"
+    ## set directories for feature and model specs
+    BASE_DIR = Path(__file__).absolute().parent.parent 
     FIG_DIR = BASE_DIR / "reports" / "figures"
-    PHENO_DIR = RAW_DIR / "phenotype"
-    MODEL_DIR = INTERIM_DIR / "models"
-    CACHE_DIR_LOCAL = '/Users/maedbhking/pydra-ml/cache-wf/'
-    CACHE_DIR_SAVIO = '/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/'
     FEATURE_DIR = BASE_DIR / 'features'
     MODEL_SPEC_DIR = BASE_DIR / 'models'
 
-    dirs = [RAW_DIR, INTERIM_DIR, PROCESSED_DIR, FIG_DIR, MODEL_DIR, CACHE_DIR_LOCAL, CACHE_DIR_SAVIO, FEATURE_DIR, MODEL_SPEC_DIR]
+    # set data base directories
+    DATA_DIR = '/nese/mit/group/sig/projects/hbn/phenotype'
+    # DATA_DIR = BASE_DIR / 'data'
+    RAW_DIR = DATA_DIR / "raw"
+    INTERIM_DIR = DATA_DIR / "interim"
+    PROCESSED_DIR = DATA_DIR / "processed"
+    PHENO_DIR = RAW_DIR / "phenotype"
+    MODEL_DIR = INTERIM_DIR / "models"
+
+    dirs = [RAW_DIR, INTERIM_DIR, PROCESSED_DIR, FIG_DIR, MODEL_DIR, FEATURE_DIR, MODEL_SPEC_DIR]
     for dirn in dirs:
         if not os.path.isdir(dirn):
             try:

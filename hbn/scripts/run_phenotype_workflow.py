@@ -225,6 +225,7 @@ def run_model_pipeline_secondlevel():
     model_output_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, "*out-localspec*"))
     
     for output_dir in model_output_dirs:
+        pass
 
         # model_name = Path(output_dir).name.replace('out-localspec-', '')
 
@@ -295,29 +296,39 @@ def run(
     run_locally=False,
     ):
     """ Entire processing workflow for processing phenotypic data from parsing data to running predictive models
+
+    Args: 
+        parse_data (bool): parse data from `/nese/mit/group/sig/projects/hbn/phenotype/data-2022-08-24T16_37_18.263Z.csv`. default is False because data have already been parsed and saved on OpenMind.
+        feature_specs (bool): default is True. Saves feature specs (json and csv files) to `/om2/user/maedbh/healthy_brain_network/features`
+        model_specs (bool): default is True. Saves model specs (json files) to `/om2/user/maedbh/healthy_brain_network/models`
+        run_models_first (bool): default is True. Runs main predictive modeling routine: uses `https://github.com/nipype/pydra-ml` 
+        run_models_second (bool): default is True. Wrapper function applied to output from `pydra-ml` to create model summaries, which are saved in `/nese/mit/group/sig/projects/hbn/phenotype/interim/models`
+        run_locally (bool): default is False - runs on OpenMind
     """
-    # First Step
+    # CHANGE CACHEDIR
+    # cachedir = '/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/'
+    cachedir = '/home/maedbh/.cache/pydra-ml/cache-wf/'
+    if run_locally:
+        cachedir = '/Users/maedbhking/pydra-ml/cache-wf/'  
+    os.makedirs(cachedir)
+
+    # FIRST STEP
     if parse_data:
         parse_phenotypic_data()
 
-    # Second Step
+    # SECOND STEP
     if feature_specs:
         make_feature_specs()
 
-    # Third step
+    # THIRD STEP
     if model_specs:
         make_model_specs()
 
-    # get cache dir for model output
-    cachedir = Defaults.CACHE_DIR_SAVIO
-    if run_locally:
-        cachedir = Defaults.CACHE_DIR_LOCAL
-
-    # running models (first level)
+    # RUNNING MODELS (FIRST LEVEL)
     if run_models_first:
         run_model_pipeline_firstlevel(cachedir=cachedir)
     
-    # running models (second level)
+    # RUNNING MODELS (SECOND LEVEL)
     if run_models_second:
         run_model_pipeline_secondlevel()
 

@@ -3,20 +3,20 @@ Healthy Brain Networks
 
 cerebellar fingerprints for neurodevelopmental disorders
 
+First Steps
+------------
+This project uses [`pipenv`](https://github.com/pypa/pipenv) for virtual environment and python package management
+> see [OpenMind Setup](https://maedbhk.github.io/MIT-Projects/openmind/setup.html) for more detailed instructions on setting up virtual environments on OpenMind
+
+Predictive Modeling
+------------
+* The following command runs the Python predictive modeling script: `hbn/scripts/run_phenotype_workflow.py`
+    * See `hpc_scripts/run_phenotype_workflow_openmind.sh` for running an example slurm script on OpenMind
+
 Project Organization
 ------------
 
-This project uses [`pipenv`](https://github.com/pypa/pipenv) for virtual environment and python package management
-> see [OpenMind Setup](https://maedbhk.github.io/MIT-Projects/openmind/setup.html) for more detailed instructions on getting setup on OpenMind
-
-To install a virtualenv from the Pipfile:
-    $ pipenv install
-
-To activate a virtualenv in order to access libraries:
-    $ pipenv shell
-
 ### Data
-
 > stored on OpenMind at `/nese/mit/group/sig/projects/hbn/phenotype`
 
     ├── data
@@ -25,7 +25,6 @@ To activate a virtualenv in order to access libraries:
     │   └── raw            <- The original, immutable data dump.
 
 ### Code
-
 > Clone the repo to your own path on OpenMind at `/om2/user/<username>/` (example: `/om2/user/maedbh/healthy_brain_network`)
 
     ├── LICENSE
@@ -34,11 +33,11 @@ To activate a virtualenv in order to access libraries:
     │
     ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
     │
-    ├── models             <- Trained and serialized models, model predictions, model summaries and model spec files
+    ├── models             <- Model Spec files
     │
     ├── features           <- Feature spec files and csv files containing features (X) and target (y)
     │
-    ├── hpc_scripts        <- Bash scripts for running jobs on openmind
+    ├── hpc_scripts        <- Bash scripts for running jobs on openmind. See `run_phenotype_workflow_openmind.sh` as an example
     │
     ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
     │                         the creator's initials, and a short `-` delimited description, e.g.
@@ -50,7 +49,7 @@ To activate a virtualenv in order to access libraries:
     │   └── figures        <- Generated graphics and figures to be used in reporting
     │
     ├── Pipfile            <- The file for reproducing the analysis environment, e.g.
-    │                         generated with `pipenv install` (install env) and `pipenv shell` (activate env)
+    │                         generated with `$ pipenv install` (to install environment) and `$ pipenv shell` (to activate environment)
     │
     ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
     ├── hbn                <- Source code for use in this project.
@@ -65,12 +64,14 @@ To activate a virtualenv in order to access libraries:
     │   ├── models         <- Scripts to train models and then use trained models to make
     │   │   │                 predictions
     │   │   └── test_models.py
+    │   │   └── second_level_modeling.py
     │   │
     │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │   │
+    │   │   └── visualize.py
     │   |
     │   └─── scripts <- Scripts to run workflow for phenotypic assessment
     │       └── run_phenotype_workflow.py
+    │   │   └── feature_embeddings.py
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
 
