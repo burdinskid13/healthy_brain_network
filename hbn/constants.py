@@ -13,8 +13,8 @@ class Defaults:
     MODEL_SPEC_DIR = BASE_DIR / 'models'
 
     # set data base directories
-    DATA_DIR = '/nese/mit/group/sig/projects/hbn/phenotype'
-    # DATA_DIR = BASE_DIR / 'data'
+    # DATA_DIR = '/nese/mit/group/sig/projects/hbn/phenotype'
+    DATA_DIR = BASE_DIR / 'data'
     RAW_DIR = DATA_DIR / "raw"
     INTERIM_DIR = DATA_DIR / "interim"
     PROCESSED_DIR = DATA_DIR / "processed"

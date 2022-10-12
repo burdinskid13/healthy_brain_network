@@ -1,7 +1,9 @@
+from math import perm
 import os
 import re
 import glob
 from stat import FILE_ATTRIBUTE_INTEGRITY_STREAM
+from wsgiref.simple_server import demo_app
 import click
 from pathlib import Path
 
@@ -215,69 +217,43 @@ def run_model_pipeline_firstlevel(
 
 
 def run_model_pipeline_secondlevel():
-    """TEMPORARY - NEEDS TO BE REWRITTEN TO BE MORE FLEXIBLE
+    """Makes model and feature summary files from results output from `run_model_pipeline_firstlevel`
+
+    Saves output in `../interim/models/`
     """
-    import pickle as pk
-    import pandas as pd
-    import numpy as np
+    from hbn.models import second_level_modeling as second_level
 
-    # grab model output
-    model_output_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, "*out-localspec*"))
+    # grab list of models
+    model_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, '*out-localspec*/*results*.pkl*'))
+    spec_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, '*out-localspec*/*.json*'))
     
-    for output_dir in model_output_dirs:
-        pass
+    for (model_fpath, spec_fpath) in zip(model_dirs, spec_dirs):
 
-        # model_name = Path(output_dir).name.replace('out-localspec-', '')
+        # get model name
+        modelname = Path(model_fpath).stem.split('-')[1] # `results-<modelname>`
 
-        # with open(os.path.join(output_dir, f"results-{model_name}.pkl"), "rb") as fp:
-        #     res = pk.load(fp)
-        
-        # # load spec info from file
-        # spec_fname = glob.glob(os.path.join(output_dir, '*json'))[0]
-        # spec_info = io.read_json(os.path.join(output_dir, spec_fname))
+        # load results
+        results = second_level.load_results(fpath=model_fpath)
 
-        # # extract feature importance
-        # feature_splits = np.array(res[1][1].output.feature_importance)
-        # feature_names = np.array(res[1][1].output.feature_names)
+        # make feature summary (and save to disk)
+        feature_df, permutation_df = second_level.get_features(
+            results=results, 
+            model=modelname,
+            feature_importance=True, 
+            permutation_importance=False
+            )
+        feature_df.to_csv(os.path.join(Defaults.MODEL_DIR, 'feature_importance.csv'))
+        permutation_df.to_csv(os.path.join(Defaults.MODEL_DIR, 'permutation_importance.csv'))
 
-        # n_splits, n_feats = feature_splits.shape
-
-        # feature_names_mat = np.tile(np.reshape(feature_names, (n_feats,1)), n_splits).T
-        # feature_splits_sort_idx = np.argsort(feature_splits)
-
-        # features_sorted = np.take_along_axis(feature_names_mat, feature_splits_sort_idx, axis=1)
-        # features_sorted = features_sorted[:,::-1] # reverse order
-
-        # feature importances
-
-        # clf = Path(spec_fname).name.split('-')[0]
-
-        # # get output file
-        # model_fpath = os.path.join(Defaults.MODEL_DIR, f'{clf}-all-phenotypic-models-performance.csv')
-
-        # # get data and null models
-        # null = res[0][1]
-        # data = res[1][1]
-
-        # # make dataframe
-        # df_data = pd.DataFrame(np.array(data.output.score), columns=spec_info['metrics'])
-        # df_data['data'] = "model-data"
-
-        # df_null = pd.DataFrame(np.array(null.output.score), columns=spec_info['metrics'])
-        # df_null['data'] = "model-null"
-
-        # df_concat = pd.concat([df_data, df_null], axis=0)
-        # df_concat = df_concat.rename_axis('splits').reset_index() 
-        # df_concat['target'] = spec_info['target_vars'][0]
-        # df_concat['features'] = '-'.join(spec_info['filename'].split('-')[1:-1]) 
-        # df_concat['model'] = model_name
-
-        # # save out to existing file (if it exists)
-        # df = pd.DataFrame()
-        # if os.path.exists(model_fpath):
-        #     df = pd.read_csv(model_fpath)
-        # df_out = pd.concat([df, df_concat])
-        # df_out.to_csv(model_fpath, index=False)
+        # get model summary (and save to disk)
+        model_dataframe = second_level.get_model_summary(
+                        results=results, 
+                        spec_file=spec_fpath, 
+                        )
+        model_dataframe['model'] =  modelname
+        clf = Path(spec_fpath).name.split('-')[0]
+        outpath = os.path.join(Defaults.MODEL_DIR, f'{clf}-all-phenotypic-models-performance.csv')
+        model_dataframe.to_csv(outpath, index=False)
 
 @click.command()
 @click.option("--parse-data/--no-parse-data", default=False)
@@ -310,7 +286,7 @@ def run(
     cachedir = '/home/maedbh/.cache/pydra-ml/cache-wf/'
     if run_locally:
         cachedir = '/Users/maedbhking/pydra-ml/cache-wf/'  
-    os.makedirs(cachedir)
+    io.make_dirs(cachedir)
 
     # FIRST STEP
     if parse_data:
