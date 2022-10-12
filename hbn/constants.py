@@ -10,7 +10,7 @@ class Defaults:
     BASE_DIR = Path(__file__).absolute().parent.parent 
     FIG_DIR = BASE_DIR / "reports" / "figures"
     FEATURE_DIR = BASE_DIR / 'features'
-    MODEL_SPEC_DIR = BASE_DIR / 'models'
+    MODEL_SPEC_DIR = BASE_DIR / 'model_specs'
 
     # set data base directories
     # DATA_DIR = '/nese/mit/group/sig/projects/hbn/phenotype'

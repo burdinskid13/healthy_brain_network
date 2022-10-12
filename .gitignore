@@ -79,7 +79,7 @@ target/
 # exclude data from source control by default
 data/
 features/
-models/
+model_specs/
 
 # Mac OS-specific storage files
 .DS_Store
