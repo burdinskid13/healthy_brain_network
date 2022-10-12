@@ -256,12 +256,12 @@ def run_model_pipeline_secondlevel():
         model_dataframe.to_csv(outpath, index=False)
 
 @click.command()
+@click.option("cachedir")
 @click.option("--parse-data/--no-parse-data", default=False)
 @click.option("--feature-specs/--no-feature-specs", default=True)
 @click.option("--model-specs/--no-model-specs", default=True)
 @click.option("--run-models-first/--no-run-models-first", default=True)
 @click.option("--run-models-second/--no-run-models-second", default=True)
-@click.option("cachedir")
 
 def run(
     parse_data=False,
