@@ -130,8 +130,9 @@ def _get_feature_importance(model_output):
         # get features across splits
         df_rank = _rank_order_features_across_splits(dataframe=pd.DataFrame(features_sorted))
         df_common = _most_commonly_occuring_features(dataframe=pd.DataFrame(features_sorted))
+        df_sum = _sum_feature_weights(feature_splits, feature_names)
 
-        df_features = pd.concat([df_rank, df_common], axis=1)
+        df_features = pd.concat([df_rank, df_common, df_sum], axis=1)
 
     return df_features
 
@@ -195,3 +196,20 @@ def _most_commonly_occuring_features(dataframe):
     df_features['feature_probabilities_common'] = feature_probabilities
     
     return df_features 
+
+
+def _sum_feature_weights(feature_splits, feature_names):
+    import numpy as np
+    import pandas as pd
+
+    # sum up weights for each feature (across splits)
+    feature_sum = np.sum(feature_splits,0)
+
+    # rank order summed weights
+    sort_idx = np.argsort(feature_sum)
+
+    df = pd.DataFrame()
+    df['feature_sum'] = feature_sum[sort_idx[::-1]]
+    df['feature_names_sum'] = np.array(feature_names)[sort_idx[::-1]]
+
+    return df
