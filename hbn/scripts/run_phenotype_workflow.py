@@ -264,22 +264,22 @@ def run_model_pipeline_secondlevel():
 @click.option("--run-models-second/--no-run-models-second", default=True)
 
 def run(
+    cachedir='/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/',
     parse_data=False,
     feature_specs=False,
     model_specs=False,
     run_models_first=True,
-    run_models_second=True,
-    cachedir='/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/',
+    run_models_second=True,,
     ):
     """ Entire processing workflow for processing phenotypic data from parsing data to running predictive models
 
     Args: 
+        cachedir (str): full path to model cache directory.
         parse_data (bool): parse data from `/nese/mit/group/sig/projects/hbn/phenotype/data-2022-08-24T16_37_18.263Z.csv`. default is False because data have already been parsed and saved on OpenMind.
         feature_specs (bool): default is True. Saves feature specs (json and csv files) to `/om2/user/maedbh/healthy_brain_network/features`
         model_specs (bool): default is True. Saves model specs (json files) to `/om2/user/maedbh/healthy_brain_network/models`
         run_models_first (bool): default is True. Runs main predictive modeling routine: uses `https://github.com/nipype/pydra-ml` 
-        run_models_second (bool): default is True. Wrapper function applied to output from `pydra-ml` to create model summaries, which are saved in `/nese/mit/group/sig/projects/hbn/phenotype/interim/models`
-        cachedir (str): full path to model cache directory. 
+        run_models_second (bool): default is True. Wrapper function applied to output from `pydra-ml` to create model summaries, which are saved in `/nese/mit/group/sig/projects/hbn/phenotype/interim/models` 
             on openmind I use: '/home/maedbh/.cache/pydra-ml/cache-wf/
             on savio I use '/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/'
             on local I use '/Users/maedbhking/pydra-ml/cache-wf/'
