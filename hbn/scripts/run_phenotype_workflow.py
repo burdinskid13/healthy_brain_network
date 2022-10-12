@@ -282,8 +282,8 @@ def run(
         run_locally (bool): default is False - runs on OpenMind
     """
     # CHANGE CACHEDIR
-    # cachedir = '/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/'
-    cachedir = '/home/maedbh/.cache/pydra-ml/cache-wf/'
+    cachedir = '/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/'
+    # cachedir = '/home/maedbh/.cache/pydra-ml/cache-wf/'
     if run_locally:
         cachedir = '/Users/maedbhking/pydra-ml/cache-wf/'  
     io.make_dirs(cachedir)
