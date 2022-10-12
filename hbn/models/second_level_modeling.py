@@ -1,25 +1,42 @@
 import os
 
 
-def load_results(fpath):
+def load_results(model_file, spec_file):
     """load results from `results-<modelname>.pkl` file
 
     Args: 
-        fpath (str): full path to results file
+        model_file (str): full path to results file
+        spec_file (str): full path to spec file
     Returns:
         results (list of dict)
     """
     import pickle as pk
+    from hbn import io
 
-    with open(fpath, "rb") as fp:
+    with open(model_file, "rb") as fp:
         results = pk.load(fp)
+
+    # load spec info from file
+    spec_info = io.read_json(spec_file)
     
-    return results
+    return results, spec_info
+
+
+def _add_model_parameters(df, spec_info, results):
+    """add model parameters to dataframe
+    """
+    df['clf'] = results['ml_wf.clf_info'][1]
+    df['target'] = spec_info['target_vars'][0]
+    df['features'] = '-'.join(spec_info['filename'].split('-')[1:-1]) 
+    for idx,col in enumerate(['Assessment', 'Domain', 'Measure']):
+        df[col] = df['features'].str.split('-').str.get(idx)
+
+    return df
 
 
 def get_features(
     results, 
-    model,
+    spec_info,
     feature_importance=True, 
     permutation_importance=False
     ):
@@ -32,11 +49,6 @@ def get_features(
     """
     import pandas as pd
 
-    def _add_modelname(df, model, results):
-        df['model'] = model
-        df['clf'] = results['ml_wf.clf_info'][1]
-        return df
-
     df_feature_importance = pd.DataFrame(); df_permutation_importance = pd.DataFrame()
     for res in results:
         
@@ -46,17 +58,17 @@ def get_features(
             # get feature importance
             if feature_importance:
                 df_feature_importance = _get_feature_importance(model_output=res[1].output)
-                df_feature_importance = _add_modelname(df_feature_importance, model, results=res[0])
+                df_feature_importance = _add_model_parameters(df_feature_importance, spec_info=spec_info, results=res[0])
 
             # get permutation importance
             if permutation_importance:
                 df_permutation_importance = _get_permutation_importance(model_output=res[1].output)
-                df_permutation_importance = _add_modelname(df_permutation_importance, model, results=res[0])
+                df_permutation_importance = _add_model_parameters(df_permutation_importance, spec_info=spec_info, results=res[0])
 
     return df_feature_importance, df_permutation_importance
 
 
-def get_model_summary(results, spec_file):
+def get_model_summary(results, spec_info):
     """get model summary for `results`. code has only been tested on results which have one classifier.
 
     Args: 
@@ -70,31 +82,20 @@ def get_model_summary(results, spec_file):
     import pandas as pd
     import numpy as np
 
-    # load spec info from file
-    spec_info = io.read_json(spec_file)
-
-    def _unpack_features(dataframe):
-        for idx,col in enumerate(['Assessment', 'Domain', 'Measure']):
-            dataframe[col] = dataframe['features'].str.split('-').str.get(idx)
-        return dataframe
-
     df_all = pd.DataFrame()
     for res in results:
 
         # scores
         permute = res[0]['ml_wf.permute']
-        data = 'model-data'
+        data = 'model-null'
         if permute:
-            data = 'model-null'
+            data = 'model-data'
 
         # make dataframe
         df = pd.DataFrame(np.array(res[1].output.score), columns=spec_info['metrics'])
         df['data'] = data
-        df['clf'] = res[0]['ml_wf.clf_info'][1]
-        df['target'] = spec_info['target_vars'][0]
-        df['features'] = '-'.join(spec_info['filename'].split('-')[1:-1]) 
         df['splits'] = df.index
-        df = _unpack_features(df)
+        df = _add_model_parameters(df, spec_info=spec_info, results=res[0])
 
         df_all = pd.concat([df_all, df])
     

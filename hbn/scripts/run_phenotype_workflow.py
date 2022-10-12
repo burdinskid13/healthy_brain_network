@@ -251,20 +251,21 @@ def run_model_pipeline_secondlevel():
         perm_outpath = os.path.join(Defaults.MODEL_DIR, f'{clf}-permutation_importance.csv')
 
         # load results
-        results = second_level.load_results(fpath=model_fpath)
+        results, spec_info = second_level.load_results(fpath=model_fpath)
 
         # make feature summary (and save to disk)
         feature_df, permutation_df = second_level.get_features(
             results=results, 
-            model=modelname,
+            spec_info=spec_info,
             feature_importance=True, 
             permutation_importance=False
             )
+        feature_df['model'] = modelname; permutation_df['model'] = modelname
 
         # get model summary (and save to disk)
         model_dataframe = second_level.get_model_summary(
                         results=results, 
-                        spec_file=spec_fpath, 
+                        spec_info=spec_info, 
                         )
         model_dataframe['model'] =  modelname
 
