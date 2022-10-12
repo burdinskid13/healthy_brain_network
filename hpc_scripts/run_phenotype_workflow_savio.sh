@@ -22,4 +22,4 @@ source $(pipenv --venv)/bin/activate
 cd /global/scratch/users/maedbhking/projects/healthy_brain_network/hbn/scripts
 
 # run workflow
-python3 run_phenotype_workflow.py --no-feature-specs --no-model-specs --no-run-models-first --run-models-second --cachedir=/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/
+python3 run_phenotype_workflow.py --cachedir=/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/ --no-feature-specs --no-model-specs --no-run-models-first --run-models-second

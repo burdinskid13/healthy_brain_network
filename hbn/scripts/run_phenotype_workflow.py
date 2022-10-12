@@ -269,7 +269,7 @@ def run(
     feature_specs=False,
     model_specs=False,
     run_models_first=True,
-    run_models_second=True,,
+    run_models_second=True,
     ):
     """ Entire processing workflow for processing phenotypic data from parsing data to running predictive models
 
