@@ -18,19 +18,20 @@ Project Organization
 ------------
 
 ### Data
+
+    ├── phenotype
+    │   ├── interim        <- Intermediate data that has been transformed.
+    │   ├── processed      <- The final, canonical data sets for modeling.
+    │   └── raw            <- The original, immutable data dump.
+
 * stored on OpenMind at `/nese/mit/group/sig/projects/hbn/phenotype`
 * data directories are stored in `constants.py`: 
     * `DATA_DIR` is the top-level directory where `phenotype` folders are stored
     * However, we only want to save `raw` and `processed` data on `nese/mit/group/sig/projects/hbn/phenotype`. All interim data (e.g., models etc) should be stored in your own directories (e.g., `om2/user/<username>/phenotype/`)
     * copy `/nese/mit/group/sig/projects/hbn/phenotype` to your own directory (e.g., `om2/user/<username>`) using symlink (or `cp -R`) and set this new data location as your `DATA_DIR`. 
 
-├── phenotype
-│   ├── interim        <- Intermediate data that has been transformed.
-│   ├── processed      <- The final, canonical data sets for modeling.
-│   └── raw            <- The original, immutable data dump.
-
 ### Code
-> Clone the repo to your own path on OpenMind at `/om2/user/<username>/` (example: `/om2/user/maedbh/healthy_brain_network`)
+> Clone the repo to your own path on OpenMind at `/om2/user/<username>/` (example: `/om2/user/<username>/healthy_brain_network`)
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
