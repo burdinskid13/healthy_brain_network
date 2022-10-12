@@ -228,10 +228,12 @@ def run_model_pipeline_secondlevel():
 
         df = pd.DataFrame()
         if os.path.exists(fpath):
-            df = pd.read_csv(fpath)
-        if not df.empty:
-            dataframe = pd.concat([df, dataframe])
-        dataframe.to_csv(fpath, index=False)
+            try:
+                df = pd.read_csv(fpath)
+            except:
+                pass
+        df_out = pd.concat([df, dataframe])
+        df_out.to_csv(fpath, index=False)
 
     # grab list of models
     model_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, '*out-localspec*/*results*.pkl*'))
