@@ -223,6 +223,15 @@ def run_model_pipeline_secondlevel():
     """
     from hbn.models import second_level_modeling as second_level
 
+    def _save_to_existing_file(dataframe, fpath):
+        import pandas as pd
+
+        df = pd.DataFrame()
+        if os.path.exists(fpath):
+            df = pd.read_csv(fpath)
+        df_out = pd.concat([df, dataframe])
+        df_out.to_csv(fpath, index=False)
+
     # grab list of models
     model_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, '*out-localspec*/*results*.pkl*'))
     spec_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, '*out-localspec*/*.json*'))
@@ -231,6 +240,12 @@ def run_model_pipeline_secondlevel():
 
         # get model name
         modelname = Path(model_fpath).stem.split('-')[1] # `results-<modelname>`
+        clf = Path(spec_fpath).name.split('-')[0]
+
+        # get outpaths
+        model_outpath = os.path.join(Defaults.MODEL_DIR, f'{clf}-all-phenotypic-models-performance.csv')
+        feat_outpath = os.path.join(Defaults.MODEL_DIR, f'{clf}-feature_importance.csv')
+        perm_outpath = os.path.join(Defaults.MODEL_DIR, f'{clf}-permutation_importance.csv')
 
         # load results
         results = second_level.load_results(fpath=model_fpath)
@@ -242,8 +257,6 @@ def run_model_pipeline_secondlevel():
             feature_importance=True, 
             permutation_importance=False
             )
-        feature_df.to_csv(os.path.join(Defaults.MODEL_DIR, 'feature_importance.csv'))
-        permutation_df.to_csv(os.path.join(Defaults.MODEL_DIR, 'permutation_importance.csv'))
 
         # get model summary (and save to disk)
         model_dataframe = second_level.get_model_summary(
@@ -251,9 +264,12 @@ def run_model_pipeline_secondlevel():
                         spec_file=spec_fpath, 
                         )
         model_dataframe['model'] =  modelname
-        clf = Path(spec_fpath).name.split('-')[0]
-        outpath = os.path.join(Defaults.MODEL_DIR, f'{clf}-all-phenotypic-models-performance.csv')
-        model_dataframe.to_csv(outpath, index=False)
+
+        # save to disk
+        _save_to_existing_file(dataframe=feature_df, fpath=feat_outpath)
+        _save_to_existing_file(dataframe=permutation_df, fpath=perm_outpath)
+        _save_to_existing_file(dataframe=model_dataframe, fpath=model_outpath)
+
 
 @click.command()
 @click.option("--cachedir")
