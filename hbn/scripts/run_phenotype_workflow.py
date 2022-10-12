@@ -261,7 +261,7 @@ def run_model_pipeline_secondlevel():
 @click.option("--model-specs/--no-model-specs", default=True)
 @click.option("--run-models-first/--no-run-models-first", default=True)
 @click.option("--run-models-second/--no-run-models-second", default=True)
-@click.option("--run-locally/--no-run-locally", default=False)
+@click.option("cachedir")
 
 def run(
     parse_data=False,
@@ -269,7 +269,7 @@ def run(
     model_specs=False,
     run_models_first=True,
     run_models_second=True,
-    run_locally=False,
+    cachedir='/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/',
     ):
     """ Entire processing workflow for processing phenotypic data from parsing data to running predictive models
 
@@ -279,13 +279,12 @@ def run(
         model_specs (bool): default is True. Saves model specs (json files) to `/om2/user/maedbh/healthy_brain_network/models`
         run_models_first (bool): default is True. Runs main predictive modeling routine: uses `https://github.com/nipype/pydra-ml` 
         run_models_second (bool): default is True. Wrapper function applied to output from `pydra-ml` to create model summaries, which are saved in `/nese/mit/group/sig/projects/hbn/phenotype/interim/models`
-        run_locally (bool): default is False - runs on OpenMind
+        cachedir (str): full path to model cache directory. 
+            on openmind I use: '/home/maedbh/.cache/pydra-ml/cache-wf/
+            on savio I use '/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/'
+            on local I use '/Users/maedbhking/pydra-ml/cache-wf/'
     """
-    # CHANGE CACHEDIR
-    cachedir = '/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/'
-    # cachedir = '/home/maedbh/.cache/pydra-ml/cache-wf/'
-    if run_locally:
-        cachedir = '/Users/maedbhking/pydra-ml/cache-wf/'  
+    # make cachedir if it doesn't exist
     io.make_dirs(cachedir)
 
     # FIRST STEP
