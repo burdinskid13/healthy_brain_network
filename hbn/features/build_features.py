@@ -33,9 +33,9 @@ def get_data(
     """
 
     # check input args - `domains` and `measures` must be list or None
-    if (isinstance(domains, str)) and (domains != 'all'):
+    if (isinstance(domains, str)) and ('all' in domains):
         domains = [domains]
-    if (isinstance(measures, str)) and (measures != 'all'):
+    if (isinstance(measures, str)) and ('all' in measures):
         measures = [measures]
 
     # get directory
@@ -46,7 +46,7 @@ def get_data(
     _, identifiers = make_dataset.get_clinical_diagnosis(demographics=False, target=target)
 
     # get domains
-    if domains == 'all':
+    if 'all' in domains:
         domain_dir = glob.glob(os.path.join(fdir, '*'))
     else:
         domain_dir = [os.path.join(fdir, '_'.join(re.split(r'_|,|/| ', d))) for d in domains]
@@ -56,7 +56,7 @@ def get_data(
     for domain in domain_dir:
 
         # get measures
-        if measures == 'all':
+        if 'all' in measures:
             measure_dir = glob.glob(os.path.join(domain, '*'))
         else:
             measure_dir = [os.path.join(domain, '_'.join(re.split(r'_|,|/| ', m)) + '.csv') for m in measures] # join with '_'
@@ -79,7 +79,9 @@ def get_data(
                 super_logger.info(Path(measure).name)
 
     # add clinical + demographic info as `target`
-    if 'CGAS' in target:
+    if target is None:
+        pass
+    elif 'CGAS' in target:
         df_all = make_dataset._add_CGAS_Score(dataframe=df_all)
     elif 'DX' in target:
         dx, _ = make_dataset.get_clinical_diagnosis(demographics=False, target=target)
@@ -176,9 +178,9 @@ def column_transform(
         return pipe
 
     # drop `cols_to_ignore`
-    dataframe_to_ignore = pd.DataFrame()
+    dataframe_final = pd.DataFrame()
     if cols_to_ignore is not None:
-        dataframe_dropped = dataframe.drop(cols_to_ignore, axis=1)
+        dataframe_final = dataframe.drop(cols_to_ignore, axis=1)
         dataframe_to_ignore = dataframe[cols_to_ignore]
 
     # set up numeric pipeline
@@ -197,7 +199,7 @@ def column_transform(
                 )
 
     # transform the data
-    df_transformed = preprocesser.fit_transform(dataframe_dropped)
+    df_transformed = preprocesser.fit_transform(dataframe_final)
 
     # get transformed feature names
     feature_names = get_feature_names(column_transformer=preprocesser)
@@ -206,7 +208,8 @@ def column_transform(
     df_transformed = pd.DataFrame(df_transformed, columns=feature_names)
 
     # add `col_to_ignore` back in
-    df_transformed = pd.concat([dataframe_to_ignore, df_transformed], axis=1)
+    if cols_to_ignore is not None:
+        df_transformed = pd.concat([dataframe_to_ignore, df_transformed], axis=1)
 
     return df_transformed
 

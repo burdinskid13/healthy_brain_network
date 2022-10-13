@@ -3,7 +3,6 @@ import os
 import re
 import glob
 from stat import FILE_ATTRIBUTE_INTEGRITY_STREAM
-from wsgiref.simple_server import demo_app
 import click
 from pathlib import Path
 
@@ -78,27 +77,48 @@ def make_feature_specs():
                     "preprocessing": {"numeric": [["sklearn.impute", "SimpleImputer", {"strategy": "mean"}], ["sklearn.preprocessing", "StandardScaler", {}]]},
                     "min_num_participants": 2000
                     }
-
-        # get features (X and y) - make csv file
-        df = build_features.get_data(
-                            assessment=spec_info['assessment'],
-                            domains=spec_info['domains'],
-                            measures=spec_info['measures'],
-                            target=spec_info['target'],
-                            min_num_participants=spec_info['min_num_participants']
-                            )
-
-        df_processed = build_features.preprocess(
-                            dataframe=df,   
-                            clf_info=spec_info['preprocessing'],
-                            cols_to_ignore=spec_info['target']
-                            )
+        # make feature files from spec
+        df =  make_features_from_spec(spec_info)
 
         # save json + csv to ../features/ only if there are X features (not just y target)
-        if len(df_processed.columns)>1:
+        if len(df.columns)>1:
             io.save_dict_as_JSON(fpath=spec_fpath, data_dict=spec_info)
-            df_processed.to_csv(feature_fpath, index=False)
             print(f'spec file and features saved to disk for {spec_file}')
+
+
+def make_features_from_spec(spec_info):
+    """makes features from spec file, preprocesses, and saves to `FEATURE_DIR`
+
+    Args: 
+        spec_info (dict): created in `make_feature_specs`
+    Returns:   
+        df_processed (pd dataframe)
+    """
+    import os
+    from hbn.features import build_features
+
+    # get features (X and y) - make csv file
+    df = build_features.get_data(
+                        assessment=spec_info['assessment'],
+                        domains=spec_info['domains'],
+                        measures=spec_info['measures'],
+                        target=spec_info['target'],
+                        min_num_participants=spec_info['min_num_participants']
+                        )
+
+    keyboard
+
+    df_processed = build_features.preprocess(
+                        dataframe=df,   
+                        clf_info=spec_info['preprocessing'],
+                        cols_to_ignore=spec_info['target']
+                        )
+
+    # save to disk
+    if len(df_processed.columns)>1:
+        df_processed.to_csv(os.path.join(Defaults.FEATURE_DIR, spec_info['filename']), index=False)
+    
+    return df_processed
 
 
 def make_model_specs():
@@ -167,7 +187,7 @@ def make_model_specs():
         spec_name = model + Path(fpath).name.replace('features', '').replace('-spec', '')
         io.save_dict_as_JSON(fpath=os.path.join(Defaults.BASE_DIR, "models", spec_name), data_dict=spec_info)
         print(f'save model specs to file for {spec_name}')
-
+    
 
 def run_model_pipeline_firstlevel(
     specs=None, 
