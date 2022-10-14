@@ -106,8 +106,6 @@ def make_features_from_spec(spec_info):
                         min_num_participants=spec_info['min_num_participants']
                         )
 
-    keyboard
-
     df_processed = build_features.preprocess(
                         dataframe=df,   
                         clf_info=spec_info['preprocessing'],

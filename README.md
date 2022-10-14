@@ -8,11 +8,14 @@ First Steps
 This project uses [`pipenv`](https://github.com/pypa/pipenv) for virtual environment and python package management
 > see [OpenMind Setup](https://maedbhk.github.io/MIT-Projects/openmind/setup.html) for more detailed instructions on setting up virtual environments on OpenMind
 
+To run jupyter notebook using modules installed in virtual env, run the following command in top-level directory of repo
+> `ipython kernel install --name "hbn" --user`
+
 Predictive Modeling
 ------------
-* The following command runs the Python predictive modeling script: `hbn/scripts/run_phenotype_workflow.py`
-    * See `hpc_scripts/run_phenotype_workflow_openmind.sh` for running an example slurm script on OpenMind
-    * Note that `run_phenotype_workflow.run_model_pipeline_secondlevel` is still under construction. Set input arg to `--no-run-models-second` for now
+* The following command runs the Python predictive modeling script: **hbn/scripts/run_phenotype_workflow.py**
+    * See **hpc_scripts/run_phenotype_workflow_openmind.sh** for running an example slurm script on OpenMind
+    * Note that **run_phenotype_workflow.run_model_pipeline_secondlevel** is still under construction. Set input arg to **--no-run-models-second** for now
 
 Project Organization
 ------------
@@ -24,15 +27,15 @@ Project Organization
     │   ├── processed      <- The final, canonical data sets for modeling.
     │   └── raw            <- The original, immutable data dump.
 
-* `raw` data are stored on OpenMind at `/nese/mit/group/sig/projects/hbn/phenotype`
-   * `processed` data will eventually be stored here as well
-* `interim` data (models etc.) should be stored in your own directory (e.g., `om2/user/<username>/phenotype/`)
-* data directories are stored in `constants.py`: 
-    * `DATA_DIR` is the top-level directory where `phenotype` folders are stored
-    * copy `/nese/mit/group/sig/projects/hbn/phenotype/raw` to your own directory (e.g., `om2/user/<username>`) using symlink (or `cp -R`) and set this new data location as your `DATA_DIR`. 
+* **raw** data are stored on OpenMind at **/nese/mit/group/sig/projects/hbn/phenotype**
+   * **processed** data will eventually be stored here as well
+* **interim** data (models etc.) should be stored in your own directory (e.g., **om2/user/"username"/phenotype/**)
+* data directories are stored in **constants.py**: 
+    * **DATA_DIR** is the top-level directory where **phenotype** folders are stored
+    * copy **/nese/mit/group/sig/projects/hbn/phenotype/raw** to your own directory (e.g., **om2/user/"username"**) using symlink (or `cp -R`) and set this new data location as your **DATA_DIR**. 
 
 ### Code
-> Clone the repo to your own path on OpenMind at `/om2/user/<username>/` (example: `/om2/user/<username>/healthy_brain_network`)
+> Clone the repo to your own path on OpenMind at **/om2/user/"username"/** (example: **/om2/user/<username>/healthy_brain_network**)
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
