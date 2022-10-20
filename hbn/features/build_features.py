@@ -72,10 +72,10 @@ def get_data(
                     df_all = df_all.merge(df, on='Identifiers')
                     print(f'reading {measure} into dataframe')
                 else:
-                    logger = setup_logger('first_logger', 'too-few-features.log')
+                    logger = _setup_logger('first_logger', 'too-few-features.log')
                     logger.info(Path(measure).name)
             else:
-                super_logger = setup_logger('second_logger', 'features-nonexistent.log')
+                super_logger = _setup_logger('second_logger', 'features-nonexistent.log')
                 super_logger.info(Path(measure).name)
 
     # add clinical + demographic info as `target`
@@ -99,6 +99,7 @@ def get_data(
 
     return df_all
 
+
 def preprocess(
         dataframe,
         cols_to_drop=['Identifiers', 'EID', 'Comment_ID', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'],
@@ -109,7 +110,7 @@ def preprocess(
     """Preprocess the features (data cleaning, scaling, imputation, standarization, one-hot encoding)
 
     Args:
-        dataframe (pd dataframe): pandas dataframe to preprocess, should include X features and y target var
+        dataframe (pd dataframe): pandas dataframe to preprocess, should include X features and y target var, output from `get_data`
         cols_to_drop (list of str): list of columns to drop from dataframe
         clf_info (dict of lists of scikit-learn classifiers): see `hbn/features/features-example.json` for example of structure
         cols_to_ignore (list of str): columns to ignore in preprocessing
@@ -134,6 +135,125 @@ def preprocess(
 
     return dataframe
 
+
+def make_features(spec_file, save_dir=Defaults.FEATURE_DIR):
+    """makes features from spec file, preprocesses, and saves to `save_dir`
+
+    Args: 
+        spec_file (str): full path to spec file
+        save_dir (str): save features csv to path. default is `Defaults.FEATURE_DIR`
+    Returns:   
+        df_processed (pd dataframe) 
+    """
+    import os
+    from hbn import io
+
+    spec_info = io.read_json(spec_file)
+
+    # get features (X and y) - make csv file
+    df = get_data(
+                assessment=spec_info['assessment'],
+                domains=spec_info['domains'],
+                measures=spec_info['measures'],
+                target=spec_info['target'],
+                min_num_participants=spec_info['min_num_participants']
+                )
+
+    df_processed = preprocess(
+                    dataframe=df,   
+                    clf_info=spec_info['preprocessing'],
+                    cols_to_ignore=spec_info['target']
+                    )
+
+    # save to disk
+    if len(df_processed.columns)>1:
+        df_processed.to_csv(os.path.join(save_dir, spec_info['filename']), index=False)
+    else:
+        # remove spec file (because there won't be a corresponding feature csv)
+        os.remove(spec_file)
+    
+    return df_processed
+
+
+def _get_feature_combinations(master_spec):
+    """gets combinations of assessment*domain*measure to make feature files from `master_spec`
+
+    Args:
+        master_spec (str): full path to master spec file. saved in `FEATURE_DIR`
+    """
+    from hbn import io
+
+    master_spec = io.read_json(master_spec)
+    spec_info = []
+    for assess in master_spec['assessments']:
+        domains = get_domains(assess)[assess]
+        for (target_type, target) in zip(master_spec['target_type'], master_spec['targets']):
+            for domain in domains:
+                measures = get_measures(assess, domain)[domain]
+                for measure in measures:
+                    spec_info.append({'assessment': assess,
+                                'domains': domain,
+                                'measures': measure, 
+                                'target': target,
+                                'target_type': target_type
+                                })
+    return spec_info
+
+
+def _make_filename(data):
+    """make filename for feature spec
+
+    Args: 
+        data (dict):
+    Returns:
+        spec_file (str): spec filename
+    """
+    # define spec filename
+    vals = []
+    for val in ['features', 'assessment', 'domains', 'measures', 'target']:
+        if val in data.keys():
+            vals.append('_'.join(re.split(r'_|,|/| ', data[val])))
+        else:
+            vals.append(val)
+    spec_file = '-'.join(vals)
+    return spec_file
+
+
+def make_specs(master_spec, save_dir=Defaults.FEATURE_DIR):
+    """make feature sets (json spec files + feature csv files)
+
+    Args: 
+        master_spec (str): full path to master spec file. saved in `save_dir`
+        save_dir (str): save to path. default is `Defaults.FEATURE_DIR`
+    Returns:
+        saves feature spec files (.json) to `FEATURE_DIR`
+    """
+    from hbn import io
+
+    feature_combinations = _get_feature_combinations(master_spec)
+    master_spec_info = io.read_json(feature_combinations)
+    
+    for data in feature_combinations:
+        
+        spec_filename = _make_filename(data)
+
+        # define spec file
+        spec_info = {"filename": spec_filename + '.csv',
+                    "assessment": data['assessment'],
+                    "domains": data['domains'],
+                    "measures": data['measures'],
+                    "target": data['target'],
+                    "target_type": data['target_type'],
+                    "preprocessing": master_spec_info['preprocessing'], 
+                    "min_num_participants": master_spec_info['min_num_participants']
+                    }
+
+        # save json to `FEATURE_DIR`
+        spec_fpath = os.path.join(save_dir, spec_filename + '-spec.json')
+        io.save_dict_as_JSON(fpath=spec_fpath, data_dict=spec_info)
+        print(f'spec file and features saved to disk for {spec_filename}')
+
+
 def column_transform(
     dataframe,
     clf_info,
@@ -142,7 +262,7 @@ def column_transform(
     """Column Transformation on `dataframe` using classifier information passed in by `clf_info`, `cols_to_ignore` in dataframe are ignored
 
     Args: 
-        dataframe (pd dataframe): pandas dataframe, `cols_to_ignore` should be in `dataframe`
+        dataframe (pd dataframe): pandas dataframe, `cols_to_ignore` should be in `dataframe`. output from `get_data`
         clf_info (dict of classifier): example is {"numeric": [["sklearn.impute", "SimpleImputer", {"strategy": "mean"}], ["sklearn.preprocessing", "StandardScaler", {}]]}
         cols_to_ignore (list of str or None): default is None.
     """
@@ -213,6 +333,7 @@ def column_transform(
 
     return df_transformed
 
+
 def get_feature_names(column_transformer):
     """Get feature names from all transformers.
     Returns
@@ -280,6 +401,7 @@ def get_feature_names(column_transformer):
     
     return feature_names
 
+
 def get_domains(assessment='Child Measures'):
     """get domains for `assessment`
 
@@ -305,6 +427,7 @@ def get_domains(assessment='Child Measures'):
         domains = info['Measure'].unique()
 
     return {assessment: domains}
+
 
 def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
     """get measures for `assessment` and `domain`. See `Assessment_List_2019.xlsx` for `assessment` and `domain`
@@ -334,7 +457,8 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
 
     return {domain: measures}
 
-def setup_logger(name, log_file, level=logging.INFO):
+
+def _setup_logger(name, log_file, level=logging.INFO):
     """To setup as many loggers as you want"""
 
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')

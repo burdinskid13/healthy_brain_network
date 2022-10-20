@@ -78,62 +78,66 @@ def get_clinical_diagnosis(
     
     return dx, dx['Identifiers']
 
+
 def parse_phenotypic_data(
-    assessment='Child Measures', 
+    assessments=['Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'], 
     ):
     """parse phenotype assessments
 
     Args: 
-        assessment (str): options: 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
+        assessments (list of str): options: ['Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures']
     Returns: 
         dataframe (pd dataframe): `assessment` parsed and saved to disk
     """
-    Abbreviation = 'Abbreviation(s) COINS'
-    if assessment=="Teacher Measures":
-        Abbreviation='Abbreviation'
+    # loop over assessments
+    for assessment in assessments:
+        Abbreviation = 'Abbreviation(s) COINS'
+        if assessment=="Teacher Measures":
+            Abbreviation='Abbreviation'
 
-    # set up directory
-    assessment_dir = os.path.join(Defaults.PHENO_DIR, '_'.join(assessment.split()))
-    if not os.path.isdir(assessment_dir):
-        os.makedirs(assessment_dir)
+        # set up directory
+        assessment_dir = os.path.join(Defaults.PHENO_DIR, '_'.join(assessment.split()))
+        if not os.path.isdir(assessment_dir):
+            os.makedirs(assessment_dir)
 
-    # load in master dataframe
-    df = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'data-2022-08-24T16_37_18.263Z.csv'));
-    df = df.replace('.', np.float("NaN")) # replace '.' with NaN (easier to drop these rows)
-    df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|')
+        # load in master dataframe
+        df = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'data-2022-08-24T16_37_18.263Z.csv'));
+        df = df.replace('.', np.float("NaN")) # replace '.' with NaN (easier to drop these rows)
+        df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|')
 
-    # load excel containing descriptions of phenotypic assessment
-    info, domain = assessment_list(assessment=assessment)
+        # load excel containing descriptions of phenotypic assessment
+        info, domain = assessment_list(assessment=assessment)
 
-    # parse columns
-    info['abbrev_parsed'] = info[Abbreviation].str.split(r'_|,')
-    info['measure_parsed'] = info['Measure'].str.split(r'_|,|/| ')
-    if domain:
-        info['domain_parsed'] = info['Domain'].str.split(r'_|,|/| ')
-    
-    # loop over rows
-    for row in info.index:
-        abbrev = info.iloc[row]['abbrev_parsed'][0] 
-        
-        # create separately outdir if `Domain` is present
-        out_dir = assessment_dir
+        # parse columns
+        info['abbrev_parsed'] = info[Abbreviation].str.split(r'_|,')
+        info['measure_parsed'] = info['Measure'].str.split(r'_|,|/| ')
         if domain:
-            domain_name = info.iloc[row]['domain_parsed']
-            while("" in domain_name) :
-                domain_name.remove("") 
-            out_dir = os.path.join(assessment_dir, '_'.join(domain_name))
-            if not os.path.isdir(out_dir):
-                os.makedirs(out_dir)
+            info['domain_parsed'] = info['Domain'].str.split(r'_|,|/| ')
+        
+        # loop over rows
+        for row in info.index:
+            abbrev = info.iloc[row]['abbrev_parsed'][0] 
+            
+            # create separately outdir if `Domain` is present
+            out_dir = assessment_dir
+            if domain:
+                domain_name = info.iloc[row]['domain_parsed']
+                while("" in domain_name) :
+                    domain_name.remove("") 
+                out_dir = os.path.join(assessment_dir, '_'.join(domain_name))
+                if not os.path.isdir(out_dir):
+                    os.makedirs(out_dir)
 
-        # subset the dataframe based on `Abbreviation`
-        df_subset = df.filter(like=abbrev)
-        df_subset = pd.concat([df['Identifiers'], df_subset], axis=1).set_index('Identifiers') # add identifiers
+            # subset the dataframe based on `Abbreviation`
+            df_subset = df.filter(like=abbrev)
+            df_subset = pd.concat([df['Identifiers'], df_subset], axis=1).set_index('Identifiers') # add identifiers
 
-        # only save out datasets that aren't empty
-        if not df_subset.empty:
-            df_subset = df_subset.dropna(how='all').reset_index() # drop rows where all values are missing
-            df_subset.to_csv(os.path.join(out_dir, '_'.join(info.iloc[row]['measure_parsed'])) + '.csv', index=None)
-            print(f'saving to dir {out_dir}')
+            # only save out datasets that aren't empty
+            if not df_subset.empty:
+                df_subset = df_subset.dropna(how='all').reset_index() # drop rows where all values are missing
+                df_subset.to_csv(os.path.join(out_dir, '_'.join(info.iloc[row]['measure_parsed'])) + '.csv', index=None)
+                print(f'saving to dir {out_dir}')
+
 
 def assessment_list(assessment, save=True):
     """correct assessment list, update `domain` for each `measure`
@@ -169,6 +173,7 @@ def assessment_list(assessment, save=True):
 
     return info, domain
 
+
 def _add_demographics(dataframe):
     """add demographics to existing dataframe, merging on participant id `Identifiers`
 
@@ -186,6 +191,7 @@ def _add_demographics(dataframe):
 
     return df_merged
 
+
 def _add_CGAS_Score(dataframe):
     """add CGAS_Score to existing dataframe, merging on participant id `Identifiers`
 
@@ -201,6 +207,7 @@ def _add_CGAS_Score(dataframe):
     df_merged = df_score[['Identifiers', 'CGAS_Score']].merge(dataframe, on='Identifiers')
 
     return df_merged
+
 
 def _dx_grouping(x):
     """group diagnoses into broader set of domains

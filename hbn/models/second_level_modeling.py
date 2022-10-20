@@ -213,3 +213,17 @@ def _sum_feature_weights(feature_splits, feature_names):
     df['feature_names_sum'] = np.array(feature_names)[sort_idx[::-1]]
 
     return df
+
+
+def _save_to_existing_file(dataframe, fpath):
+    import pandas as pd
+
+    df = pd.DataFrame()
+    if os.path.exists(fpath):
+        try:
+            df = pd.read_csv(fpath)
+        except:
+            pass
+    df_out = pd.concat([df, dataframe])
+    df_out.to_csv(fpath, index=False)
+
