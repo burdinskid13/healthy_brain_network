@@ -13,18 +13,23 @@ To run jupyter notebook using modules installed in virtual env, run the followin
 
 Data Exploration
 ------------
-* To explore clinical diagnoses, check out **notebooks/clinical_dx.ipynb**
+* To explore and visualize clinical diagnoses, check out **notebooks/clinical_dx.ipynb**
     * if you're having difficulty opening notebooks on OpenMind, then you can always explore the data yourself by loading dataframe and using seaborn or plotly to do some visualizations
     ```
     from hbn.data import make_dataset
     
     df, _ = make_dataset.get_clinical_diagnosis(demographics=True, target=None)
     ```
-* To explore output of predictive modeling, check out **notebooks/phenotype_models.ipynb.ipynb**
+* To visualize output of predictive modeling, check out **notebooks/phenotype_models.ipynb.ipynb**
 
 Features
 ------------
-* features (including X variables and y target variable) are created from a **spec file** using the function **hbn.features.build_features.make_features**
+* features (including X variables and y target variable) are created from a **spec file** using the following command:
+    ```
+    from hbn.features import build_features 
+    
+    build_features.make_features(spec_file)
+    ```
     * for an example of a feature spec file (.json) and features file (.csv), see example files in **hbn/tests/data** with a more detailed description in **README**
 
 Predictive Modeling
