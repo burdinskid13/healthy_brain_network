@@ -27,4 +27,7 @@ source $(pipenv --venv)/bin/activate # activate virtual environment
 cd /om2/user/maedbh/healthy_brain_network/hbn/scripts
 
 # run workflow
-python3 run_phenotype_workflow.py --feature-specs --model-specs --run-models-first --run-models-second
+# python3 run_phenotype_workflow.py --feature-specs --model-specs --run-models-first --run-models-second
+
+# test workflow
+python3 test_workflow.py --spec_file=classifier-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize.json --cachedir=/home/maedbh/.cache/pydra-ml/cache-wf/

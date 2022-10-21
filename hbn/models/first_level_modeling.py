@@ -76,13 +76,15 @@ def make_specs():
 def run_pipeline(
     spec_file, 
     features,
-    cachedir='/Users/maedbhking/pydra-ml/cache-wf/'):
+    cachedir='/Users/maedbhking/pydra-ml/cache-wf/',
+    model_dir=''):
     """ run predictive models using pydra-ml. must provide `spec_file` json and `filename` in `spec_file` must be a csv of features saved in ../features/
 
     Args:
         spec_file (str): full path to model spec file
         features (str or pd dataframe): fullpath to features file or dataframe containing features
         cachedir (str): default is '/Users/maedbhking/pydra-ml/cache-wf/'
+        model_dir (str): full path to model output directory
     Returns: 
         saves (pickled) model to ../data/interim/
     """
@@ -100,8 +102,8 @@ def run_pipeline(
 
     # get features
     if isinstance(features, str):
-        csv_file = os.path.join(Defaults.BASE_DIR, "features", spec_info['filename'])
-        
+        csv_file = os.path.join(features)
+
     dataframe = pd.read_csv(csv_file)
     spec_info['filename'] = csv_file # full path to csv file
 
@@ -114,4 +116,4 @@ def run_pipeline(
     # move model output to new directory + add model spec file
     out_dir = glob.glob(os.path.join(os.getcwd(), '*out-localspec*'))
     shutil.copy(spec_file, out_dir[0])
-    shutil.move(out_dir[0], Defaults.MODEL_DIR)
+    shutil.move(out_dir[0], model_dir)
