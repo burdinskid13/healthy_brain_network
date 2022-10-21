@@ -1,7 +1,7 @@
 
 
 def make_specs():
-    """make model specs (json spec files)
+    """make model specs (json spec files) from the
     """
     import os
     import glob
@@ -10,8 +10,7 @@ def make_specs():
     from pathlib import Path
 
     # grab feature specs and make model specs
-    feature_dir = os.path.join(Defaults.BASE_DIR, "features")
-    fpaths = glob.glob(os.path.join(feature_dir, '*.json'))
+    fpaths = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*.json'))
 
     # hardcode classifiers
     clfs = {'categorical': [
@@ -69,7 +68,7 @@ def make_specs():
         
         # write out model spec to disk ../models/
         spec_name = model + Path(fpath).name.replace('features', '').replace('-spec', '')
-        io.save_dict_as_JSON(fpath=os.path.join(Defaults.BASE_DIR, "models", spec_name), data_dict=spec_info)
+        io.save_dict_as_JSON(fpath=os.path.join(Defaults.MODEL_SPEC_DIR, spec_name), data_dict=spec_info)
         print(f'save model specs to file for {spec_name}')
 
 

@@ -11,11 +11,29 @@ This project uses [`pipenv`](https://github.com/pypa/pipenv) for virtual environ
 To run jupyter notebook using modules installed in virtual env, run the following command in top-level directory of repo
 > `ipython kernel install --name "hbn" --user`
 
+Data Exploration
+------------
+* To explore clinical diagnoses, check out **notebooks/clinical_dx.ipynb**
+    * if you're having difficulty opening notebooks on OpenMind, then you can always explore the data yourself by loading dataframe and using seaborn or plotly to do some visualizations
+    ```
+    from hbn.data import make_dataset
+    
+    df, _ = make_dataset.get_clinical_diagnosis(demographics=True, target=None)
+    ```
+* To explore output of predictive modeling, check out **notebooks/phenotype_models.ipynb.ipynb**
+
+Features
+------------
+* features (including X variables and y target variable) are created from a **spec file** using the function **hbn.features.build_features.make_features**
+    * for an example of a feature spec file (.json) and features file (.csv), see example files in **hbn/tests/data** with a more detailed description in **README**
+
 Predictive Modeling
 ------------
-* The following command runs the Python predictive modeling script: **hbn/scripts/run_phenotype_workflow.py**
-    * See **hpc_scripts/run_phenotype_workflow_openmind.sh** for running an example slurm script on OpenMind
-    * Note that **run_phenotype_workflow.run_model_pipeline_secondlevel** is still under construction. Set input arg to **--no-run-models-second** for now
+* Model spec files (.json) are created using the function **hbn.models.first_level_modeling.make_specs**
+    * for an example of a model spec file (.json), see example file in **hbn/tests/data** with a more detailed description in **README**
+* To run a predictive modeling script on OpenMind: 
+    * 1) `cd hpc_scripts` 2) `vim run_phenotype_workflow_openmind.sh` and change the **cachedir** input to point to your cache directory,  and run the bash script: 3) `sbatch run_phenotype_workflow_openmind.sh`
+    * The bash script executes the Python script **test_workflow.py**
 
 Project Organization
 ------------
@@ -23,19 +41,20 @@ Project Organization
 ### Data
 
     ├── phenotype
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
+    │   ├── interim        <- Intermediate data that has been transformed (model outputs are stored here)
+    │   ├── processed      <- The final, canonical data sets for modeling
+    │   └── raw            <- The original, immutable data dump
 
-* **raw** data are stored on OpenMind at **/nese/mit/group/sig/projects/hbn/phenotype**
-   * **processed** data will eventually be stored here as well
-* **interim** data (models etc.) should be stored in your own directory (e.g., **om2/user/"username"/phenotype/**)
-* data directories are stored in **constants.py**: 
-    * **DATA_DIR** is the top-level directory where **phenotype** folders are stored
-    * copy **/nese/mit/group/sig/projects/hbn/phenotype/raw** to your own directory (e.g., **om2/user/"username"**) using symlink (or `cp -R`) and set this new data location as your **DATA_DIR**. 
+* **data** are stored on OpenMind at **/nese/mit/group/sig/projects/hbn/phenotype**
 
 ### Code
-> Clone the repo to your own path on OpenMind at **/om2/user/"username"/** (example: **/om2/user/<username>/healthy_brain_network**)
+> Clone the repo to your own path on OpenMind at **/om2/user/"username"/** (example: **/om2/user/"username"/healthy_brain_network**)
+
+* PATHS are stored in **constants.py**: 
+    * **DATA_DIR**: top-level directory where **phenotype** data folders are stored 
+    * **FEATURE_DIR**: where feature spec files (.json) and csv files are stored
+    * **MODEL_SPEC_DIR**: where model specs (.json) are stored
+    * **hpc_scripts**: where bash scripts are stored (running on OpenMind)
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
@@ -43,7 +62,7 @@ Project Organization
     │
     ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
     │
-    ├── models             <- Model Spec files
+    ├── model_specs        <- Model Spec files
     │
     ├── features           <- Feature spec files and csv files containing features (X) and target (y)
     │
@@ -64,6 +83,8 @@ Project Organization
     ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
     ├── hbn                <- Source code for use in this project.
     │   ├── __init__.py    <- Makes src a Python module
+    |   |
+    |   ├── constants.py      <- Directories are set here
     │   │
     │   ├── data           <- Scripts to download or generate data
     │   │   └── make_dataset.py
