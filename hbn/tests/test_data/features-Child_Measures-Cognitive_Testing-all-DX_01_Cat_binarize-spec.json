@@ -1,0 +1,25 @@
+{
+    "filename": "features-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize.csv",
+    "assessment": "Child Measures",
+    "domains": "Cognitive Testing",
+    "measures": "all",
+    "target": "DX_01_Cat_binarize",
+    "target_type": "categorical",
+    "preprocessing": {
+        "numeric": [
+            [
+                "sklearn.impute",
+                "SimpleImputer",
+                {
+                    "strategy": "mean"
+                }
+            ],
+            [
+                "sklearn.preprocessing",
+                "StandardScaler",
+                {}
+            ]
+        ]
+    },
+    "min_num_participants": 4000
+}
