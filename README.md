@@ -66,16 +66,17 @@ Project Organization
     │   ├── processed      <- The final, canonical data sets for modeling
     │   └── raw            <- The original, immutable data dump
 
-* **data** are stored on OpenMind at **/nese/mit/group/sig/projects/hbn/phenotype**
+* **phenotype** folder is stored on OpenMind at **/nese/mit/group/sig/projects/hbn/**
 
 ### Directories
 > PATHS are stored in **constants.py**: 
 
     ├── constants.py
-    │   ├── DATA_DIR         <- top-level directory where **phenotype** data folders are stored 
+    │   ├── DATA_DIR         <- top-level directory where **phenotype** folder is stored 
     │   ├── FEATURE_DIR      <- where feature spec files (.json) and csv files are stored
     │   └── MODEL_SPEC_DIR   <- where model specs (.json) are stored
     │   └── BASH_SCRIPTS     <- where bash scripts are stored (running on OpenMind)
+    │   └── TEST_DIR         <- where test scripts are stored
 
 ### Code 
 
