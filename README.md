@@ -8,11 +8,15 @@ First Steps
 This project uses [**pipenv**](https://github.com/pypa/pipenv) for virtual environment and python package management
 > see [OpenMind Setup](https://maedbhk.github.io/MIT-Projects/openmind/setup.html) for more detailed instructions on setting up virtual environments on OpenMind
 
-Clone the repo to your own path on OpenMind at **/om2/user/"username"**
-> `git clone git@github.com:maedbhk/healthy_brain_network.git`
+> Clone the repo to your own path on OpenMind at **/om2/user/"username"**
+```
+    git clone git@github.com:maedbhk/healthy_brain_network.git`
+```
 
-To run jupyter notebook using modules installed in virtual env, run the following command in top-level directory of repo
-> `ipython kernel install --name "hbn" --user`
+> To run jupyter notebook using modules installed in virtual env, run the following command in top-level directory of repo
+```
+ipython kernel install --name "hbn" --user
+```
 
 Data Exploration
 ------------
