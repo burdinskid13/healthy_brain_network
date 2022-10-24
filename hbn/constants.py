@@ -8,6 +8,7 @@ class Defaults:
     FIG_DIR = BASE_DIR / "reports" / "figures"
     FEATURE_DIR = BASE_DIR / 'features'
     MODEL_SPEC_DIR = BASE_DIR / 'model_specs'
+    BASH_SCRIPTS = BASE_DIR / 'hpc_scripts'
     TEST_DIR = BASE_DIR / "hbn" / 'tests'
 
     # set data base directories

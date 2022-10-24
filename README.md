@@ -71,10 +71,11 @@ Project Organization
 ### Directories
 
 * PATHS are stored in **constants.py**: 
-    * **DATA_DIR**: top-level directory where **phenotype** data folders are stored 
-    * **FEATURE_DIR**: where feature spec files (.json) and csv files are stored
-    * **MODEL_SPEC_DIR**: where model specs (.json) are stored
-    * **hpc_scripts**: where bash scripts are stored (running on OpenMind)
+    ├── constants.py
+    │   ├── DATA_DIR         <- top-level directory where **phenotype** data folders are stored 
+    │   ├── FEATURE_DIR      <- where feature spec files (.json) and csv files are stored
+    │   └── MODEL_SPEC_DIR   <- where model specs (.json) are stored
+    │   └── BASH_SCRIPTS     <- where bash scripts are stored (running on OpenMind)
 
 ### Code 
 
