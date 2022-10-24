@@ -69,8 +69,8 @@ Project Organization
 * **data** are stored on OpenMind at **/nese/mit/group/sig/projects/hbn/phenotype**
 
 ### Directories
+> PATHS are stored in **constants.py**: 
 
-* PATHS are stored in **constants.py**: 
     ├── constants.py
     │   ├── DATA_DIR         <- top-level directory where **phenotype** data folders are stored 
     │   ├── FEATURE_DIR      <- where feature spec files (.json) and csv files are stored
