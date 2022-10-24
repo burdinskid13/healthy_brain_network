@@ -10,7 +10,7 @@ This project uses [**pipenv**](https://github.com/pypa/pipenv) for virtual envir
 
 > Clone the repo to your own path on OpenMind at **/om2/user/"username"**
 ```
-    git clone git@github.com:maedbhk/healthy_brain_network.git`
+git clone git@github.com:maedbhk/healthy_brain_network.git`
 ```
 
 > To run jupyter notebook using modules installed in virtual env, run the following command in top-level directory of repo
