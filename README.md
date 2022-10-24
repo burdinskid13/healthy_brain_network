@@ -73,10 +73,11 @@ Project Organization
 
     ├── constants.py
     │   ├── DATA_DIR         <- top-level directory where **phenotype** folder is stored 
-    │   ├── FEATURE_DIR      <- where feature spec files (.json) and csv files are stored
+    │   ├── FEATURE_DIR      <- where feature spec (.json) and features (.csv) files are stored
     │   └── MODEL_SPEC_DIR   <- where model specs (.json) are stored
-    │   └── BASH_SCRIPTS     <- where bash scripts are stored (running on OpenMind)
-    │   └── TEST_DIR         <- where test scripts are stored
+    │   └── MODEL_DIR        <- where model outputs (*pkl) are stored
+    │   └── BASH_SCRIPTS     <- where bash scripts (.sh) are stored
+    │   └── TEST_DIR         <- where test scripts (.py) are stored
 
 ### Code 
 
