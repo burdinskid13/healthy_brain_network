@@ -1,4 +1,3 @@
-import os
 import click
 
 @click.command()
@@ -28,6 +27,7 @@ def run(
     from hbn.models import second_level_modeling as second_level
     from hbn.constants import Defaults
     from hbn import io
+    import os
 
     # load model spec file and get features
     model_spec_dir = os.path.join(Defaults.TEST_DIR, spec_file)
