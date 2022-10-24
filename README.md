@@ -65,12 +65,13 @@ Project Organization
 
 ### Data
 
-    ├── phenotype
+    ├── hbn_data
     │   ├── interim        <- Intermediate data that has been transformed (model outputs are stored here)
     │   ├── processed      <- The final, canonical data sets for modeling
     │   └── raw            <- The original, immutable data dump
 
-* **phenotype** folder is stored on OpenMind at **/nese/mit/group/sig/projects/hbn/**
+* **hbn_data** folder is stored on OpenMind at **/om2/user/maedbh/hbn_data/**
+> Note: create symlinks from this folder (or copy over **hbn_data** folder) to your own directory so that you can read/write new files to your own path
 
 ### Directories
 > PATHS are stored in **constants.py**: 
