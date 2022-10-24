@@ -20,25 +20,38 @@ Data Exploration
     
     df, _ = make_dataset.get_clinical_diagnosis(demographics=True, target=None)
     ```
-* To visualize output of predictive modeling, check out **notebooks/phenotype_models.ipynb.ipynb**
+* To visualize output of predictive modeling, check out **notebooks/phenotype_models.ipynb**
 
 Features
 ------------
 * features (including X variables and y target variable) are created from a **spec file** using the following command:
     ```
+    import os
     from hbn.features import build_features 
-    
-    build_features.make_features(spec_file)
+
+    # example feature_spec
+    feature_spec = os.path.join(Defaults.TEST_DIR, 'features-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize-spec.json')
+    build_features.make_features(feature_spec, out_dir=Defaults.FEATURE_DIR)
     ```
-    * for an example of a feature spec file (.json) and features file (.csv), see example files in **hbn/tests/data** with a more detailed description in **README**
+* for an example of a feature spec file (.json) and features file (.csv), see example files in **hbn/tests/data** with a more detailed description in **hbn/tests/README**
 
 Predictive Modeling
 ------------
-* Model spec files (.json) are created using the function **hbn.models.first_level_modeling.make_specs**
-    * for an example of a model spec file (.json), see example file in **hbn/tests/data** with a more detailed description in **README**
+* Model spec files (.json) are created using the following command:
+    ```
+    from hbn.models.first_level_modeling import make_specs
+    
+    # example feature_spec
+    feature_spec = os.path.join(Defaults.TEST_DIR, 'features-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize-spec.json')
+    first_level.make_specs(feature_spec, out_dir=Defaults.MODEL_SPEC_DIR)
+    
+    ``` 
+* For an example of a model spec file (.json), see example file in **hbn/tests/data** with a more detailed description in **README**
 * To run a predictive modeling script on OpenMind: 
-    * 1) `cd hpc_scripts` 2) `vim run_phenotype_workflow_openmind.sh` and change the **cachedir** input to point to your cache directory,  and run the bash script: 3) `sbatch run_phenotype_workflow_openmind.sh`
-    * The bash script executes the Python script **test_workflow.py**
+    * 1) `cd hpc_scripts` 
+    * 2) `vim run_phenotype_workflow_openmind.sh` and change the **cachedir** input to point to your cache directory 
+    * 3) Run the bash script: `sbatch run_phenotype_workflow_openmind.sh`
+* The bash script executes the Python script **test_workflow.py**
 
 Project Organization
 ------------

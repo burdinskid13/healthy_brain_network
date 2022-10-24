@@ -34,11 +34,15 @@ def run(
     features = io.read_json(model_spec_dir)['filename']
 
     # Runs main predictive modeling routine: calls `https://github.com/nipype/pydra-ml` 
-    first_level.run_pipeline(spec_file, features, cachedir=cachedir, model_dir=Defaults.MODEL_DIR)
+    first_level.run_pipeline(
+        spec_file, 
+        features=features, 
+        cachedir=cachedir, 
+        out_dir=Defaults.MODEL_DIR
+        )
 
-    # # run model pipeline (second level)
-    # second_level.get_features()
-    # second_level.get_model_summary()
+if __name__ == "__main__":
+    run()
 
 
 

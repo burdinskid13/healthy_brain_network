@@ -1,16 +1,18 @@
+from hbn.constants import Defaults
 
-
-def make_specs():
-    """make model specs (json spec files) from the
+def make_specs(
+    feature_spec, 
+    out_dir=Defaults.MODEL_SPEC_DIR
+    ):
+    """make model specs (json spec files) from the feature specs stored in `FEATURE_DIR`.
+    model specs are saved out to `out_dir`
+    Args:
+        feature_spec (str): full path to feature spec file
+        out_dir (str): full path to model spec output directory. default is `Defaults.out_dir`
     """
     import os
-    import glob
-    from hbn.constants import Defaults
     from hbn import io
     from pathlib import Path
-
-    # grab feature specs and make model specs
-    fpaths = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*.json'))
 
     # hardcode classifiers
     clfs = {'categorical': [
@@ -27,63 +29,60 @@ def make_specs():
                ["explained_variance_score", "mean_squared_error", "mean_absolute_error"]
             }
 
-    # loop over feature filenames
-    for fpath in fpaths:
+    # load from json file
+    feature_info = io.read_json(feature_spec)
+    target_type = feature_info['target_type']
 
-        # load from json file
-        feature_spec = io.read_json(fpath)
-        target_type = feature_spec['target_type']
+    # get classifier
+    clf = clfs[target_type]
 
-        # get classifier
-        clf = clfs[target_type]
+    # get metrics
+    metric = metrics[target_type]
 
-        # get metrics
-        metric = metrics[target_type]
-
-        # define spec file
-        spec_info = {
-                "filename": feature_spec['filename'], 
-                "x_indices": [],
-                "target_vars": [feature_spec['target']],
-                "group_var": None,
-                "n_splits": 50,
-                "test_size": 0.2,
-                "clf_info": clf,
-                "permute": [True, False],
-                "gen_feature_importance": True,
-                "gen_permutation_importance": True,
-                "permutation_importance_n_repeats": 5,
-                "permutation_importance_scoring": "accuracy",
-                "gen_shap": False,
-                "nsamples": "auto",
-                "l1_reg": "aic",
-                "plot_top_n_shap": 10,
-                "metrics": metric
-                }
-        
-        if target_type=='categorical':
-            model = 'classifier'
-        elif target_type=='numeric':
-            model = 'regression'
-        
-        # write out model spec to disk ../models/
-        spec_name = model + Path(fpath).name.replace('features', '').replace('-spec', '')
-        io.save_dict_as_JSON(fpath=os.path.join(Defaults.MODEL_SPEC_DIR, spec_name), data_dict=spec_info)
-        print(f'save model specs to file for {spec_name}')
+    # define spec file
+    spec_info = {
+            "filename": feature_info['filename'], 
+            "x_indices": [],
+            "target_vars": [feature_info['target']],
+            "group_var": None,
+            "n_splits": 50,
+            "test_size": 0.2,
+            "clf_info": clf,
+            "permute": [True, False],
+            "gen_feature_importance": True,
+            "gen_permutation_importance": True,
+            "permutation_importance_n_repeats": 5,
+            "permutation_importance_scoring": "accuracy",
+            "gen_shap": False,
+            "nsamples": "auto",
+            "l1_reg": "aic",
+            "plot_top_n_shap": 10,
+            "metrics": metric
+            }
+    
+    if target_type=='categorical':
+        model = 'classifier'
+    elif target_type=='numeric':
+        model = 'regression'
+    
+    # write out model spec to disk ../model_specs/
+    spec_name = model + Path(feature_spec).name.replace('features', '').replace('-spec', '')
+    io.save_dict_as_JSON(fpath=os.path.join(out_dir, spec_name), data_dict=spec_info)
+    print(f'save model specs to file for {spec_name}')
 
 
 def run_pipeline(
-    spec_file, 
+    model_spec, 
     features,
     cachedir='/Users/maedbhking/pydra-ml/cache-wf/',
-    model_dir=''):
-    """ run predictive models using pydra-ml. must provide `spec_file` json and `filename` in `spec_file` must be a csv of features saved in ../features/
+    out_dir=''):
+    """ run predictive models using pydra-ml. must provide `model_spec` json and `filename` in `model_spec` must be a csv of features saved in ../features/
 
     Args:
-        spec_file (str): full path to model spec file
+        model_spec (str): full path to model spec file
         features (str or pd dataframe): fullpath to features file or dataframe containing features
         cachedir (str): default is '/Users/maedbhking/pydra-ml/cache-wf/'
-        model_dir (str): full path to model output directory
+        out_dir (str): full path to model output directory
     Returns: 
         saves (pickled) model to ../data/interim/
     """
@@ -97,7 +96,7 @@ def run_pipeline(
     from hbn import io
 
     # load json
-    spec_info = io.read_json(spec_file)
+    spec_info = io.read_json(model_spec)
 
     # get features
     if isinstance(features, str):
@@ -108,11 +107,11 @@ def run_pipeline(
 
     spec_info['x_indices'] = range(1,len(dataframe.columns)-1)
 
-    print(f'running {spec_file}...\n')
+    print(f'running {model_spec}...\n')
     wf = gen_workflow(spec_info, cache_dir=cachedir)
     run_workflow(wf, "cf", {"n_procs": 1})
 
     # move model output to new directory + add model spec file
     out_dir = glob.glob(os.path.join(os.getcwd(), '*out-localspec*'))
-    shutil.copy(spec_file, out_dir[0])
-    shutil.move(out_dir[0], model_dir)
+    shutil.copy(model_spec, out_dir[0])
+    shutil.move(out_dir[0], out_dir)

@@ -99,20 +99,24 @@ def run(
 
     # SECOND STEP
     if feature_specs:
-        master_spec = os.path.join(Defaults.FEATURE_DIR, 'features-master_spec.json')
-        build_features.make_specs(master_spec, save_dir=Defaults.FEATURE_DIR)
-        build_features.make_features(spec_file, save_dir=Defaults.FEATURE_DIR)
+        parent_spec = os.path.join(Defaults.FEATURE_DIR, 'features-parent_spec.json')
+        feature_fpaths = build_features.make_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
+        for feature_spec in feature_fpaths:
+            build_features.make_features(feature_spec, out_dir=Defaults.FEATURE_DIR)
 
     # THIRD STEP
     if model_specs:
-        first_level.make_specs()
+        # grab feature specs and make model specs
+        fpaths = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*.json'))
+        for fpath in fpaths:
+            first_level.make_specs(feature_spec=fpath, out_dir=Defaults.MODEL_SPEC_DIR)
 
     # RUNNING MODELS (FIRST LEVEL)
     if run_models_first:
-        # grab spec files
-        specs = glob.glob(os.path.join(Defaults.BASE_DIR, "models", '*classifier*DX_01_Cat_binarize*json'))
-        for spec_file in specs:
-            first_level.run_pipeline(spec_file, cachedir=cachedir)
+        # grab model specs and run modeling routine
+        specs = glob.glob(os.path.join(Defaults.MODEL_DIR, '*classifier*DX_01_Cat_binarize*json'))
+        for model_spec in specs:
+            first_level.run_pipeline(model_spec, cachedir=cachedir, out_dir=Defaults.MODEL_DIR)
     
     # RUNNING MODELS (SECOND LEVEL)
     if run_models_second:

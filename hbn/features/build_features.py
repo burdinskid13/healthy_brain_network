@@ -136,11 +136,11 @@ def preprocess(
     return dataframe
 
 
-def make_features(spec_file, save_dir=Defaults.FEATURE_DIR):
+def make_features(feature_spec, out_dir=Defaults.FEATURE_DIR):
     """makes features from spec file, preprocesses, and saves to `save_dir`
 
     Args: 
-        spec_file (str): full path to spec file
+        feature_spec (str): full path to spec file
         save_dir (str): save features csv to path. default is `Defaults.FEATURE_DIR`
     Returns:   
         df_processed (pd dataframe) 
@@ -148,7 +148,7 @@ def make_features(spec_file, save_dir=Defaults.FEATURE_DIR):
     import os
     from hbn import io
 
-    spec_info = io.read_json(spec_file)
+    spec_info = io.read_json(feature_spec)
 
     # get features (X and y) - make csv file
     df = get_data(
@@ -167,10 +167,10 @@ def make_features(spec_file, save_dir=Defaults.FEATURE_DIR):
 
     # save to disk
     if len(df_processed.columns)>1:
-        df_processed.to_csv(os.path.join(save_dir, spec_info['filename']), index=False)
+        df_processed.to_csv(os.path.join(out_dir, spec_info['filename']), index=False)
     else:
         # remove spec file (because there won't be a corresponding feature csv)
-        os.remove(spec_file)
+        os.remove(feature_spec)
     
     return df_processed
 
@@ -219,20 +219,21 @@ def _make_filename(data):
     return spec_file
 
 
-def make_specs(master_spec, save_dir=Defaults.FEATURE_DIR):
+def make_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
     """make feature sets (json spec files + feature csv files)
 
     Args: 
-        master_spec (str): full path to master spec file. saved in `save_dir`
-        save_dir (str): save to path. default is `Defaults.FEATURE_DIR`
+        parent_spec (str): full path to master spec file. saved in `out_dir`
+        out_dir (str): save to path. default is `Defaults.FEATURE_DIR`
     Returns:
-        saves feature spec files (.json) to `FEATURE_DIR`
+        saves feature spec files (.json) to `FEATURE_DIR` and returns list of feature specs
     """
     from hbn import io
 
-    feature_combinations = _get_feature_combinations(master_spec)
-    master_spec_info = io.read_json(feature_combinations)
+    feature_combinations = _get_feature_combinations(parent_spec)
+    parent_spec_info = io.read_json(feature_combinations)
     
+    spec_files = []
     for data in feature_combinations:
         
         spec_filename = _make_filename(data)
@@ -244,14 +245,17 @@ def make_specs(master_spec, save_dir=Defaults.FEATURE_DIR):
                     "measures": data['measures'],
                     "target": data['target'],
                     "target_type": data['target_type'],
-                    "preprocessing": master_spec_info['preprocessing'], 
-                    "min_num_participants": master_spec_info['min_num_participants']
+                    "preprocessing": parent_spec_info['preprocessing'], 
+                    "min_num_participants": parent_spec_info['min_num_participants']
                     }
 
         # save json to `FEATURE_DIR`
-        spec_fpath = os.path.join(save_dir, spec_filename + '-spec.json')
+        spec_fpath = os.path.join(out_dir, spec_filename + '-spec.json')
         io.save_dict_as_JSON(fpath=spec_fpath, data_dict=spec_info)
         print(f'spec file and features saved to disk for {spec_filename}')
+        spec_files.append(spec_fpath)
+
+    return spec_files
 
 
 def column_transform(
