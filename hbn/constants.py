@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path, PosixPath
 import os
 
 class Defaults:
@@ -12,7 +12,8 @@ class Defaults:
     TEST_DIR = BASE_DIR / "hbn" / 'tests'
 
     # set data base directories
-    DATA_DIR = '/om2/user/maedbh/hbn_data/'
+    # DATA_DIR = PosixPath('/om2/user/maedbh/hbn_data')
+    DATA_DIR = BASE_DIR / 'data'
     RAW_DIR = DATA_DIR / "raw"
     INTERIM_DIR = DATA_DIR / "interim"
     PROCESSED_DIR = DATA_DIR / "processed"

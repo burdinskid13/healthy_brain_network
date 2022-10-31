@@ -1,28 +1,18 @@
 import os
+from this import d
 import numpy as np
 import pandas as pd
 
 from hbn.constants import Defaults
 
-def get_clinical_diagnosis(
-    demographics=True,
-    target='CGAS_Score',
-    ):
-    """
-    Return clinical diagnosis and participant identifiers: `Clinical_Diagnosis.csv` is parsed from master data (`phenotype.parse_data`) but is incorrect. `Clinical_Diagnosis_2022.csv`
-    was downloaded directly from LORIS and is correct, the latter is returned by this function.
-    Args: 
-        demographics (bool): default is True. adds basic demographic information to dataframe
-        target (str or None): default is 'CGAS_Score': disorder assigned to each participant. other option: 'DX_01', 'DX_01_Cat', 'DX_01_factorize'. If None, then entire clinical dataframe is returned. 
-    Returns: 
-        dx (pd dataframe), identifiers (list of str)
-    """
 
-    def binarize_diagnosis(x):
-        if 'No Diagnosis Given' in x:
-            return 0
-        else:
-            return 1
+def make_summary():
+    """
+    Save summary of dataset (clinical diagnosis + demographics) and save out participant identifiers: `Clinical_Diagnosis.csv` is parsed from master data (`phenotype.parse_data`) but is incorrect. `Clinical_Diagnosis_2022.csv`
+    was downloaded directly from LORIS and is correct, the latter is returned by this function.
+    Returns: 
+        dx (pd dataframe)
+    """
     
     # READ CLINICAL CONSENSUS
     dx_file = os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_2022.csv')
@@ -34,49 +24,23 @@ def get_clinical_diagnosis(
     dx['Identifiers'] = dx['Identifiers'].str.strip(',assessment')
 
     # new disorder category
-    # df_merged['disorder'] = df_merged['diagnosis_01'].agg(lambda x: _dx_grouping(x));
     diagnoses = [f'DX_{f:02}' for f in np.arange(1,11)]
     dx['comorbidities'] = dx[diagnoses].count(axis=1)-1
 
-    # make new `factorize` and `binarize` columns for `DX` targets
-    dx_col = False
-    if  (target is not None) and ('DX' in target):
-        if isinstance(target, (str)) and ('factorize' in target):
-            col = target.replace('_factorize', '')
-            dx_col = True
-        elif isinstance(target, (str)) and ('binarize' in target):
-            col = target.replace('_binarize', '')
-            dx_col = True
-        if dx_col:
-            dx[col] = dx[col].fillna('No Diagnosis Given')
-            dx[f'{col}_binarize'] = dx[col].apply(lambda x: binarize_diagnosis(x)) # factorize and binarize DX diagnoses
-            labels, _ = dx[col].factorize()
-            dx[f'{col}_factorize'] = labels
-
-    # optionally add CGAS score (another clinical diagnosis) or Sex
-    if target is None:
-        pass
-    elif target=='CGAS_Score':
-        df_score = _add_CGAS_Score(dx)
-        dx = df_score[['Identifiers', 'CGAS_Score']].merge(dx, on='Identifiers')
-    elif target=='Sex_binarize':
-        demographics = False
-        print(f"not returning all possible demographics, except for {target}")
-        dx = _add_demographics(dataframe=dx)
-
     # optionally add demographics
-    if demographics:
-        dx = _add_demographics(dataframe=dx)
-
-    # return dataframe containing only `Identifiers` and `<target>`
-    if target is not None:
-        dx = dx[['Identifiers', target]]
+    dx = _add_demographics(dataframe=dx)
 
     # deal with missing values and NaN
     dx = dx.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
     dx = dx.dropna(how='all', axis=0)
     
-    return dx, dx['Identifiers']
+    # save out new files to disk
+    # participants
+    dx['Identifiers'].to_csv(os.path.join(Defaults.PHENO_DIR, 'participants.csv'))
+    # updated clinical diagnosis
+    dx.to_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
+
+    return dx
 
 
 def parse_phenotypic_data(
@@ -185,14 +149,13 @@ def _add_demographics(dataframe):
     # READ BASIC DEMOGRAPHICS
     df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Demographic_Questionnaire_Measures/Demographics.csv'))
     df_demo.columns = df_demo.columns.str.replace('Basic_Demos,','')
-    df_demo['Sex_binarize'] = df_demo['Sex']
     df_demo['Sex'] = df_demo['Sex'].map({0: 'male', 1: 'female'})
-    df_merged = df_demo[['Identifiers', 'Age', 'Sex', 'Sex_binarize', 'Enroll_Year']].merge(dataframe, on='Identifiers')
+    df_merged = df_demo[['Identifiers', 'Age', 'Sex', 'Enroll_Year']].merge(dataframe, on='Identifiers') # 'Sex_binarize',
 
     return df_merged
 
 
-def _add_CGAS_Score(dataframe):
+def add_CGAS_Score(dataframe):
     """add CGAS_Score to existing dataframe, merging on participant id `Identifiers`
 
     Args: 

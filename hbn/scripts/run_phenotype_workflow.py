@@ -56,14 +56,15 @@ def run_model_pipeline_secondlevel():
 @click.command()
 @click.option("--cachedir")
 @click.option("--parse-data/--no-parse-data", default=False)
-@click.option("--feature-specs/--no-feature-specs", default=True)
-@click.option("--model-specs/--no-model-specs", default=True)
+@click.option("--feature-specs/--no-feature-specs", default=False)
+@click.option("--model-specs/--no-model-specs", default=False)
 @click.option("--run-models-first/--no-run-models-first", default=True)
-@click.option("--run-models-second/--no-run-models-second", default=True)
+@click.option("--run-models-second/--no-run-models-second", default=False)
 
 def run(
     cachedir='/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/',
     parse_data=False,
+    target_specs=False,
     feature_specs=False,
     model_specs=False,
     run_models_first=True,
@@ -83,6 +84,7 @@ def run(
             on local I use '/Users/maedbhking/pydra-ml/cache-wf/'
     """
     from hbn import io
+    import os
     import glob
     from hbn.constants import Defaults
     from hbn.data import make_dataset
@@ -96,25 +98,29 @@ def run(
     # FIRST STEP
     if parse_data:
         make_dataset.parse_phenotypic_data(assessment=['Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'])
+        make_dataset.make_summary()
 
     # SECOND STEP
     if feature_specs:
         parent_spec = os.path.join(Defaults.FEATURE_DIR, 'features-parent_spec.json')
-        feature_fpaths = build_features.make_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
+        feature_fpaths = build_features.make_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR)
         for feature_spec in feature_fpaths:
-            build_features.make_features(feature_spec, out_dir=Defaults.FEATURE_DIR)
+            build_features.make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR)
 
-    # THIRD STEP
+    # FOURTH STEP
     if model_specs:
         # grab feature specs and make model specs
         fpaths = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*.json'))
         for fpath in fpaths:
-            first_level.make_specs(feature_spec=fpath, out_dir=Defaults.MODEL_SPEC_DIR)
+            try:
+                first_level.make_specs(feature_spec=fpath, out_dir=Defaults.MODEL_SPEC_DIR)
+            except:
+                pass
 
     # RUNNING MODELS (FIRST LEVEL)
     if run_models_first:
         # grab model specs and run modeling routine
-        specs = glob.glob(os.path.join(Defaults.MODEL_DIR, '*classifier*DX_01_Cat_binarize*json'))
+        specs = glob.glob(os.path.join(Defaults.MODEL_SPEC_DIR, '*classifier*DX_01_Cat_binarize*json'))
         for model_spec in specs:
             first_level.run_pipeline(model_spec, cachedir=cachedir, out_dir=Defaults.MODEL_DIR)
     

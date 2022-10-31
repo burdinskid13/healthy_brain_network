@@ -6,7 +6,7 @@ import click
 @click.option("--cachedir")
 
 def run(
-    spec_file='classifier-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize.json',
+    spec_file='classifier-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize.json',
     cachedir='/home/maedbh/.cache/pydra-ml/cache-wf/'
     ):
     """

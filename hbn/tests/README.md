@@ -2,29 +2,59 @@ Tests
 ==============================
 
 ### Feature Specs
-* **features-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize-spec.json** is a feature spec file (.json)
-* The spec file contains all of the information needed to create the features file **features-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize.csv**
+* **features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json** is a feature spec file (.json)
+* The spec file contains all of the information needed to create the features file **features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize.csv**
 
+You will need to create the .csv file using the feature spec file.
+Run the following command
+```
+import os
+from hbn.constants import Defaults
+from hbn.features import build_features
+
+# define feature spec file
+feature_spec = os.path.join(Defaults.FEATURE_DIR, 'features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json')
+
+# make features csv
+build_features.make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR)
+
+```
+
+### Example Feature Spec
 The following parameters contain the following information:
 * filename: the exact filename (.csv) that the features will be saved to
-* assessment: should always be one of the following: "Child Measures", "Parent Measures", "Teacher Measures"
-* domains: to get all possible __domains__ for each __assessment__, run **hbn.features.build_features.get_domains**
-* measures: to get all possible __measures__ for each __domains__ (and __assessment__), run **hbn.features.build_features.get_measures**
-* target: targets should be one of the following: "DX_01_Cat_binarize", "DX_01_Cat_factorize", "Sex_binarize"
-* target_type: should always be "categorical" unless the __target__ is a continuous variable
-* preprocessing: follow example given in **features-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize-spec.json**
+* features_X:
+    * assessment: should always be one of the following: "Child Measures", "Parent Measures", "Teacher Measures"
+    * domains: to get all possible __domains__ for each __assessment__, run **hbn.features.build_features.get_domains**
+    * measures: to get all possible __measures__ for each __domains__ (and __assessment__), run **hbn.features.build_features.get_measures**
+* target_y:
+    * assessment: assessment in which `domain` and `measure` are saved
+    * domain: domain in which `measure` is saved 
+    * measure: questionnaire name (e.g., `Clinical Diagnosis Demographics`)
+    * target_column: any column from `measure`
+    * transform: should be one of the following - "binarize", "factorize", "numeric"
+    * outname: should be one of the following - "DX_01_Cat_binarize", "DX_01_Cat_factorize", "Sex_binarize"
+* preprocessing: follow example given in **Example Feature Spec** below
 * min_num_participants: should always be an integer value
 
 Example Feature Spec
 ----------------------
 ```
 {
-    "filename": "features-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize.csv",
-    "assessment": "Child Measures",
-    "domains": "Cognitive Testing",
-    "measures": "all",
-    "target": "DX_01_Cat_binarize",
-    "target_type": "categorical",
+    "filename": "features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize.csv",
+    "features_X": {
+        "assessment": "Parent Measures",
+        "domains": "Interview of Emotional and Psychological Function",
+        "measures": "Intake Interview"
+    },
+    "target_y": {
+        "assessment": "Clinical Measures",
+        "domain": null,
+        "measure": "Clinical Diagnosis Demographics",
+        "target_column": "DX_01_Cat",
+        "transform": "binarize",
+        "outname": "DX_01_Cat_binarize"
+    },
     "preprocessing": {
         "numeric": [
             [
@@ -39,17 +69,36 @@ Example Feature Spec
                 "StandardScaler",
                 {}
             ]
+        ],
+        "category": [
+            [
+                "sklearn.impute",
+                "SimpleImputer",
+                {
+                    "strategy": "most_frequent"
+                }
+            ],
+            [
+                "sklearn.preprocessing",
+                "OneHotEncoder",
+                {
+                    "handle_unknown": "ignore",
+                    "sparse": false
+                }
+            ]
         ]
     },
-    "min_num_participants": 4000
+    "min_num_participants": 2000
 }
 ```
 
 ### Model Specs
-* **classifier-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize.json** is a model spec file (.json)
+* **classifier-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize.json** is a model spec file (.json)
 * The spec file contains all of the information needed to create the model that is input to **hbn.models.first_level_modeling.run_pipeline**
 > Note: model spec files can be created programatically with ** hbn.models.first_level_modeling.make_specs**
 
+
+### Example Model Spec
 For example: the following parameters contain the following information:
 > For a more detailed description of the parameters, see https://github.com/nipype/pydra-ml
 * filename: the __exact__ filename of the .csv features file to be input to modeling pipeline
@@ -60,31 +109,21 @@ Example Model Spec
 ----------------------
 ```
 {
-    "filename": "features-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize.csv",
+    "filename": "features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize.csv",
     "x_indices": [],
     "target_vars": [
         "DX_01_Cat_binarize"
     ],
     "group_var": null,
-    "n_splits": 15,
+    "n_splits": 50,
     "test_size": 0.2,
     "clf_info": [
         [
-            [
-                "sklearn.impute",
-                "SimpleImputer"
-            ],
-            [
-                "sklearn.preprocessing",
-                "StandardScaler"
-            ],
-            [
-                "sklearn.tree",
-                "DecisionTreeClassifier",
-                {
-                    "max_depth": 5
-                }
-            ]
+            "sklearn.tree",
+            "DecisionTreeClassifier",
+            {
+                "max_depth": 5
+            }
         ]
     ],
     "permute": [
@@ -92,9 +131,9 @@ Example Model Spec
         false
     ],
     "gen_feature_importance": true,
-    "gen_permutation_importance": false,
+    "gen_permutation_importance": true,
     "permutation_importance_n_repeats": 5,
-    "permutation_importance_scoring": null,
+    "permutation_importance_scoring": "accuracy",
     "gen_shap": false,
     "nsamples": "auto",
     "l1_reg": "aic",

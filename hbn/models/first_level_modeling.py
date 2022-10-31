@@ -22,7 +22,6 @@ def make_specs(
                 ["sklearn.linear_model","RidgeCV",{"fit_intercept": False}],
                 ]
             }
-
     metrics = {'categorical': 
                 ['roc_auc_score', 'f1_score', 'precision_score', 'recall_score'],
                'numeric': 
@@ -31,7 +30,15 @@ def make_specs(
 
     # load from json file
     feature_info = io.read_json(feature_spec)
-    target_type = feature_info['target_type']
+
+    # get target type, anything other than 'numeric' is considered 'categorical' for modeling purposes
+    # 'numeric' = regression; 'categorical' = 'classifier'
+    target_type = feature_info['target_y']['transform']
+    if target_type!='numeric':
+        target_type = 'categorical'
+        model = 'classifier'
+    else:
+         model = 'regression'
 
     # get classifier
     clf = clfs[target_type]
@@ -43,7 +50,7 @@ def make_specs(
     spec_info = {
             "filename": feature_info['filename'], 
             "x_indices": [],
-            "target_vars": [feature_info['target']],
+            "target_vars": [feature_info['target_y']['outname']],
             "group_var": None,
             "n_splits": 50,
             "test_size": 0.2,
@@ -59,11 +66,6 @@ def make_specs(
             "plot_top_n_shap": 10,
             "metrics": metric
             }
-    
-    if target_type=='categorical':
-        model = 'classifier'
-    elif target_type=='numeric':
-        model = 'regression'
     
     # write out model spec to disk ../model_specs/
     spec_name = model + Path(feature_spec).name.replace('features', '').replace('-spec', '')
@@ -91,6 +93,7 @@ def run_pipeline(
     import pandas as pd
     import glob
     import shutil
+    from hbn import io
     from pydra_ml.classifier import gen_workflow, run_workflow
 
     from hbn import io
@@ -106,6 +109,9 @@ def run_pipeline(
     spec_info['filename'] = csv_file # full path to csv file
 
     spec_info['x_indices'] = range(1,len(dataframe.columns)-1)
+
+    # create cachedir if it hasn't already been created
+    io.make_dirs(cachedir)
 
     print(f'running {model_spec}...\n')
     wf = gen_workflow(spec_info, cache_dir=cachedir)

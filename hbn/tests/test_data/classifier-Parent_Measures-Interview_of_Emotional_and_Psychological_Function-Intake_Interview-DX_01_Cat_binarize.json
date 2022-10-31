@@ -1,0 +1,37 @@
+{
+    "filename": "features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize.csv",
+    "x_indices": [],
+    "target_vars": [
+        "DX_01_Cat_binarize"
+    ],
+    "group_var": null,
+    "n_splits": 50,
+    "test_size": 0.2,
+    "clf_info": [
+        [
+            "sklearn.tree",
+            "DecisionTreeClassifier",
+            {
+                "max_depth": 5
+            }
+        ]
+    ],
+    "permute": [
+        true,
+        false
+    ],
+    "gen_feature_importance": true,
+    "gen_permutation_importance": true,
+    "permutation_importance_n_repeats": 5,
+    "permutation_importance_scoring": "accuracy",
+    "gen_shap": false,
+    "nsamples": "auto",
+    "l1_reg": "aic",
+    "plot_top_n_shap": 10,
+    "metrics": [
+        "roc_auc_score",
+        "f1_score",
+        "precision_score",
+        "recall_score"
+    ]
+}
