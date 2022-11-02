@@ -73,6 +73,37 @@ def make_specs(
     print(f'save model specs to file for {spec_name}')
 
 
+def train_test_split(dataframe, out_dir=Defaults.MODEL_SPEC_DIR):
+    """get train/validate and test identifiers
+    """
+    import os
+    import pandas as pd
+    from sklearn.model_selection import train_test_split
+
+    df_train = pd.DataFrame()
+    df_test = pd.DataFrame()
+
+    for name, group in dataframe.groupby('DX_01_Cat_new'):
+
+        # split train/test participants
+        X_train, X_test, _, _ = train_test_split(group['Identifiers'], group['Identifiers'], test_size=0.2, random_state=42)
+        
+        # get train dataframe
+        X_train = group.merge(pd.DataFrame(X_train).reset_index(drop=True), on='Identifiers')
+        
+        # get test dataframe
+        X_test = group.merge(pd.DataFrame(X_test).reset_index(drop=True), on='Identifiers')
+        
+        
+        df_train = pd.concat([df_train, X_train])
+        df_test = pd.concat([df_test, X_test])
+    
+    # save out participants to file
+    cols_to_incl = ['Identifiers', 'DX_01_Cat_new', 'DX_01_Cat', 'dx_model']
+    df_train[cols_to_incl].reset_index(drop=True).to_csv(os.path.join(out_dir, 'train_participants.csv'))
+    df_test[cols_to_incl].reset_index(drop=True).to_csv(os.path.join(out_dir, 'test_participants.csv'))
+
+
 def run_pipeline(
     model_spec, 
     features,

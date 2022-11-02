@@ -27,12 +27,15 @@ def make_summary():
     diagnoses = [f'DX_{f:02}' for f in np.arange(1,11)]
     dx['comorbidities'] = dx[diagnoses].count(axis=1)-1
 
-    # optionally add demographics
+    # add demographics
     dx = _add_demographics(dataframe=dx)
 
     # deal with missing values and NaN
     dx = dx.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
     dx = dx.dropna(how='all', axis=0)
+
+    # add new categories (including categories to be modeled)
+    dx = define_new_categories(dataframe=dx)
     
     # save out new files to disk
     # participants
@@ -41,6 +44,48 @@ def make_summary():
     dx.to_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
 
     return dx
+
+
+def define_new_categories(dataframe):
+    """define new disorder categories using labels from `DX_01_Cat`
+
+    Args:
+        dataframe (pd dataframe)
+    """
+    import pandas as pd
+
+    def new_categories(x,y):
+        adhd_list = ['ADHD', 'Attention-Deficit']
+        autism_list = ['Autism']
+        learning_list = ['Specific Learning Disorder with Impairment in Reading']
+        if isinstance(x, str):
+            adhd = any(map(x.__contains__, adhd_list))
+            autism = any(map(x.__contains__, autism_list))
+            learning = any(map(x.__contains__, learning_list))
+            if adhd:
+                return 'ADHD'
+            elif autism:
+                return 'Autism Spectrum Disorder'
+            elif learning:
+                return 'Specific Learning Disorder with Impairment in Reading'
+            else:
+                return y
+
+    ## divide neurodevelopmental disorders into other categories
+    dataframe['DX_01_Cat_new'] = dataframe.apply(lambda x: new_categories(x['DX_01'], x['DX_01_Cat']), axis=1)
+
+    dx_to_model = ['Anxiety Disorders', 'Autism Spectrum Disorder', 'ADHD',
+                                        'No Diagnosis Given', 'No Diagnosis Given: Incomplete Eval',
+                                        'Specific Learning Disorder with Impairment in Reading']
+    dx_not_to_model = dataframe[~dataframe['DX_01_Cat_new'].isin(dx_to_model)].reset_index(drop=True)
+    dx_not_to_model['dx_model'] = False
+
+    dx_model = dataframe[dataframe['DX_01_Cat_new'].isin(dx_to_model)].reset_index(drop=True)
+    dx_model['dx_model'] = True
+
+    df_concat = pd.concat([dx_model, dx_not_to_model])
+
+    return df_concat
 
 
 def parse_phenotypic_data(
@@ -170,31 +215,3 @@ def add_CGAS_Score(dataframe):
     df_merged = df_score[['Identifiers', 'CGAS_Score']].merge(dataframe, on='Identifiers')
 
     return df_merged
-
-
-def _dx_grouping(x):
-    """group diagnoses into broader set of domains
-
-    Args: 
-        x (str): diagnosis name. e.g., 'Social Phobia'
-    Returns: 
-        k (str): one of keys from `remap_dict`
-    """
-    remap_dict = {
-                'adhd': ['ADHD', 'Attention-Deficit'],
-                'language_communication': ['Tourettes', 'Speech', 'Communication', 'Mutism', ' Tic Disorder', 'Language'],
-                'anxiety': ['Stress', 'Adjustment', 'Agoraphobia', 'Obsessive', 'Panic', 'Anxiety', 'Specific Phobia'],
-                'asd': ['Autism'],
-                'mood': ['Bipolar I', 'Bipolar II', 'Cyclothymic', 'Depressive', 'Mood'],
-                'no_diagnosis': ['No Diagnosis'],
-                'conduct_relational': ['Conduct', 'Intermittent Explosive', 'Oppositional Defiant', 'Relational', 'Attachment'],
-                'body_related': ['Encopresis', 'Enuresis', 'Excoriation', 'Food Intake', 'Bulimia', 'Dysphoria'],
-                'substance_use': ['Alcohol', 'Cannabis', 'Substance'],
-                'intellectual': ['Intellectual', 'Learning', 'Neurocognitive', 'Neurodevelopmental'],
-                'psychosis': ['Delirium', 'Schizophrenia']
-                }
-    
-    for k,v in remap_dict.items():
-        for vv in v:
-            if vv in x:
-                return k

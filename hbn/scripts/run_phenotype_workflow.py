@@ -64,7 +64,6 @@ def run_model_pipeline_secondlevel():
 def run(
     cachedir='/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/',
     parse_data=False,
-    target_specs=False,
     feature_specs=False,
     model_specs=False,
     run_models_first=True,
