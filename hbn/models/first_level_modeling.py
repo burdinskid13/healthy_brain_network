@@ -103,6 +103,8 @@ def train_test_split(dataframe, out_dir=Defaults.MODEL_SPEC_DIR):
     df_train[cols_to_incl].reset_index(drop=True).to_csv(os.path.join(out_dir, 'train_participants.csv'))
     df_test[cols_to_incl].reset_index(drop=True).to_csv(os.path.join(out_dir, 'test_participants.csv'))
 
+    return df_train, df_test
+
 
 def run_pipeline(
     model_spec, 
