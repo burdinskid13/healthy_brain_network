@@ -74,7 +74,11 @@ def make_specs(
 
 
 def train_test_split(dataframe, out_dir=Defaults.MODEL_SPEC_DIR):
-    """get train/validate and test identifiers
+    """get train/validate and test identifiers, save them to file
+
+    Args:
+        dataframe (pd dataframe): output from `hbn.data.make_dataset.get_summary`
+        out_dir (str): full path to out dir where train and test identifiers will be stored. default is `MODEL_SPEC_DIR`
     """
     import os
     import pandas as pd
