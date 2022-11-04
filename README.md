@@ -18,6 +18,9 @@ git clone git@github.com:maedbhk/healthy_brain_network.git`
 ipython kernel install --name "hbn" --user
 ```
 
+## Setting Paths
+* Go to **constants.py** and set __DATA_DIR__ to PosixPath("full path to top-level directory of hbn data")
+
 Data Exploration
 ------------
 * To explore and visualize clinical diagnoses, check out **notebooks/clinical_dx.ipynb**
@@ -25,7 +28,7 @@ Data Exploration
     ```
     from hbn.data import make_dataset
     
-    df, _ = make_dataset.get_clinical_diagnosis(demographics=True, target=None)
+    df = make_dataset.make_summary()
     ```
 * To visualize output of predictive modeling, check out **notebooks/phenotype_models.ipynb**
 
@@ -36,9 +39,13 @@ Features
     import os
     from hbn.features import build_features 
 
+    TEST_DATA = os.path.join(Defaults.TEST_DIR, 'test_data')
+
     # example feature_spec
-    feature_spec = os.path.join(Defaults.TEST_DIR, 'features-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize-spec.json')
-    build_features.make_features(feature_spec, out_dir=Defaults.FEATURE_DIR)
+    feature_spec = os.path.join(TEST_DATA, 'features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json')
+
+    # make feature csv
+    build_features.make_feature_files(feature_spec, out_dir=TEST_DATA)
     ```
 * for an example of a feature spec file (.json) and features file (.csv), see example files in **hbn/tests/data** with a more detailed description in **hbn/tests/README**
 
@@ -47,11 +54,14 @@ Predictive Modeling
 * Model spec files (.json) are created using the following command:
     ```
     from hbn.models import first_level_modeling
+
+    TEST_DATA = os.path.join(Defaults.TEST_DIR, 'test_data')
     
     # example feature_spec
-    feature_spec = os.path.join(Defaults.TEST_DIR, 'features-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize-spec.json')
-    first_level_modeling.make_specs(feature_spec, out_dir=Defaults.MODEL_SPEC_DIR)
+    feature_spec = os.path.join(TEST_DATA, features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json')
     
+    # make model spec file
+    model_spec = first_level.make_model_spec(feature_spec, participants='train_participants-ADHD.csv', out_dir=TEST_DATA)
     ``` 
 * For an example of a model spec file (.json), see example file in **hbn/tests/data** with a more detailed description in **README**
 * To run a predictive modeling script on OpenMind: 
