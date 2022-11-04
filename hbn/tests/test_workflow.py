@@ -40,6 +40,7 @@ def run(
 
     # make summary files 
     make_dataset.make_summary()
+    make_dataset.make_train_test_splits()
 
     TEST_DATA = os.path.join(Defaults.TEST_DIR, 'test_data')
 
