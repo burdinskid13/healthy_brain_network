@@ -1,5 +1,6 @@
 {
     "filename": "features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize.csv",
+    "participants": "train_participants-ADHD.csv",
     "x_indices": [],
     "target_vars": [
         "DX_01_Cat_binarize"

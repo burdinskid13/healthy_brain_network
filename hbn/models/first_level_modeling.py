@@ -1,14 +1,19 @@
 from hbn.constants import Defaults
 
-def make_specs(
+
+def make_model_spec(
     feature_spec, 
+    participants,
     out_dir=Defaults.MODEL_SPEC_DIR
     ):
     """make model specs (json spec files) from the feature specs stored in `FEATURE_DIR`.
     model specs are saved out to `out_dir`
     Args:
         feature_spec (str): full path to feature spec file
-        out_dir (str): full path to model spec output directory. default is `Defaults.out_dir`
+        participants (str): participant file name (should NOT be full path to filename)
+        out_dir (str): full path to model spec output directory. default is `Defaults.MODEL_SPEC_DIR`
+    Returns:
+        full outpath to `model_spec` JSON
     """
     import os
     from hbn import io
@@ -49,6 +54,7 @@ def make_specs(
     # define spec file
     spec_info = {
             "filename": feature_info['filename'], 
+            "participants": participants,
             "x_indices": [],
             "target_vars": [feature_info['target_y']['outname']],
             "group_var": None,
@@ -72,47 +78,13 @@ def make_specs(
     io.save_dict_as_JSON(fpath=os.path.join(out_dir, spec_name), data_dict=spec_info)
     print(f'save model specs to file for {spec_name}')
 
-
-def train_test_split(dataframe, out_dir=Defaults.MODEL_SPEC_DIR):
-    """get train/validate and test identifiers, save them to file
-
-    Args:
-        dataframe (pd dataframe): output from `hbn.data.make_dataset.get_summary`
-        out_dir (str): full path to out dir where train and test identifiers will be stored. default is `MODEL_SPEC_DIR`
-    """
-    import os
-    import pandas as pd
-    from sklearn.model_selection import train_test_split
-
-    df_train = pd.DataFrame()
-    df_test = pd.DataFrame()
-
-    for name, group in dataframe.groupby('DX_01_Cat_new'):
-
-        # split train/test participants
-        X_train, X_test, _, _ = train_test_split(group['Identifiers'], group['Identifiers'], test_size=0.2, random_state=42)
-        
-        # get train dataframe
-        X_train = group.merge(pd.DataFrame(X_train).reset_index(drop=True), on='Identifiers')
-        
-        # get test dataframe
-        X_test = group.merge(pd.DataFrame(X_test).reset_index(drop=True), on='Identifiers')
-        
-        
-        df_train = pd.concat([df_train, X_train])
-        df_test = pd.concat([df_test, X_test])
-    
-    # save out participants to file
-    cols_to_incl = ['Identifiers', 'DX_01_Cat_new', 'DX_01_Cat', 'dx_model']
-    df_train[cols_to_incl].reset_index(drop=True).to_csv(os.path.join(out_dir, 'train_participants.csv'))
-    df_test[cols_to_incl].reset_index(drop=True).to_csv(os.path.join(out_dir, 'test_participants.csv'))
-
-    return df_train, df_test
+    return os.path.join(out_dir, spec_name)
 
 
 def run_pipeline(
     model_spec, 
     features,
+    participants,
     cachedir='/Users/maedbhking/pydra-ml/cache-wf/',
     out_dir=''):
     """ run predictive models using pydra-ml. must provide `model_spec` json and `filename` in `model_spec` must be a csv of features saved in ../features/
@@ -120,6 +92,7 @@ def run_pipeline(
     Args:
         model_spec (str): full path to model spec file
         features (str or pd dataframe): fullpath to features file or dataframe containing features
+        participants (str or pd dataframe): fullpath to participants file or dataframe containing column 'Identifiers' to indicate participants
         cachedir (str): default is '/Users/maedbhking/pydra-ml/cache-wf/'
         out_dir (str): full path to model output directory
     Returns: 
@@ -135,20 +108,31 @@ def run_pipeline(
 
     from hbn import io
 
-    # load json
-    spec_info = io.read_json(model_spec)
-
-    # get features
-    if isinstance(features, str):
-        csv_file = os.path.join(features)
-
-    dataframe = pd.read_csv(csv_file)
-    spec_info['filename'] = csv_file # full path to csv file
-
-    spec_info['x_indices'] = range(1,len(dataframe.columns)-1)
-
     # create cachedir if it hasn't already been created
     io.make_dirs(cachedir)
+
+    # load json
+    spec_info = io.read_json(model_spec)
+    
+    # get features
+    if isinstance(features, str):
+        features = os.path.join(features)
+
+    # get participants
+    if isinstance(participants, str):
+        participants = os.path.join(participants)
+
+    # load dataframes for features and participants
+    df_features = pd.read_csv(features)
+    df_participants = pd.read_csv(participants)
+
+    # make new feature file, merging on common 'Identifiers'
+    # save out file temporarily
+    features_final = df_features.merge(df_participants, on='Identifiers').drop(columns=['Identifiers'])
+    features_final.reset_index(drop=True).to_csv(os.path.join(cachedir, f'temporary-features.csv'), index=False)
+
+    spec_info['filename'] = os.path.join(cachedir, f'temporary-features.csv') # full path to csv file
+    spec_info['x_indices'] = range(1,len(features_final.columns)-1)
 
     print(f'running {model_spec}...\n')
     wf = gen_workflow(spec_info, cache_dir=cachedir)

@@ -98,7 +98,7 @@ def get_features(
 def get_targets(
     target_info
     ):
-    """Return target (y) data given by `target_y` from feature spec file (e.g., ) 
+    """Return target (y) data given by `target_info` from feature spec file (.json)
 
     Args:
         target_info (dict): key is `target_y` from feature spec file (e.g., features-Child_Measures-Cognitive_Testing-Adaptive_Cognitive_Evaluation-DX_01_Cat-spec.json)
@@ -142,7 +142,7 @@ def get_targets(
 
 def preprocess(
         dataframe,
-        cols_to_drop=['Identifiers', 'EID', 'Comment_ID', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'],
+        cols_to_drop=['EID', 'Comment_ID', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'],
         clf_info=None,
         cols_to_ignore=['DX_01_Cat_factorize']
         ):
@@ -172,6 +172,9 @@ def preprocess(
     # preprocessing: column transformation
     if clf_info is not None:
         dataframe = column_transform(dataframe=dataframe, clf_info=clf_info, cols_to_ignore=cols_to_ignore)
+
+    dataframe = dataframe.reset_index()
+    dataframe = dataframe.loc[:, ~dataframe.columns.str.contains('^Unnamed')]
 
     return dataframe
 
@@ -210,13 +213,15 @@ def make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR):
         df_processed = preprocess(
                         dataframe=df,   
                         clf_info=feature_info['preprocessing'],
-                        cols_to_ignore=feature_info['target_y']['outname']
+                        cols_to_ignore=['Identifiers', feature_info['target_y']['outname']]
                         )
         # save to disk
-        df_processed.to_csv(os.path.join(out_dir, feature_info['filename']), index=False)
+        df_processed.reset_index(drop=True).to_csv(os.path.join(out_dir, feature_info['filename']), index=False)
+        return os.path.join(out_dir, feature_info['filename'])
     else:
         # remove spec file (because there won't be a corresponding feature csv)
         os.remove(feature_spec)
+        return None
 
 
 def make_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
@@ -389,9 +394,10 @@ def column_transform(
 
     # transform the data
     # make sure there aren't mixed types in columns
-    for col in dataframe_final.columns:
-        if isinstance(dataframe_final[col].dtype, (object)):
-            dataframe_final[col] = dataframe_final[col].astype(str)
+    # for col in dataframe_final.columns:
+    #     dtypes = dataframe_final[col].dtypes
+    #     if isinstance(dtypes, (object)):
+    #         dataframe_final[col] = dataframe_final[col].dropna().astype(str)
     df_transformed = preprocesser.fit_transform(dataframe_final)
 
     # get transformed feature names (on fitted transformers only)

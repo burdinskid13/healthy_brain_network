@@ -39,11 +39,53 @@ def make_summary():
     
     # save out new files to disk
     # participants
+    dx = dx.loc[:, ~dx.columns.str.contains('^Unnamed')]
     dx['Identifiers'].to_csv(os.path.join(Defaults.PHENO_DIR, 'participants.csv'))
     # updated clinical diagnosis
     dx.to_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
 
     return dx
+
+
+def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
+    """get train/validate and test identifiers, save them to file
+
+    Args:
+        out_dir (str): full path to out dir where train and test identifiers will be stored. default is `MODEL_SPEC_DIR`
+    """
+    import re
+    import os
+    import pandas as pd
+    from sklearn.model_selection import train_test_split
+
+    # get dataframe containing all participants + diagnoses
+    dataframe = make_summary()
+
+    df_train = pd.DataFrame()
+    df_test = pd.DataFrame()
+
+    for name, group in dataframe.groupby('DX_01_Cat_new'):
+
+        # split train/test participants
+        X_train, X_test, _, _ = train_test_split(group['Identifiers'], group['Identifiers'], test_size=0.2, random_state=42)
+        
+        # get train dataframe
+        X_train = group.merge(pd.DataFrame(X_train).reset_index(drop=True), on='Identifiers')
+        
+        # get test dataframe
+        X_test = group.merge(pd.DataFrame(X_test).reset_index(drop=True), on='Identifiers')
+        
+        df_train = pd.concat([df_train, X_train])
+        df_test = pd.concat([df_test, X_test])
+
+        outname = '_'.join(re.split(r'_|,|/| ', name))
+        
+        X_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'train_participants-{outname}.csv'), index=False)
+        X_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'test_participants-{outname}.csv'), index=False)
+
+    
+    df_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'train_participants-all_diagnoses.csv'), index=False)
+    df_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'test_participants-all_diagnoses.csv'), index=False)
 
 
 def define_new_categories(dataframe):
