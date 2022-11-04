@@ -19,7 +19,7 @@ ipython kernel install --name "hbn" --user
 ```
 
 ## Setting Paths
-* Go to **constants.py** and set __DATA_DIR__ to PosixPath("full path to top-level directory of hbn data")
+* Go to **constants.py** and set __DATA_DIR__ to be the fullpath to your top-level directory of hbn data
 
 Data Exploration
 ------------
