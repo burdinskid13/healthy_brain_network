@@ -47,15 +47,16 @@ def run(
     # Make feature csv
     features = build_features.make_feature_files(feature_spec, out_dir=TEST_DATA)
 
+    list_of_ids = build_features.select_participants(diagnoses=['train_participants-ADHD.csv', 'train_participants-no-diagnoses.csv'])
+
     # make model spec file
-    model_spec = first_level.make_model_spec(feature_spec, participants='train_participants-ADHD.csv', out_dir=TEST_DATA)
+    model_spec = first_level.make_model_spec(feature_spec, participants=list_of_ids, out_dir=TEST_DATA)
     model_info = io.read_json(model_spec)
 
     # Run main predictive modeling routine: calls `https://github.com/nipype/pydra-ml` 
     first_level.run_pipeline(
             model_spec=model_spec, 
             features=features,
-            participants=os.path.join(TEST_DATA, model_info['participants']),
             cachedir=cachedir, 
             out_dir=Defaults.MODEL_DIR)
 

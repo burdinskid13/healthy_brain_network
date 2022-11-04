@@ -54,7 +54,7 @@ def make_model_spec(
     # define spec file
     spec_info = {
             "filename": feature_info['filename'], 
-            "participants": participants,
+            "participants": participants, # list of identfiers
             "x_indices": [],
             "target_vars": [feature_info['target_y']['outname']],
             "group_var": None,
@@ -118,17 +118,13 @@ def run_pipeline(
     if isinstance(features, str):
         features = os.path.join(features)
 
-    # get participants
-    if isinstance(participants, str):
-        participants = os.path.join(participants)
-
     # load dataframes for features and participants
     df_features = pd.read_csv(features)
-    df_participants = pd.read_csv(participants)
+    # df_participants = pd.read_csv(participants)
 
     # make new feature file, merging on common 'Identifiers'
     # save out file temporarily
-    features_final = df_features.merge(df_participants, on='Identifiers').drop(columns=['Identifiers'])
+    features_final = df_features.merge(pd.DataFrame(participants), on='Identifiers').drop(columns=['Identifiers'])
     features_final.reset_index(drop=True).to_csv(os.path.join(cachedir, f'temporary-features.csv'), index=False)
 
     spec_info['filename'] = os.path.join(cachedir, f'temporary-features.csv') # full path to csv file

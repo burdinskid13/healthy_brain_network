@@ -223,6 +223,9 @@ def make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR):
         os.remove(feature_spec)
         return None
 
+def select_participants():
+    pass
+
 
 def make_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
     """make feature sets (json spec files + feature csv files)
