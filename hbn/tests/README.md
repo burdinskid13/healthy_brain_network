@@ -12,11 +12,13 @@ import os
 from hbn.constants import Defaults
 from hbn.features import build_features
 
+TEST_DATA = os.path.join(Defaults.TEST_DIR, 'test_data')
+
 # define feature spec file
-feature_spec = os.path.join(Defaults.FEATURE_DIR, 'features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json')
+feature_spec = os.path.join(TEST_DATA, 'features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json')
 
 # make features csv
-build_features.make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR)
+build_features.make_feature_files(feature_spec, out_dir=TEST_DATA)
 
 ```
 
@@ -97,6 +99,21 @@ Example Feature Spec
 * The spec file contains all of the information needed to create the model that is input to **hbn.models.first_level_modeling.run_pipeline**
 > Note: model spec files can be created programatically with ** hbn.models.first_level_modeling.make_specs**
 
+You will need to create the model spec file using the feature spec file.
+Run the following command
+```
+import os
+from hbn.constants import Defaults
+from hbn.models import first_level_modeling as first_level
+
+TEST_DATA = os.path.join(Defaults.TEST_DIR, 'test_data')
+
+# define feature spec file
+feature_spec = os.path.join(TEST_DATA, 'features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json')
+
+# make model spec file
+model_spec = first_level.make_model_spec(feature_spec, participants='train_participants-ADHD.csv', out_dir=TEST_DATA)
+```
 
 ### Example Model Spec
 For example: the following parameters contain the following information:
@@ -110,6 +127,7 @@ Example Model Spec
 ```
 {
     "filename": "features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize.csv",
+    "participants": "train_participants-ADHD.csv",
     "x_indices": [],
     "target_vars": [
         "DX_01_Cat_binarize"
