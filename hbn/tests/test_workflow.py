@@ -10,8 +10,7 @@ def run(
     ):
     """
     FIRST STEP: 
-        make two files: `make_summary`: makes 'participants.csv' and 'Clinical_Diagnosis_Demographics.csv' that are used in later modeling routine
-                        `make_train_test_splits`: makes multiple csv files that contain participant ids for train and test sets across all disorders
+        makes 'participants.csv' and 'Clinical_Diagnosis_Demographics.csv' that are used in later modeling routine
     SECOND STEP: 
         make feature csv file using `feature_spec`
     THIRD STEP: 
