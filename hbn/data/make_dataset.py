@@ -1,28 +1,18 @@
 import os
+from this import d
 import numpy as np
 import pandas as pd
 
 from hbn.constants import Defaults
 
-def get_clinical_diagnosis(
-    demographics=True,
-    target='CGAS_Score',
-    ):
-    """
-    Return clinical diagnosis and participant identifiers: `Clinical_Diagnosis.csv` is parsed from master data (`phenotype.parse_data`) but is incorrect. `Clinical_Diagnosis_2022.csv`
-    was downloaded directly from LORIS and is correct, the latter is returned by this function.
-    Args: 
-        demographics (bool): default is True. adds basic demographic information to dataframe
-        target (str or None): default is 'CGAS_Score': disorder assigned to each participant. other option: 'DX_01', 'DX_01_Cat', 'DX_01_factorize'. If None, then entire clinical dataframe is returned. 
-    Returns: 
-        dx (pd dataframe), identifiers (list of str)
-    """
 
-    def binarize_diagnosis(x):
-        if 'No Diagnosis Given' in x:
-            return 0
-        else:
-            return 1
+def make_summary():
+    """
+    Save summary of dataset (clinical diagnosis + demographics) and save out participant identifiers: `Clinical_Diagnosis.csv` is parsed from master data (`phenotype.parse_data`) but is incorrect. `Clinical_Diagnosis_2022.csv`
+    was downloaded directly from LORIS and is correct, the latter is returned by this function.
+    Returns: 
+        dx (pd dataframe)
+    """
     
     # READ CLINICAL CONSENSUS
     dx_file = os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_2022.csv')
@@ -34,49 +24,110 @@ def get_clinical_diagnosis(
     dx['Identifiers'] = dx['Identifiers'].str.strip(',assessment')
 
     # new disorder category
-    # df_merged['disorder'] = df_merged['diagnosis_01'].agg(lambda x: _dx_grouping(x));
     diagnoses = [f'DX_{f:02}' for f in np.arange(1,11)]
     dx['comorbidities'] = dx[diagnoses].count(axis=1)-1
 
-    # make new `factorize` and `binarize` columns for `DX` targets
-    dx_col = False
-    if  (target is not None) and ('DX' in target):
-        if isinstance(target, (str)) and ('factorize' in target):
-            col = target.replace('_factorize', '')
-            dx_col = True
-        elif isinstance(target, (str)) and ('binarize' in target):
-            col = target.replace('_binarize', '')
-            dx_col = True
-        if dx_col:
-            dx[col] = dx[col].fillna('No Diagnosis Given')
-            dx[f'{col}_binarize'] = dx[col].apply(lambda x: binarize_diagnosis(x)) # factorize and binarize DX diagnoses
-            labels, _ = dx[col].factorize()
-            dx[f'{col}_factorize'] = labels
-
-    # optionally add CGAS score (another clinical diagnosis) or Sex
-    if target is None:
-        pass
-    elif target=='CGAS_Score':
-        df_score = _add_CGAS_Score(dx)
-        dx = df_score[['Identifiers', 'CGAS_Score']].merge(dx, on='Identifiers')
-    elif target=='Sex_binarize':
-        demographics = False
-        print(f"not returning all possible demographics, except for {target}")
-        dx = _add_demographics(dataframe=dx)
-
-    # optionally add demographics
-    if demographics:
-        dx = _add_demographics(dataframe=dx)
-
-    # return dataframe containing only `Identifiers` and `<target>`
-    if target is not None:
-        dx = dx[['Identifiers', target]]
+    # add demographics
+    dx = _add_demographics(dataframe=dx)
 
     # deal with missing values and NaN
     dx = dx.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
     dx = dx.dropna(how='all', axis=0)
+
+    # add new categories (including categories to be modeled)
+    dx = define_new_categories(dataframe=dx)
     
-    return dx, dx['Identifiers']
+    # save out new files to disk
+    # participants
+    dx = dx.loc[:, ~dx.columns.str.contains('^Unnamed')]
+    dx['Identifiers'].to_csv(os.path.join(Defaults.PHENO_DIR, 'participants.csv'))
+    # updated clinical diagnosis
+    dx.to_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
+
+    return dx
+
+
+def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
+    """get train/validate and test identifiers, save them to file
+
+    Args:
+        out_dir (str): full path to out dir where train and test identifiers will be stored. default is `MODEL_SPEC_DIR`
+    """
+    import re
+    import os
+    import pandas as pd
+    from sklearn.model_selection import train_test_split
+
+    # get dataframe containing all participants + diagnoses
+    dataframe = make_summary()
+
+    df_train = pd.DataFrame()
+    df_test = pd.DataFrame()
+
+    for name, group in dataframe.groupby('DX_01_Cat_new'):
+
+        # split train/test participants
+        X_train, X_test, _, _ = train_test_split(group['Identifiers'], group['Identifiers'], test_size=0.2, random_state=42)
+        
+        # get train dataframe
+        X_train = group.merge(pd.DataFrame(X_train).reset_index(drop=True), on='Identifiers')
+        
+        # get test dataframe
+        X_test = group.merge(pd.DataFrame(X_test).reset_index(drop=True), on='Identifiers')
+        
+        df_train = pd.concat([df_train, X_train])
+        df_test = pd.concat([df_test, X_test])
+
+        outname = '_'.join(re.split(r'_|,|/| ', name))
+        
+        X_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'train_participants-{outname}.csv'), index=False)
+        X_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'test_participants-{outname}.csv'), index=False)
+
+    
+    df_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'train_participants-all_diagnoses.csv'), index=False)
+    df_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'test_participants-all_diagnoses.csv'), index=False)
+
+
+def define_new_categories(dataframe):
+    """define new disorder categories using labels from `DX_01_Cat`
+
+    Args:
+        dataframe (pd dataframe)
+    """
+    import pandas as pd
+
+    def new_categories(x,y):
+        adhd_list = ['ADHD', 'Attention-Deficit']
+        autism_list = ['Autism']
+        learning_list = ['Specific Learning Disorder with Impairment in Reading']
+        if isinstance(x, str):
+            adhd = any(map(x.__contains__, adhd_list))
+            autism = any(map(x.__contains__, autism_list))
+            learning = any(map(x.__contains__, learning_list))
+            if adhd:
+                return 'ADHD'
+            elif autism:
+                return 'Autism Spectrum Disorder'
+            elif learning:
+                return 'Specific Learning Disorder with Impairment in Reading'
+            else:
+                return y
+
+    ## divide neurodevelopmental disorders into other categories
+    dataframe['DX_01_Cat_new'] = dataframe.apply(lambda x: new_categories(x['DX_01'], x['DX_01_Cat']), axis=1)
+
+    dx_to_model = ['Anxiety Disorders', 'Autism Spectrum Disorder', 'ADHD',
+                                        'No Diagnosis Given', 'No Diagnosis Given: Incomplete Eval',
+                                        'Specific Learning Disorder with Impairment in Reading']
+    dx_not_to_model = dataframe[~dataframe['DX_01_Cat_new'].isin(dx_to_model)].reset_index(drop=True)
+    dx_not_to_model['dx_model'] = False
+
+    dx_model = dataframe[dataframe['DX_01_Cat_new'].isin(dx_to_model)].reset_index(drop=True)
+    dx_model['dx_model'] = True
+
+    df_concat = pd.concat([dx_model, dx_not_to_model])
+
+    return df_concat
 
 
 def parse_phenotypic_data(
@@ -185,14 +236,13 @@ def _add_demographics(dataframe):
     # READ BASIC DEMOGRAPHICS
     df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Demographic_Questionnaire_Measures/Demographics.csv'))
     df_demo.columns = df_demo.columns.str.replace('Basic_Demos,','')
-    df_demo['Sex_binarize'] = df_demo['Sex']
     df_demo['Sex'] = df_demo['Sex'].map({0: 'male', 1: 'female'})
-    df_merged = df_demo[['Identifiers', 'Age', 'Sex', 'Sex_binarize', 'Enroll_Year']].merge(dataframe, on='Identifiers')
+    df_merged = df_demo[['Identifiers', 'Age', 'Sex', 'Enroll_Year']].merge(dataframe, on='Identifiers') # 'Sex_binarize',
 
     return df_merged
 
 
-def _add_CGAS_Score(dataframe):
+def add_CGAS_Score(dataframe):
     """add CGAS_Score to existing dataframe, merging on participant id `Identifiers`
 
     Args: 
@@ -207,31 +257,3 @@ def _add_CGAS_Score(dataframe):
     df_merged = df_score[['Identifiers', 'CGAS_Score']].merge(dataframe, on='Identifiers')
 
     return df_merged
-
-
-def _dx_grouping(x):
-    """group diagnoses into broader set of domains
-
-    Args: 
-        x (str): diagnosis name. e.g., 'Social Phobia'
-    Returns: 
-        k (str): one of keys from `remap_dict`
-    """
-    remap_dict = {
-                'adhd': ['ADHD', 'Attention-Deficit'],
-                'language_communication': ['Tourettes', 'Speech', 'Communication', 'Mutism', ' Tic Disorder', 'Language'],
-                'anxiety': ['Stress', 'Adjustment', 'Agoraphobia', 'Obsessive', 'Panic', 'Anxiety', 'Specific Phobia'],
-                'asd': ['Autism'],
-                'mood': ['Bipolar I', 'Bipolar II', 'Cyclothymic', 'Depressive', 'Mood'],
-                'no_diagnosis': ['No Diagnosis'],
-                'conduct_relational': ['Conduct', 'Intermittent Explosive', 'Oppositional Defiant', 'Relational', 'Attachment'],
-                'body_related': ['Encopresis', 'Enuresis', 'Excoriation', 'Food Intake', 'Bulimia', 'Dysphoria'],
-                'substance_use': ['Alcohol', 'Cannabis', 'Substance'],
-                'intellectual': ['Intellectual', 'Learning', 'Neurocognitive', 'Neurodevelopmental'],
-                'psychosis': ['Delirium', 'Schizophrenia']
-                }
-    
-    for k,v in remap_dict.items():
-        for vv in v:
-            if vv in x:
-                return k

@@ -1,0 +1,33 @@
+{
+    "filename": "features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize.csv",
+    "features_X": {
+        "assessment": "Parent Measures",
+        "domains": "Interview of Emotional and Psychological Function",
+        "measures": "Intake Interview"
+    },
+    "target_y": {
+        "assessment": "Clinical Measures",
+        "domain": null,
+        "measure": "Clinical Diagnosis Demographics",
+        "target_column": "DX_01_Cat",
+        "transform": "binarize",
+        "outname": "DX_01_Cat_binarize"
+    },
+    "preprocessing": {
+        "numeric": [
+            [
+                "sklearn.impute",
+                "SimpleImputer",
+                {
+                    "strategy": "mean"
+                }
+            ],
+            [
+                "sklearn.preprocessing",
+                "StandardScaler",
+                {}
+            ]
+        ]
+    },
+    "min_num_participants": 2000
+}

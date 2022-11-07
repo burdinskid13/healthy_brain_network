@@ -58,8 +58,8 @@ def run_model_pipeline_secondlevel():
 @click.option("--parse-data/--no-parse-data", default=False)
 @click.option("--feature-specs/--no-feature-specs", default=True)
 @click.option("--model-specs/--no-model-specs", default=True)
-@click.option("--run-models-first/--no-run-models-first", default=True)
-@click.option("--run-models-second/--no-run-models-second", default=True)
+@click.option("--run-models-first/--no-run-models-first", default=False)
+@click.option("--run-models-second/--no-run-models-second", default=False)
 
 def run(
     cachedir='/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/',
@@ -83,6 +83,7 @@ def run(
             on local I use '/Users/maedbhking/pydra-ml/cache-wf/'
     """
     from hbn import io
+    import os
     import glob
     from hbn.constants import Defaults
     from hbn.data import make_dataset
@@ -96,27 +97,49 @@ def run(
     # FIRST STEP
     if parse_data:
         make_dataset.parse_phenotypic_data(assessment=['Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'])
-
-    # SECOND STEP
-    if feature_specs:
-        parent_spec = os.path.join(Defaults.FEATURE_DIR, 'features-parent_spec.json')
-        feature_fpaths = build_features.make_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
-        for feature_spec in feature_fpaths:
-            build_features.make_features(feature_spec, out_dir=Defaults.FEATURE_DIR)
+    
+    # SECOND STEP 
+    make_dataset.make_summary()
+    make_dataset.make_train_test_splits()
 
     # THIRD STEP
+    if feature_specs:
+        parent_spec = os.path.join(Defaults.FEATURE_DIR, 'features-parent_spec.json')
+        feature_fpaths = build_features.make_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR)
+        for feature_spec in feature_fpaths:
+            build_features.make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR)
+
+    # FOURTH STEP
     if model_specs:
         # grab feature specs and make model specs
-        fpaths = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*.json'))
-        for fpath in fpaths:
-            first_level.make_specs(feature_spec=fpath, out_dir=Defaults.MODEL_SPEC_DIR)
+        feature_paths = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*.json'))
+        participants_files = glob.glob(os.path.join(Defaults.MODEL_SPEC_DIR, '*train*.csv'))
+        for fpath in feature_paths:
+            for participants in participants_files:
+                try:
+                    first_level.make_model_spec(feature_spec=fpath, participants=participants, out_dir=Defaults.MODEL_SPEC_DIR)
+                except:
+                    pass
 
     # RUNNING MODELS (FIRST LEVEL)
     if run_models_first:
         # grab model specs and run modeling routine
-        specs = glob.glob(os.path.join(Defaults.MODEL_DIR, '*classifier*DX_01_Cat_binarize*json'))
+        specs = glob.glob(os.path.join(Defaults.MODEL_SPEC_DIR, '*classifier*DX_01_Cat_binarize*json'))
         for model_spec in specs:
-            first_level.run_pipeline(model_spec, cachedir=cachedir, out_dir=Defaults.MODEL_DIR)
+
+            # load model info
+            model_info = io.read_json(model_spec)
+            
+            # get features & participants
+            features = os.path.join(Defaults.FEATURE_DIR, model_info['filename'])
+            participants = os.path.join(Defaults.MODEL_SPEC_DIR, model_info['participants'])
+
+            first_level.run_pipeline(
+                model_spec=model_spec, 
+                features=features,
+                participants=participants,
+                cachedir=cachedir, 
+                out_dir=Defaults.MODEL_DIR)
     
     # RUNNING MODELS (SECOND LEVEL)
     if run_models_second:
