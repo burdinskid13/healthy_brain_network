@@ -6,7 +6,7 @@ import pandas as pd
 from hbn.constants import Defaults
 
 
-def make_summary():
+def make_summary(save=True):
     """
     Save summary of dataset (clinical diagnosis + demographics) and save out participant identifiers: `Clinical_Diagnosis.csv` is parsed from master data (`phenotype.parse_data`) but is incorrect. `Clinical_Diagnosis_2022.csv`
     was downloaded directly from LORIS and is correct, the latter is returned by this function.
@@ -40,9 +40,10 @@ def make_summary():
     # save out new files to disk
     # participants
     dx = dx.loc[:, ~dx.columns.str.contains('^Unnamed')]
-    dx['Identifiers'].to_csv(os.path.join(Defaults.PHENO_DIR, 'participants.csv'))
-    # updated clinical diagnosis
-    dx.to_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
+    if save:
+        dx['Identifiers'].to_csv(os.path.join(Defaults.PHENO_DIR, 'participants.csv'))
+        # updated clinical diagnosis
+        dx.to_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
 
     return dx
 
