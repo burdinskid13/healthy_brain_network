@@ -132,11 +132,9 @@ def get_targets(
             df[new_col] = df[col].factorize()[0]
     elif target=='factorize':
         df[new_col] = df[col].factorize()[0]
-    elif target=='numeric':
-        df[new_col] = df[col]
     else:
-        print('`transform` should be one of the following: "binarize", "factorize", "numeric"')
-    
+        df[new_col] = df[col]
+
     return df[['Identifiers', new_col]]
 
 
@@ -396,11 +394,6 @@ def column_transform(
                 )
 
     # transform the data
-    # make sure there aren't mixed types in columns
-    # for col in dataframe_final.columns:
-    #     dtypes = dataframe_final[col].dtypes
-    #     if isinstance(dtypes, (object)):
-    #         dataframe_final[col] = dataframe_final[col].dropna().astype(str)
     df_transformed = preprocesser.fit_transform(dataframe_final)
 
     # get transformed feature names (on fitted transformers only)
