@@ -1,5 +1,4 @@
 import os
-from this import d
 import numpy as np
 import pandas as pd
 
@@ -48,10 +47,11 @@ def make_summary(save=True):
     return dx
 
 
-def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
-    """get train/validate and test identifiers, save them to file
+def make_train_test_splits(column='DX_01_Cat_new', out_dir=Defaults.MODEL_SPEC_DIR):
+    """get train/validate and test identifiers (from dataframe output by `make_summary`), save them to file
 
     Args:
+        column (str): which column is being use to group participants. default is 'DX_01_Cat_new'
         out_dir (str): full path to out dir where train and test identifiers will be stored. default is `MODEL_SPEC_DIR`
     """
     import re
@@ -65,28 +65,71 @@ def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
     df_train = pd.DataFrame()
     df_test = pd.DataFrame()
 
-    for name, group in dataframe.groupby('DX_01_Cat_new'):
+    for name, group in dataframe.groupby(column):
 
-        # split train/test participants
-        X_train, X_test, _, _ = train_test_split(group['Identifiers'], group['Identifiers'], test_size=0.2, random_state=42)
-        
-        # get train dataframe
-        X_train = group.merge(pd.DataFrame(X_train).reset_index(drop=True), on='Identifiers')
-        
-        # get test dataframe
-        X_test = group.merge(pd.DataFrame(X_test).reset_index(drop=True), on='Identifiers')
-        
-        df_train = pd.concat([df_train, X_train])
-        df_test = pd.concat([df_test, X_test])
-
+        # get diagnosis name
         outname = '_'.join(re.split(r'_|,|/| ', name))
-        
-        X_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'train_participants-{outname}.csv'), index=False)
-        X_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'test_participants-{outname}.csv'), index=False)
 
-    
+        try: 
+            # split train/test participants
+            X_train, X_test, _, _ = train_test_split(group['Identifiers'], group['Identifiers'], test_size=0.2, random_state=42)
+            
+            # get train dataframe
+            X_train = group.merge(pd.DataFrame(X_train).reset_index(drop=True), on='Identifiers')
+            
+            # get test dataframe
+            X_test = group.merge(pd.DataFrame(X_test).reset_index(drop=True), on='Identifiers')
+            
+            df_train = pd.concat([df_train, X_train])
+            df_test = pd.concat([df_test, X_test])
+        
+            X_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'train_participants-{outname}.csv'), index=False)
+            X_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'test_participants-{outname}.csv'), index=False)
+            print(f'writing train and test participants to file for {outname}')
+        except:
+            print(f'could not write out train and test participants for {outname} -- likely too few samples')
+
     df_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'train_participants-all_diagnoses.csv'), index=False)
     df_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'test_participants-all_diagnoses.csv'), index=False)
+
+
+def get_disorder_categories():
+    # get dataframe containing clinical diagnoses
+    dataframe = make_summary()
+    
+    # get categories of diagnoses
+    column='DX_01_Cat_new'
+    categories = dataframe[column].unique().tolist()
+    
+    return categories + ['all'] 
+
+
+def get_disorder(column='DX_01', category='Anxiety Disorders'):
+    # get dataframe containing clinical diagnoses
+    dataframe = make_summary()
+    
+    if category is not 'all':
+        disorders = dataframe[dataframe['DX_01_Cat_new']==category][column].unique()
+    elif category=='all':
+        disorders = dataframe[column].unique()
+    
+    return disorders
+
+
+def get_participants(split='train', disorders=['ADHD-Combined Type', 'ADHD-Inattentive Type'], path=Defaults.MODEL_SPEC_DIR):
+    import os
+    import re
+    import pandas as pd
+
+    df_all = pd.DataFrame()
+    for disorder in disorders:
+
+        name = '_'.join(re.split(r'_|,|/| ', disorder))
+
+        df = pd.read_csv(os.path.join(path, f'{split}_participants-{name}.csv'))
+        df_all = pd.concat([df, df_all])
+
+    return df_all
 
 
 def define_new_categories(dataframe):
