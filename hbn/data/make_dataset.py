@@ -99,16 +99,19 @@ def get_disorder_categories():
     
     # get categories of diagnoses
     column='DX_01_Cat_new'
-    categories = dataframe[column].unique()
+    categories = dataframe[column].unique().tolist()
     
-    return categories
+    return categories + ['all'] 
 
 
 def get_disorder(column='DX_01', category='Anxiety Disorders'):
     # get dataframe containing clinical diagnoses
     dataframe = make_summary()
     
-    disorders = dataframe[dataframe['DX_01_Cat_new']==category][column].unique()
+    if category is not 'all':
+        disorders = dataframe[dataframe['DX_01_Cat_new']==category][column].unique()
+    elif category=='all':
+        disorders = dataframe[column].unique()
     
     return disorders
 

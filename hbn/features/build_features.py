@@ -501,11 +501,11 @@ def get_domains(assessment='Child Measures'):
     info = pd.read_csv(fpath)
 
     if 'Domain' in info.columns:
-        domains = info['Domain'].unique()
+        domains = info['Domain'].unique().tolist()
     elif 'Measure' in info.columns:
-        domains = info['Measure'].unique()
+        domains = info['Measure'].unique().tolist()
 
-    return {assessment: domains}
+    return {assessment: domains + ['all']}
 
 
 def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
@@ -513,7 +513,7 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
 
     Args:
         assessment (str): options: 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
-        domain (str): specific for each assessment. 
+        domain (str): specific for each assessment. if 'all', then measures for all domains are returned
     Returns:
         list of str: list of domains
     """
@@ -530,7 +530,12 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
 
     # return measures if both domain and measures are present
     if sum(info.columns.isin(['Domain', 'Measure']))==2:
-        measures = info[info['Domain']==domain]['Measure'].tolist()
+        if domain is not 'all':
+            measures = info[info['Domain']==domain]['Measure'].tolist()
+        else:
+            measures = []
+            for name, group in info.groupby('Domain'):
+                measures.extend(group['Measure'].tolist())
     else:
         measures = info['Measure']
 
