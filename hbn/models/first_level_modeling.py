@@ -84,8 +84,7 @@ def make_model_spec(
 def run_pipeline(
     model_spec, 
     features,
-    participants,
-    cachedir='/Users/maedbhking/pydra-ml/cache-wf/',
+    cachedir='/home/shreyark/.cache/pydra-ml/cache-wf/',
     out_dir=''):
     """ run predictive models using pydra-ml. must provide `model_spec` json and `filename` in `model_spec` must be a csv of features saved in ../features/
 
@@ -121,16 +120,18 @@ def run_pipeline(
     # load dataframes for features and participants
     df_features = pd.read_csv(features)
     # df_participants = pd.read_csv(participants)
+    df_participants = pd.DataFrame(spec_info['participants'], columns = ['Identifiers'])
 
     # make new feature file, merging on common 'Identifiers'
     # save out file temporarily
-    features_final = df_features.merge(pd.DataFrame(participants), on='Identifiers').drop(columns=['Identifiers'])
-    features_final.reset_index(drop=True).to_csv(os.path.join(cachedir, f'temporary-features.csv'), index=False)
-
-    spec_info['filename'] = os.path.join(cachedir, f'temporary-features.csv') # full path to csv file
+    features_final = df_features.merge(df_participants, on='Identifiers').drop(columns=['Identifiers'])
+    features_final.reset_index(drop=True).to_csv(os.path.join(cachedir, f'temporary__features.csv'), index=False)
+    print('features_final', features_final)
+    spec_info['filename'] = os.path.join(cachedir, f'temporary__features.csv') # full path to csv file
     spec_info['x_indices'] = range(1,len(features_final.columns)-1)
 
     print(f'running {model_spec}...\n')
+    print("spec info", spec_info)
     wf = gen_workflow(spec_info, cache_dir=cachedir)
     run_workflow(wf, "cf", {"n_procs": 1})
 
