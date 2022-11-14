@@ -24,10 +24,10 @@ source ~/.bash_profile # set paths
 source $(pipenv --venv)/bin/activate # activate virtual environment
 
 # scripts are stored here:
-cd /om2/user/maedbh/healthy_brain_network/hbn/scripts
+cd /om2/user/shreyark/healthy_brain_network/hbn/tests
 
 # run workflow
 # python3 run_phenotype_workflow.py --feature-specs --model-specs --run-models-first --run-models-second
 
 # test workflow
-python3 test_workflow.py --spec_file=classifier-Child_Measures-Cognitive_Testing-all-DX_01_Cat_binarize.json --cachedir=/home/maedbh/.cache/pydra-ml/cache-wf/
+python3 test_workflow.py --feature_spec=features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json --cachedir=/home/shreyark/.cache/pydra-ml/cache-wf/
