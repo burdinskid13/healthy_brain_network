@@ -6,23 +6,22 @@
 #SBATCH --partition=gablab
 #
 # Nodes:
-# SBATCH -N 1 # one node
+#SBATCH -N 1 # one node
 #
 # Tasks:
-# SBATCH -n 8 # 8 tasks
-#
-# Cores:
-#SBATCH -ntasks-per-core=1 # one CPU 
+#SBATCH -c 16 # 16 hyperthreaded cores 
 #
 # Memory:
-#SBATCH --mem=10G
+#SBATCH --mem=20G
 #
 # Wall clock limit:
 #SBATCH --time=05:00:00 # 5 hours
 # 
 # Email Updates:
-# SBATCH --mail-user=maedbh@mit.edu
-# SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE,STAGE_OUT
+#SBATCH --mail-user=maedbh@mit.edu
+#SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE,STAGE_OUT
+
+export  OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 ## Command(s) to run:
 module load openmind/anaconda/3-2022.05 # load python module
