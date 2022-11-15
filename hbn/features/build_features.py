@@ -171,7 +171,7 @@ def preprocess(
     if clf_info is not None:
         dataframe = column_transform(dataframe=dataframe, clf_info=clf_info, cols_to_ignore=cols_to_ignore)
 
-    dataframe = dataframe.reset_index()
+    dataframe = dataframe.reset_index(drop=True)
     dataframe = dataframe.loc[:, ~dataframe.columns.str.contains('^Unnamed')]
 
     return dataframe
