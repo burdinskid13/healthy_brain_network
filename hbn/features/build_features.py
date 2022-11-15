@@ -221,6 +221,7 @@ def make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR):
         os.remove(feature_spec)
         return None
 
+
 def select_participants(diagnoses):
     """make list of participants, combining different diagnoses
 
