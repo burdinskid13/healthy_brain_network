@@ -5,8 +5,8 @@ import click
 @click.option("--cachedir")
 
 def run(
-    feature_spec='features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize.json',
-    cachedir='/home/shreyark/.cache/pydra-ml/cache-wf/'
+    feature_spec='features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json',
+    cachedir='/home/maedbh/.cache/pydra-ml/cache-wf/'
     ):
     """
     FIRST STEP: 
@@ -39,8 +39,8 @@ def run(
     io.make_dirs(cachedir)
 
     # make summary files 
-    # make_dataset.make_summary()
-    # make_dataset.make_train_test_splits()
+    make_dataset.make_summary()
+    make_dataset.make_train_test_splits()
 
     TEST_DATA = os.path.join(Defaults.TEST_DIR, 'test_data')
 

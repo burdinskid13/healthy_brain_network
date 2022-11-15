@@ -13,6 +13,7 @@ class Defaults:
 
     # set data base directories
     # DATA_DIR = PosixPath("/om2/user/shreyark/hbn_data") ## SET YOUR OWN PATH HERE
+    DATA_DIR = PosixPath("/om2/user/maedbh/hbn_data")
     DATA_DIR = BASE_DIR / 'data'
     RAW_DIR = DATA_DIR / "raw"
     INTERIM_DIR = DATA_DIR / "interim"

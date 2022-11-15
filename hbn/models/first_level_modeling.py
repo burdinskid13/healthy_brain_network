@@ -103,14 +103,13 @@ def run_pipeline(
     import glob
     import shutil
     from hbn import io
+    import random
     from pydra_ml.classifier import gen_workflow, run_workflow
-
-    from hbn import io
 
     # create cachedir if it hasn't already been created
     io.make_dirs(cachedir)
 
-    # load json
+    # load model spec json
     spec_info = io.read_json(model_spec)
     
     # get features
@@ -119,19 +118,20 @@ def run_pipeline(
 
     # load dataframes for features and participants
     df_features = pd.read_csv(features)
-    # df_participants = pd.read_csv(participants)
     df_participants = pd.DataFrame(spec_info['participants'], columns = ['Identifiers'])
 
-    # make new feature file, merging on common 'Identifiers'
-    # save out file temporarily
+    # make new feature file, merging on common 'Identifiers', and save out file temporarily
     features_final = df_features.merge(df_participants, on='Identifiers').drop(columns=['Identifiers'])
-    features_final.reset_index(drop=True).to_csv(os.path.join(cachedir, f'temporary__features.csv'), index=False)
+    random_number = round(random.random()*1000000000)
+    features_final.reset_index(drop=True).to_csv(os.path.join(cachedir, f'temporary_features_{random_number}.csv'), index=False)
     print('features_final', features_final)
-    spec_info['filename'] = os.path.join(cachedir, f'temporary__features.csv') # full path to csv file
+    
+    spec_info['filename'] = os.path.join(cachedir, f'temporary_features_{random_number}.csv') # full path to csv file
     spec_info['x_indices'] = range(1,len(features_final.columns)-1)
 
     print(f'running {model_spec}...\n')
     print("spec info", spec_info)
+    
     wf = gen_workflow(spec_info, cache_dir=cachedir)
     run_workflow(wf, "cf", {"n_procs": 1})
 
