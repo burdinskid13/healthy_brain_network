@@ -19,7 +19,10 @@ ipython kernel install --name "hbn" --user
 ```
 
 ## Setting Paths
-* Go to **constants.py** and set __DATA_DIR__ to be the fullpath to your top-level directory of hbn data
+* Go to **constants.py** and set __DATA_DIR__ to be the fullpath to your top-level directory of **hbn_data**
+
+> Note: **hbn_data** folder is stored on OpenMind at **/om2/user/maedbh/hbn_data/**
+> create symlinks from this folder (or copy (`cp`) over **hbn_data** folder) to your top-level directory so you can read/write new files to your own path
 
 Data Exploration
 ------------
@@ -79,9 +82,6 @@ Project Organization
     │   ├── interim        <- Intermediate data that has been transformed (model outputs are stored here)
     │   ├── processed      <- The final, canonical data sets for modeling
     │   └── raw            <- The original, immutable data dump
-
-* **hbn_data** folder is stored on OpenMind at **/om2/user/maedbh/hbn_data/**
-> Note: create symlinks from this folder (or copy over **hbn_data** folder) to your own directory so that you can read/write new files to your own path
 
 ### Directories
 > PATHS are stored in **constants.py**: 
