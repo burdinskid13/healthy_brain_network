@@ -84,7 +84,7 @@ def make_model_spec(
 def run_pipeline(
     model_spec, 
     features,
-    cachedir='/home/shreyark/.cache/pydra-ml/cache-wf/',
+    cachedir='/home/maedbh/.cache/pydra-ml/cache-wf/',
     out_dir=''):
     """ run predictive models using pydra-ml. must provide `model_spec` json and `filename` in `model_spec` must be a csv of features saved in ../features/
 
