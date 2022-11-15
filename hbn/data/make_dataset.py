@@ -66,12 +66,16 @@ def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
     import os
     import pandas as pd
     from sklearn.model_selection import train_test_split
+    from sklearn.model_selection import StratifiedShuffleSplit
 
     # get dataframe containing all participants + diagnoses
     dataframe = make_summary()
+    dataframe['Sex_binarize'] = dataframe['Sex'].map({'male': 0, 'female': 1})
+    dataframe['DX_01_Cat_new_factorize'] = dataframe['DX_01_Cat_new'].factorize()[0]
 
     # get train/test for all participants
-    train_participants, test_participants, _, _ = train_test_split(dataframe['Identifiers'], dataframe['Identifiers'], test_size=0.2, random_state=42)
+    strat_array = np.array(dataframe[['DX_01_Cat_new_factorize']])
+    train_participants, test_participants, _, _ = train_test_split(dataframe['Identifiers'], dataframe['Identifiers'], test_size=0.2, random_state=42, stratify=strat_array)
 
     train_all_df = dataframe[dataframe['Identifiers'].isin(train_participants)].reset_index(drop=True)
     test_all_df = dataframe[dataframe['Identifiers'].isin(test_participants)].reset_index(drop=True)
@@ -88,7 +92,8 @@ def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
 
             try: 
                 # split train/test participants
-                X_train, X_test, _, _ = train_test_split(group['Identifiers'], group['Identifiers'], test_size=0.2, random_state=42)
+                labels = np.array(group['Sex_binarize'])
+                X_train, X_test, _, _ = train_test_split(group['Identifiers'], group['Identifiers'], test_size=0.2, random_state=42, stratify=labels)
                 
                 # get train and test dataframes
                 X_train = group.merge(pd.DataFrame(X_train).reset_index(drop=True), on='Identifiers')

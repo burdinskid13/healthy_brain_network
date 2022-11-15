@@ -15,7 +15,8 @@ def calculate_embedding(
         n_components=n_components, 
         min_dist=min_dist,
         n_neighbors=n_neighbors,
-        metric=metric)
+        metric=metric
+        )
     
     # train model 
     reducer.fit(data)
