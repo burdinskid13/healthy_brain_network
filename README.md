@@ -18,10 +18,9 @@ git clone git@github.com:maedbhk/healthy_brain_network.git`
 ipython kernel install --name "hbn" --user
 ```
 
-## Setting Paths
+## Setting Paths and Accessing Data
 * Go to **constants.py** and set __DATA_DIR__ to be the fullpath to your top-level directory of **hbn_data**
 
-> Note: **hbn_data** folder is stored on OpenMind at **/om2/user/maedbh/hbn_data/**
 * Create symlinks from this folder (or copy over **hbn_data** folder) to your directory so you can read/write new files to your own path
 
 ```
@@ -81,6 +80,7 @@ Project Organization
 ------------
 
 ### Data
+> Note: **hbn_data** folder is stored on OpenMind at **/om2/user/maedbh/hbn_data/**
 
     ├── hbn_data
     │   ├── interim        <- Intermediate data that has been transformed (model outputs are stored here)
