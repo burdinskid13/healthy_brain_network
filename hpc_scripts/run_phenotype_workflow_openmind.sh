@@ -6,10 +6,13 @@
 #SBATCH --partition=gablab
 #
 # Nodes:
-# SBATCH -N=1 # one node
+# SBATCH -N 1 # one node
+#
+# Tasks:
+# SBATCH -n 8 # 8 tasks
 #
 # Cores:
-#SBATCH -ntasks-per-core=8 # one CPU 
+#SBATCH -ntasks-per-core=1 # one CPU 
 #
 # Memory:
 #SBATCH --mem=10G
