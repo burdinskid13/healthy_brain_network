@@ -22,7 +22,11 @@ ipython kernel install --name "hbn" --user
 * Go to **constants.py** and set __DATA_DIR__ to be the fullpath to your top-level directory of **hbn_data**
 
 > Note: **hbn_data** folder is stored on OpenMind at **/om2/user/maedbh/hbn_data/**
-> create symlinks from this folder (or copy (`cp`) over **hbn_data** folder) to your top-level directory so you can read/write new files to your own path
+* Create symlinks from this folder (or copy over **hbn_data** folder) to your directory so you can read/write new files to your own path
+
+```
+cp -R /om2/user/maedbh/hbn_data /om2/user/"username"/ 
+```
 
 Data Exploration
 ------------
