@@ -29,6 +29,13 @@ def make_summary(save=True):
     # add demographics
     dx = _add_demographics(dataframe=dx)
 
+    # bucket ages: over and under 10 yrs of age
+    dx.loc[dx['Age']>10, 'Age_bracket'] = "over10"
+    dx.loc[dx['Age']<=10, 'Age_bracket'] = "under10"
+
+    # add race/ethnicity
+    # dx = _add_race_ethnicity(dataframe=dx)
+
     # deal with missing values and NaN
     dx = dx.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
     dx = dx.dropna(how='all', axis=0)
@@ -47,11 +54,12 @@ def make_summary(save=True):
     return dx
 
 
-def make_train_test_splits(column='DX_01_Cat_new', out_dir=Defaults.MODEL_SPEC_DIR):
+def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
     """get train/validate and test identifiers (from dataframe output by `make_summary`), save them to file
 
+    We try to balance the train/test splits 
+
     Args:
-        column (str): which column is being use to group participants. default is 'DX_01_Cat_new'
         out_dir (str): full path to out dir where train and test identifiers will be stored. default is `MODEL_SPEC_DIR`
     """
     import re
@@ -62,35 +70,52 @@ def make_train_test_splits(column='DX_01_Cat_new', out_dir=Defaults.MODEL_SPEC_D
     # get dataframe containing all participants + diagnoses
     dataframe = make_summary()
 
-    df_train = pd.DataFrame()
-    df_test = pd.DataFrame()
+    # get train/test for all participants
+    train_participants, test_participants, _, _ = train_test_split(dataframe['Identifiers'], dataframe['Identifiers'], test_size=0.2, random_state=42)
 
-    for name, group in dataframe.groupby(column):
+    train_all_df = dataframe[dataframe['Identifiers'].isin(train_participants)].reset_index(drop=True)
+    test_all_df = dataframe[dataframe['Identifiers'].isin(test_participants)].reset_index(drop=True)
+    train_all_df['Identifiers'].to_csv(os.path.join(out_dir, f'train_participants-all.csv'), index=False)
+    test_all_df['Identifiers'].to_csv(os.path.join(out_dir, f'test_participants-all.csv'), index=False)
 
-        # get diagnosis name
-        outname = '_'.join(re.split(r'_|,|/| ', name))
+    # get train/test separately for each disorder
+    cols_to_group = ['DX_01_Cat_new', 'DX_01']
+    for col in cols_to_group:
+        for name, group in dataframe.groupby(col):
 
-        try: 
-            # split train/test participants
-            X_train, X_test, _, _ = train_test_split(group['Identifiers'], group['Identifiers'], test_size=0.2, random_state=42)
-            
-            # get train dataframe
-            X_train = group.merge(pd.DataFrame(X_train).reset_index(drop=True), on='Identifiers')
-            
-            # get test dataframe
-            X_test = group.merge(pd.DataFrame(X_test).reset_index(drop=True), on='Identifiers')
-            
-            df_train = pd.concat([df_train, X_train])
-            df_test = pd.concat([df_test, X_test])
-        
-            X_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'train_participants-{outname}.csv'), index=False)
-            X_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'test_participants-{outname}.csv'), index=False)
-            print(f'writing train and test participants to file for {outname}')
-        except:
-            print(f'could not write out train and test participants for {outname} -- likely too few samples')
+            # get diagnosis name
+            outname = '_'.join(re.split(r'_|,|/| ', name))
 
-    df_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'train_participants-all_diagnoses.csv'), index=False)
-    df_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'test_participants-all_diagnoses.csv'), index=False)
+            try: 
+                # split train/test participants
+                X_train, X_test, _, _ = train_test_split(group['Identifiers'], group['Identifiers'], test_size=0.2, random_state=42)
+                
+                # get train and test dataframes
+                X_train = group.merge(pd.DataFrame(X_train).reset_index(drop=True), on='Identifiers')
+                X_test = group.merge(pd.DataFrame(X_test).reset_index(drop=True), on='Identifiers')
+
+                # save to file
+                X_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'train_participants-{outname}.csv'), index=False)
+                X_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'test_participants-{outname}.csv'), index=False)
+                print(f'writing train and test participants to file for {outname}')
+            except:
+                print(f'could not write out train and test participants for {outname} -- likely too few samples')
+
+
+def check_train_test_split():
+    import glob
+    import pandas as pd
+    
+    files = glob.glob('*train*')
+    disorders = [f.strip(r'train_participants-*csv') for f in files]
+
+    summary = make_summary()
+
+    # loop over disorders and check balance
+    for disorder in disorders:
+
+        train_df = pd.read_csv(f'train_participants-{disorder}csv')
+        test_df = pd.read_csv(f'test_participants-{disorder}csv')
 
 
 def get_disorder_categories():
@@ -108,7 +133,7 @@ def get_disorder(column='DX_01', category='Anxiety Disorders'):
     # get dataframe containing clinical diagnoses
     dataframe = make_summary()
     
-    if category is not 'all':
+    if category != 'all':
         disorders = dataframe[dataframe['DX_01_Cat_new']==category][column].unique()
     elif category=='all':
         disorders = dataframe[column].unique()
@@ -282,6 +307,49 @@ def _add_demographics(dataframe):
     df_demo.columns = df_demo.columns.str.replace('Basic_Demos,','')
     df_demo['Sex'] = df_demo['Sex'].map({0: 'male', 1: 'female'})
     df_merged = df_demo[['Identifiers', 'Age', 'Sex', 'Enroll_Year']].merge(dataframe, on='Identifiers') # 'Sex_binarize',
+
+    return df_merged
+
+
+def _add_race_ethnicity(dataframe):
+    """add race and ethnicity to existing dataframe, merging on participant id `Identifiers`
+
+    Args: 
+        dataframe (pd dataframe): must contain col `Identifiers`
+    Returns:
+        dataframe (pd dataframe): returns `dataframe` with additional demographic columns
+    """
+    def race(x):
+        race_dict = {
+            0: "White/Caucasian",
+            1:"Black/African American",
+            2:"Hispanic",
+            3:"Asian",
+            4:"Indian",
+            5:"Native American Indian",
+            6:"American Indian/Alaskan Native",
+            7:"Native Hawaiian/Other Pacific Islander",
+            8:"Two or more races",
+            9:"Other race",
+            10:"Unknown",
+            11:"Choose not to specify"
+            }
+        return race_dict[x]
+        
+    def ethnicity(x):
+        ethnicity_dict = {
+            0: "White/Caucasian",
+            1: "Hispanic or Latino",
+            2: "Decline to specify",
+            3: "Unknown",
+            }
+        return ethnicity_dict[x]
+
+    # READ DEMOGRAPHICS - INTAKE INTERVIEW
+    df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Interview_of_Emotional_and_Psychological_Function/Intake_Interview.csv'))
+    df_demo['PreInt_Demos_Fam,Child_Race_cat'] = df_demo['PreInt_Demos_Fam,Child_Race'].fillna(10).apply(lambda x: race(x))
+    df_demo['PreInt_Demos_Fam,Child_Ethnicity_cat'] = df_demo['PreInt_Demos_Fam,Child_Ethnicity'].fillna(3).apply(lambda x: ethnicity(x))
+    df_merged = df_demo[['Identifiers', 'PreInt_Demos_Fam,Child_Race_cat', 'PreInt_Demos_Fam,Child_Ethnicity_cat']].merge(dataframe, on='Identifiers')
 
     return df_merged
 
