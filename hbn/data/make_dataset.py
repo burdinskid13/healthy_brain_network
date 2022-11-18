@@ -65,8 +65,12 @@ def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
     import re
     import os
     import pandas as pd
+    from hbn import io
     from sklearn.model_selection import train_test_split
     from sklearn.model_selection import StratifiedShuffleSplit
+
+    io.make_dirs(os.path.join(out_dir, 'train'))
+    io.make_dirs(os.path.join(out_dir, 'test'))
 
     # get dataframe containing all participants + diagnoses
     dataframe = make_summary()
@@ -79,8 +83,8 @@ def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
 
     train_all_df = dataframe[dataframe['Identifiers'].isin(train_participants)].reset_index(drop=True)
     test_all_df = dataframe[dataframe['Identifiers'].isin(test_participants)].reset_index(drop=True)
-    train_all_df['Identifiers'].to_csv(os.path.join(out_dir, f'train_participants-all.csv'), index=False)
-    test_all_df['Identifiers'].to_csv(os.path.join(out_dir, f'test_participants-all.csv'), index=False)
+    train_all_df['Identifiers'].to_csv(os.path.join(out_dir, 'train', f'train_participants-all.csv'), index=False)
+    test_all_df['Identifiers'].to_csv(os.path.join(out_dir, 'test', f'test_participants-all.csv'), index=False)
 
     # get train/test separately for each disorder
     cols_to_group = ['DX_01_Cat_new', 'DX_01']
@@ -100,27 +104,11 @@ def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
                 X_test = group.merge(pd.DataFrame(X_test).reset_index(drop=True), on='Identifiers')
 
                 # save to file
-                X_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'train_participants-{outname}.csv'), index=False)
-                X_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, f'test_participants-{outname}.csv'), index=False)
+                X_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, 'train', f'train_participants-{outname}.csv'), index=False)
+                X_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, 'test', f'test_participants-{outname}.csv'), index=False)
                 print(f'writing train and test participants to file for {outname}')
             except:
                 print(f'could not write out train and test participants for {outname} -- likely too few samples')
-
-
-def check_train_test_split():
-    import glob
-    import pandas as pd
-    
-    files = glob.glob('*train*')
-    disorders = [f.strip(r'train_participants-*csv') for f in files]
-
-    summary = make_summary()
-
-    # loop over disorders and check balance
-    for disorder in disorders:
-
-        train_df = pd.read_csv(f'train_participants-{disorder}csv')
-        test_df = pd.read_csv(f'test_participants-{disorder}csv')
 
 
 def get_disorder_categories():
@@ -152,12 +140,19 @@ def get_participants(split='train', disorders=['ADHD-Combined Type', 'ADHD-Inatt
     import pandas as pd
 
     df_all = pd.DataFrame()
+
+    if split=='all':
+        split = ['train', 'test']
+    else:
+        split = [split]
+
     for disorder in disorders:
-
-        name = '_'.join(re.split(r'_|,|/| ', disorder))
-
-        df = pd.read_csv(os.path.join(path, f'{split}_participants-{name}.csv'))
-        df_all = pd.concat([df, df_all])
+        for sp in split:
+            name = '_'.join(re.split(r'_|,|/| ', disorder))
+            fname = os.path.join(path, sp, f'{sp}_participants-{name}.csv')
+            if os.path.isfile(fname):
+                df = pd.read_csv(fname)
+                df_all = pd.concat([df, df_all])
 
     return df_all
 

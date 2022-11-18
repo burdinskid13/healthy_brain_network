@@ -5,8 +5,8 @@ import click
 @click.option("--cachedir")
 
 def run(
-    feature_spec='features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize.json',
-    cachedir='/home/shreyark/.cache/pydra-ml/cache-wf/'
+    feature_spec='features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json',
+    cachedir='/home/maedbh/.cache/pydra-ml/cache-wf/'
     ):
     """
     FIRST STEP: 
@@ -39,8 +39,8 @@ def run(
     io.make_dirs(cachedir)
 
     # make summary files 
-    # make_dataset.make_summary()
-    # make_dataset.make_train_test_splits()
+    make_dataset.make_summary()
+    make_dataset.make_train_test_splits()
 
     TEST_DATA = os.path.join(Defaults.TEST_DIR, 'test_data')
 
@@ -48,7 +48,7 @@ def run(
     feature_spec = os.path.join(TEST_DATA, feature_spec)
     features = build_features.make_feature_files(feature_spec, out_dir=TEST_DATA)
 
-    list_of_ids = build_features.select_participants(diagnoses=['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv'])
+    # list_of_ids = build_features.select_participants(diagnoses=['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv'])
 
     # make model spec file
     model_spec = first_level.make_model_spec(feature_spec, participants=list_of_ids, out_dir=TEST_DATA)
