@@ -98,10 +98,12 @@ def get_features(
 def get_targets(
     target_info
     ):
-    """Return target (y) data given by `target_info` from feature spec file (.json)
+    """Return target dataframe using arguments in `target_info` (data loaded from target spec file)
 
     Args:
-        target_info (dict): key is `target_y` from feature spec file (e.g., features-Child_Measures-Cognitive_Testing-Adaptive_Cognitive_Evaluation-DX_01_Cat-spec.json)
+        target_info (dict): dictionary loaded from target spec file (e.g., targets-DX_01_Cat-spec.json)
+    Returns:
+        dataframe (pd dataframe)
     """
 
     def _binarize_diagnosis(x):
@@ -119,7 +121,7 @@ def get_targets(
     # category of target
     col = target_info['target_column']
     target = target_info['transform']
-    new_col = target_info['outname']
+    new_target = target_info['outname']
     
     # do some cleanup
     if 'DX' in col:
@@ -127,15 +129,17 @@ def get_targets(
 
     if target=='binarize':
         if 'DX' in col:
-            df[new_col] = df[col].apply(lambda x: _binarize_diagnosis(x))
+            df[new_target] = df[col].apply(lambda x: _binarize_diagnosis(x))
         else:
-            df[new_col] = df[col].factorize()[0]
+            df[new_target] = df[col].factorize()[0]
     elif target=='factorize':
-        df[new_col] = df[col].factorize()[0]
+        df[new_target] = df[col].factorize()[0]
     else:
-        df[new_col] = df[col]
+        df[new_target] = df[col]
 
-    return df[['Identifiers', new_col]]
+    df_target = df[['Identifiers', new_target]]
+
+    return df_target
 
 
 def preprocess(
@@ -150,7 +154,7 @@ def preprocess(
     Args:
         dataframe (pd dataframe): pandas dataframe to preprocess, should include X features and y target var, output from `get_features`
         cols_to_drop (list of str): list of columns to drop from dataframe
-        clf_info (dict of lists of scikit-learn classifiers): see `hbn/features/features-example.json` for example of structure
+        clf_info (dict of lists of scikit-learn classifiers or None): see `hbn/features/features-example.json` for example of structure
         cols_to_ignore (list of str): columns to ignore in preprocessing
     """
     
@@ -184,7 +188,7 @@ def make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR):
         feature_spec (str): full path to feature spec file
         out_dir (str): save features csv to path. default is `Defaults.FEATURE_DIR`
     Returns:   
-        df_processed (pd dataframe) 
+        features_out (full path to features file)
     """
     import os
     from hbn import io
@@ -193,32 +197,63 @@ def make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR):
 
     # get features (X)
     features = get_features(
-                assessment=feature_info['features_X']['assessment'],
-                domains=[feature_info['features_X']['domains']],
-                measures=[feature_info['features_X']['measures']],
+                assessment=feature_info['assessment'],
+                domains=[feature_info['domains']],
+                measures=[feature_info['measures']],
                 min_num_participants=feature_info['min_num_participants']
                 )
-    # get target(s)
-    targets = get_targets(target_info=feature_info['target_y'])
 
     # only process dataframe that has at least one feature
     if len(features.columns)>1:
 
-        # make dataframe (X and y) to be preprocessed
-        df = targets.merge(features, on='Identifiers')
-
         # preprocess
-        df_processed = preprocess(
-                        dataframe=df,   
+        features_processed = preprocess(
+                        dataframe=features,   
                         clf_info=feature_info['preprocessing'],
-                        cols_to_ignore=['Identifiers', feature_info['target_y']['outname']]
+                        cols_to_ignore=['Identifiers']
                         )
-        # save to disk
-        df_processed.reset_index(drop=True).to_csv(os.path.join(out_dir, feature_info['filename']), index=False)
-        return os.path.join(out_dir, feature_info['filename'])
+        
+        features_out = os.path.join(out_dir, feature_info['filename'])
+
+        # save to disk separately for features
+        features_processed.reset_index(drop=True).to_csv(features_out, index=False)
+
+        return features_out
     else:
         # remove spec file (because there won't be a corresponding feature csv)
         os.remove(feature_spec)
+        return None
+
+
+def make_target_files(target_spec, out_dir=Defaults.FEATURE_DIR):
+    """makes features from spec file, preprocesses, and saves to `out_dir`
+
+    Args: 
+        feature_spec (str): full path to feature spec file
+        out_dir (str): save features csv to path. default is `Defaults.FEATURE_DIR`
+    Returns:   
+        features_out (full path to features file), target_out (full path to target file)
+    """
+    import os
+    from hbn import io
+
+    target_info = io.read_json(target_spec)
+
+    # get target(s)
+    targets = get_targets(target_info=target_info)
+
+    # only process dataframe that has at least one row
+    if len(targets)>1:
+        
+        target_out = os.path.join(out_dir, 'targets-' + target_info['outname'] + '.csv')
+
+        # save to disk separately for target
+        targets.reset_index(drop=True).to_csv(target_out, index=False)
+
+        return target_out
+    else:
+        # remove spec file (because there won't be a corresponding target csv)
+        os.remove(target_spec)
         return None
 
 
@@ -240,7 +275,7 @@ def select_participants(diagnoses):
     return participants
 
 
-def make_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
+def make_feature_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
     """make feature sets (json spec files + feature csv files)
 
     Args: 
@@ -253,31 +288,79 @@ def make_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
 
     feature_combinations = _get_feature_combinations(parent_spec)
     parent_spec_info = io.read_json(parent_spec)
+
+    def _make_filename(data):
+        """make filename for feature spec
+
+        Args: 
+            data (dict):
+        Returns:
+            spec_file (str): spec filename
+        """
+        # define spec filename
+        vals = []
+        for val in ['features', 'assessment', 'domains', 'measures']:
+            if val in data.keys():
+                vals.append('_'.join(re.split(r'_|,|/| ', data[val])))
+            else:
+                vals.append(val)
+        spec_file = '-'.join(vals)
+        return spec_file
     
     spec_files = []
     for data in feature_combinations:
         
         spec_filename = _make_filename(data)
 
-        # define spec file
-        spec_info = {"filename": spec_filename + '.csv',
-                    "features_X":{
-                            "assessment": data['assessment'],
-                            "domains": data['domains'],
-                            "measures": data['measures'],
-                            },
-                    "target_y": {
-                            "assessment": data["target_assessment"],
-                            "domain": data["target_domain"],
-                            "measure": data["target_measure"],
-                            "target_column": data["target_column"],
-                            "transform": data["transform"], 
-                            "outname": data["outname"],
-                                },
+        # define feature spec file
+        spec_info = {"filename": spec_filename + '.csv', 
+                    "assessment": data['assessment'],
+                    "domains": data['domains'],
+                    "measures": data['measures'],
                     "preprocessing": parent_spec_info['preprocessing'], 
                     "min_num_participants": parent_spec_info['min_num_participants']
                     }
 
+        # save json to `FEATURE_DIR`
+        spec_fpath = os.path.join(out_dir, spec_filename + '-spec.json')
+        io.save_dict_as_JSON(fpath=spec_fpath, data_dict=spec_info)
+        print(f'spec file and features saved to disk for {spec_filename}')
+        spec_files.append(spec_fpath)
+
+    return spec_files
+
+
+def make_target_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
+    """make target sets (json spec files + csv files)
+
+    Args: 
+        parent_spec (str): full path to master spec file. saved in `out_dir`
+        out_dir (str): save to path. default is `Defaults.FEATURE_DIR`
+    Returns:
+        saves feature spec files (.json) to `FEATURE_DIR` and returns list of feature specs
+    """
+    from hbn import io
+
+    parent_spec_info = io.read_json(parent_spec)
+
+    targets = parent_spec_info['data']["target"]
+
+    spec_files = []
+    for data in targets:
+        
+        spec_filename = 'target_' + data["outname"]
+
+        # define target spec file
+        spec_info = {"filename":  spec_filename +'.csv',
+                    "assessment": data["assessment"],
+                    "domain": data["domain"],
+                    "measure": data["measure"],
+                    "target_column": data["target_column"],
+                    "transform": data["transform"], 
+                    "outname": data["outname"],
+                    "preprocessing": parent_spec_info['preprocessing'], 
+                    "min_num_participants": parent_spec_info['min_num_participants']
+                    }
 
         # save json to `FEATURE_DIR`
         spec_fpath = os.path.join(out_dir, spec_filename + '-spec.json')
@@ -299,14 +382,43 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                     "domains": "all",
                     "measures": "all"
                     },
-                "target": {
-                    "assessment": ["Clinical Measures", "Parent Measures", "Clinical Measures"],
-                    "domain": [None, "Demographic Questionnaire Measures", None],
-                    "measure": ["Clinical Diagnosis Demographics", "Demographics", "Children's Global Assessment Scale"],
-                    "target_column": ["DX_01_Cat", "Sex", "CGAS_Score"],
-                    "transform": ["binarize", "binarize", "numeric"], #
-                    "outname": ["DX_01_Cat_binarize", "Sex_binarize", "CGAS_Score_numeric"],
-                    },
+                "target": [
+                        {"assessment": "Clinical Measures",
+                        "domain": None,
+                        "measure": "Clinical Diagnosis Demographics",
+                        "target_column": "DX_01_Cat",
+                        "transform": "binarize",
+                        "outname": "DX_01_Cat_binarize"
+                        },
+                        {"assessment": "Clinical Measures",
+                        "domain": None,
+                        "measure": "Clinical Diagnosis Demographics",
+                        "target_column": "DX_01_Cat",
+                        "transform": "factorize",
+                        "outname": "DX_01_Cat_factorize"
+                        },
+                        {"assessment": "Clinical Measures",
+                        "domain": None,
+                        "measure": "Clinical Diagnosis Demographics",
+                        "target_column": "DX_01",
+                        "transform": "binarize",
+                        "outname": "DX_01_binarize"
+                        },
+                        {"assessment": "Clinical Measures",
+                        "domain": None,
+                        "measure": "Clinical Diagnosis Demographics",
+                        "target_column": "DX_01",
+                        "transform": "factorize",
+                        "outname": "DX_01_factorize"
+                        },
+                        {"assessment": "Clinical Measures",
+                        "domain": None,
+                        "measure": "Children's Global Assessment Scale",
+                        "target_column": "CGAS,CGAS_Score",
+                        "transform": "numeric",
+                        "outname": "CGAS,CGAS_Score_numeric"
+                        }
+                    ],
                 },
             "preprocessing": {
                 "numeric": [
@@ -323,24 +435,26 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         {}
                     ]
                 ],
-                "category": [
-                    [
-                        "sklearn.impute", 
-                        "SimpleImputer", 
-                        {
-                            "strategy": "most_frequent"
-                        }
-                    ], [
-                        "sklearn.preprocessing", 
-                        "OneHotEncoder", 
-                        {"handle_unknown": "ignore", "sparse": False}
-                    ]
-                ]
+                # "category": [
+                #     [
+                #         "sklearn.impute", 
+                #         "SimpleImputer", 
+                #         {
+                #             "strategy": "most_frequent"
+                #         }
+                #     ], [
+                #         "sklearn.preprocessing", 
+                #         "OneHotEncoder", 
+                #         {"handle_unknown": "ignore", "sparse": False}
+                #     ]
+                # ]
             },
             "min_num_participants": 2000
             }
-    
-    io.save_dict_as_JSON(os.path.join(out_dir, 'features-parent_spec.json'), spec_info)
+    outpath = os.path.join(out_dir, 'features-parent_spec.json')
+    io.save_dict_as_JSON(outpath, spec_info)
+
+    return outpath
 
 
 def column_transform(
@@ -569,47 +683,18 @@ def _get_feature_combinations(parent_spec):
 
     parent_spec = io.read_json(parent_spec)
 
-    target_keys = parent_spec['data']['target'].keys()
-    data = parent_spec['data']['target']
-
     spec_info = []
     for assess in parent_spec['data']['features']['assessment']:
         domains = get_domains(assess)[assess]
-        for (t_assess, t_domain, t_measure, col, transform, out) in zip(data['assessment'], data['domain'], data['measure'],
-        data['target_column'], data['transform'], data['outname']):
-            for domain in domains:
-                measures = get_measures(assess, domain)[domain]
-                for measure in measures:
-                    spec_info.append({'assessment': assess,
-                            'domains': domain,
-                            'measures': measure,
-                            'target_assessment': t_assess,
-                            'target_domain': t_domain,
-                            'target_measure': t_measure,
-                            'target_column': col,
-                            'transform': transform,
-                            'outname': out,
-                            })
+        domains.remove('all')
+        for domain in domains:
+            measures = get_measures(assess, domain)[domain]
+            for measure in measures:
+                spec_info.append({'assessment': assess,
+                        'domains': domain,
+                        'measures': measure,
+                        })
     return spec_info
-
-
-def _make_filename(data):
-    """make filename for feature spec
-
-    Args: 
-        data (dict):
-    Returns:
-        spec_file (str): spec filename
-    """
-    # define spec filename
-    vals = []
-    for val in ['features', 'assessment', 'domains', 'measures', 'outname']:
-        if val in data.keys():
-            vals.append('_'.join(re.split(r'_|,|/| ', data[val])))
-        else:
-            vals.append(val)
-    spec_file = '-'.join(vals)
-    return spec_file
 
 
 def _setup_logger(name, log_file, level=logging.INFO):

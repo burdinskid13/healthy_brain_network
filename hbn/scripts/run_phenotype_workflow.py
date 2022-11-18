@@ -2,11 +2,72 @@ import os
 import click
 from pathlib import Path
 
+from hbn.constants import Defaults
+
 import warnings
 warnings.filterwarnings("ignore")
 
 
-def run_model_pipeline_secondlevel():
+def parse_data():
+    from hbn.data import make_dataset
+
+    make_dataset.parse_phenotypic_data(
+        assessment=['Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures']
+        )
+
+
+def make_train_test(out_dir=Defaults.MODEL_SPEC_DIR):
+    from hbn.data import make_dataset
+
+    make_dataset.make_summary()
+    make_dataset.make_train_test_splits(out_dir=out_dir)
+
+
+def make_specs():
+    import glob
+    from hbn.features import build_features
+    from hbn.models import first_level_modeling as first_level
+
+    # make parent spec file for features
+    parent_spec = build_features.make_parent_spec(out_dir=Defaults.FEATURE_DIR)
+    
+    # make feature and target spec files
+    build_features.make_feature_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR)
+    build_features.make_target_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR)
+
+    feature_paths = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*features*.json'))
+    target_paths = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*targets*.json'))
+    participant_paths = os.path.join(Defaults.MODEL_SPEC_DIR, 'train', 'model-participants.json')
+    for (feature, target, participants) in zip(feature_paths, target_paths, participant_paths):
+        first_level.make_model_spec(feature_spec=feature, 
+                                    target_spec=target,
+                                    participants=participants,
+                                    out_dir=Defaults.MODEL_SPEC_DIR
+                                    )
+
+
+def run_models_first_level():
+    # grab model specs and run modeling routine
+    specs = glob.glob(os.path.join(Defaults.MODEL_SPEC_DIR, '*classifier*DX_01_Cat_binarize*json'))
+    for model_spec in specs:
+
+        # load model info
+        model_info = io.read_json(model_spec)
+        
+        # get features & participants
+        features = os.path.join(Defaults.FEATURE_DIR, model_info['features_filename'])
+        target = os.path.join(Defaults.FEATURE_DIR, model_info['target_filename'])
+        participants = os.path.join(Defaults.MODEL_SPEC_DIR, model_info['participants'])
+
+        first_level.run_pipeline(
+            model_spec=model_spec, 
+            features=features,
+            participants=participants,
+            cachedir=cachedir, 
+            out_dir=Defaults.MODEL_DIR)
+
+
+def run_models_second_level():
     """Makes model and feature summary files from results output from `run_model_pipeline_firstlevel`
 
     Saves output in `../interim/models/`
@@ -56,16 +117,14 @@ def run_model_pipeline_secondlevel():
 @click.command()
 @click.option("--cachedir")
 @click.option("--parse-data/--no-parse-data", default=False)
-@click.option("--feature-specs/--no-feature-specs", default=True)
-@click.option("--model-specs/--no-model-specs", default=True)
+@click.option("--specs/--no-specs", default=True)
 @click.option("--run-models-first/--no-run-models-first", default=False)
 @click.option("--run-models-second/--no-run-models-second", default=False)
 
 def run(
     cachedir='/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/',
     parse_data=False,
-    feature_specs=False,
-    model_specs=False,
+    specs=False,
     run_models_first=True,
     run_models_second=True,
     ):
@@ -74,8 +133,7 @@ def run(
     Args: 
         cachedir (str): full path to model cache directory.
         parse_data (bool): parse data from `/nese/mit/group/sig/projects/hbn/phenotype/data-2022-08-24T16_37_18.263Z.csv`. default is False because data have already been parsed and saved on OpenMind.
-        feature_specs (bool): default is True. Saves feature specs (json and csv files) to `/om2/user/maedbh/healthy_brain_network/features`
-        model_specs (bool): default is True. Make model specs (json files) and save to `/om2/user/maedbh/healthy_brain_network/models`
+        specs (bool): default is True. Saves feature and model specs (json files) to `/om2/user/maedbh/healthy_brain_network/features` and `/om2/user/maedbh/healthy_brain_network/model_specs`
         run_models_first (bool): default is True. Runs main predictive modeling routine: uses `https://github.com/nipype/pydra-ml` 
         run_models_second (bool): default is True. Wrapper function applied to output from `pydra-ml` to create model summaries, which are saved in `/nese/mit/group/sig/projects/hbn/phenotype/interim/models` 
             on openmind I use: '/home/maedbh/.cache/pydra-ml/cache-wf/
@@ -83,68 +141,28 @@ def run(
             on local I use '/Users/maedbhking/pydra-ml/cache-wf/'
     """
     from hbn import io
-    import os
-    import glob
-    from hbn.constants import Defaults
-    from hbn.data import make_dataset
-    from hbn.features import build_features
-    from hbn.models import first_level_modeling as first_level
-    from hbn.models import second_level_modeling as second_level
 
     # make cachedir if it doesn't exist
     io.make_dirs(cachedir)
 
     # FIRST STEP
     if parse_data:
-        make_dataset.parse_phenotypic_data(assessment=['Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'])
-    
+       parse_data()
+
     # SECOND STEP 
-    make_dataset.make_summary()
-    make_dataset.make_train_test_splits()
+    make_train_test(out_dir=Defaults.MODEL_SPEC_DIR)
 
     # THIRD STEP
-    if feature_specs:
-        parent_spec = os.path.join(Defaults.FEATURE_DIR, 'features-parent_spec.json')
-        feature_fpaths = build_features.make_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR)
-        for feature_spec in feature_fpaths:
-            build_features.make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR)
-
-    # FOURTH STEP
-    if model_specs:
-        # grab feature specs and make model specs
-        feature_paths = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*.json'))
-        participants_files = glob.glob(os.path.join(Defaults.MODEL_SPEC_DIR, '*train*.csv'))
-        for fpath in feature_paths:
-            for participants in participants_files:
-                try:
-                    first_level.make_model_spec(feature_spec=fpath, participants=participants, out_dir=Defaults.MODEL_SPEC_DIR)
-                except:
-                    pass
+    if specs:
+        make_specs()
 
     # RUNNING MODELS (FIRST LEVEL)
     if run_models_first:
-        # grab model specs and run modeling routine
-        specs = glob.glob(os.path.join(Defaults.MODEL_SPEC_DIR, '*classifier*DX_01_Cat_binarize*json'))
-        for model_spec in specs:
-
-            # load model info
-            model_info = io.read_json(model_spec)
-            
-            # get features & participants
-            features = os.path.join(Defaults.FEATURE_DIR, model_info['filename'])
-            participants = os.path.join(Defaults.MODEL_SPEC_DIR, model_info['participants'])
-
-            first_level.run_pipeline(
-                model_spec=model_spec, 
-                features=features,
-                participants=participants,
-                cachedir=cachedir, 
-                out_dir=Defaults.MODEL_DIR)
+        run_models_first_level()
     
     # RUNNING MODELS (SECOND LEVEL)
     if run_models_second:
-        second_level.get_features()
-        second_level.get_model_summary()
+        run_models_second_level()
 
 if __name__ == "__main__":
     run()

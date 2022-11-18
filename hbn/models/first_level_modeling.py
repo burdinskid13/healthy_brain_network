@@ -3,6 +3,7 @@ from hbn.constants import Defaults
 
 def make_model_spec(
     feature_spec, 
+    target_spec,
     participants,
     out_dir=Defaults.MODEL_SPEC_DIR
     ):
@@ -10,7 +11,8 @@ def make_model_spec(
     model specs are saved out to `out_dir`
     Args:
         feature_spec (str): full path to feature spec file
-        participants (str): participant file name (should NOT be full path to filename)
+        target_spec (str): full path to target spec file
+        participants (str): full path to participant file name 
         out_dir (str): full path to model spec output directory. default is `Defaults.MODEL_SPEC_DIR`
     Returns:
         full outpath to `model_spec` JSON
@@ -19,71 +21,60 @@ def make_model_spec(
     from hbn import io
     from pathlib import Path
 
-    # hardcode classifiers
-    clfs = {'categorical': [
-                    ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}],
-                    ],
-            'numeric': [
-                ["sklearn.linear_model","RidgeCV",{"fit_intercept": False}],
-                ]
-            }
-    metrics = {'categorical': 
-                ['roc_auc_score', 'f1_score', 'precision_score', 'recall_score'],
-               'numeric': 
-               ["explained_variance_score", "mean_squared_error", "mean_absolute_error"]
-            }
-
     # load from json file
-    feature_info = io.read_json(feature_spec)
-
-    # get target type, anything other than 'numeric' is considered 'categorical' for modeling purposes
-    # 'numeric' = regression; 'categorical' = 'classifier'
-    target_type = feature_info['target_y']['transform']
-    if target_type!='numeric':
-        target_type = 'categorical'
-        model = 'classifier'
-    else:
-         model = 'regression'
-
-    # get classifier
-    clf = clfs[target_type]
-
-    # get metrics
-    metric = metrics[target_type]
+    target_info = io.read_json(target_spec)
 
     # define spec file
     spec_info = {
-            "filename": feature_info['filename'], 
-            "participants": participants, # list of identfiers
-            "x_indices": [],
-            "target_vars": [feature_info['target_y']['outname']],
-            "group_var": None,
-            "n_splits": 50,
-            "test_size": 0.2,
-            "clf_info": clf,
-            "permute": [True, False],
-            "gen_feature_importance": True,
-            "gen_permutation_importance": True,
-            "permutation_importance_n_repeats": 5,
-            "permutation_importance_scoring": "accuracy",
-            "gen_shap": False,
-            "nsamples": "auto",
-            "l1_reg": "aic",
-            "plot_top_n_shap": 10,
-            "metrics": metric
+                "filename": "",
+                "features":  feature_spec['filename'],
+                "target": target_spec['filename'],
+                "participants": participants,
+                "x_indices": [],
+                "target_vars": [target_info['outname']],
+                "group_var": None,
+                "n_splits": 50,
+                "test_size": 0.2,
+                "clf_info": [
+                            ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}],
+                            ],
+                "permute": [True, False],
+                "gen_feature_importance": True,
+                "gen_permutation_importance": True,
+                "permutation_importance_n_repeats": 5,
+                "permutation_importance_scoring": "accuracy",
+                "gen_shap": False,
+                "nsamples": "auto",
+                "l1_reg": "aic",
+                "plot_top_n_shap": 10,
+                "metrics": ['roc_auc_score', 'f1_score', 'precision_score', 'recall_score']
             }
     
     # write out model spec to disk ../model_specs/
-    spec_name = model + Path(feature_spec).name.replace('features', '').replace('-spec', '')
+    spec_name = 'classifier' + Path(feature_spec).name.replace('features', '').replace('-spec', '')
     io.save_dict_as_JSON(fpath=os.path.join(out_dir, spec_name), data_dict=spec_info)
     print(f'save model specs to file for {spec_name}')
 
     return os.path.join(out_dir, spec_name)
 
 
+def make_features(spec_info):
+    import os
+    import pandas as pd
+   
+    # load dataframes for features and participants
+    df_features = pd.read_csv(spec_info["features"])
+    df_target = pd.read_csv(spec_info["target"])
+    df_participants = pd.DataFrame(spec_info['participants'], columns = ['Identifiers'])
+
+    # make new feature file, merging on common 'Identifiers', and save out file temporarily
+    features_final = df_features.merge(df_participants, on='Identifiers').drop(columns=['Identifiers'])
+
+    return features_final
+
+
 def run_pipeline(
     model_spec, 
-    features,
     cachedir='/home/maedbh/.cache/pydra-ml/cache-wf/',
     out_dir=''):
     """ run predictive models using pydra-ml. must provide `model_spec` json and `filename` in `model_spec` must be a csv of features saved in ../features/
@@ -112,22 +103,14 @@ def run_pipeline(
     # load model spec json
     spec_info = io.read_json(model_spec)
     
-    # get features
-    if isinstance(features, str):
-        features = os.path.join(features)
+    # get final features for model
+    dataframe = make_features(spec_info)
 
-    # load dataframes for features and participants
-    df_features = pd.read_csv(features)
-    df_participants = pd.DataFrame(spec_info['participants'], columns = ['Identifiers'])
-
-    # make new feature file, merging on common 'Identifiers', and save out file temporarily
-    features_final = df_features.merge(df_participants, on='Identifiers').drop(columns=['Identifiers'])
     random_number = round(random.random()*1000000000)
-    features_final.reset_index(drop=True).to_csv(os.path.join(cachedir, f'temporary_features_{random_number}.csv'), index=False)
-    print('features_final', features_final)
+    dataframe.reset_index(drop=True).to_csv(os.path.join(cachedir, f'temporary_features_{random_number}.csv'), index=False)
     
     spec_info['filename'] = os.path.join(cachedir, f'temporary_features_{random_number}.csv') # full path to csv file
-    spec_info['x_indices'] = range(1,len(features_final.columns)-1)
+    spec_info['x_indices'] = range(1,len(dataframe.columns)-1)
 
     print(f'running {model_spec}...\n')
     print("spec info", spec_info)
