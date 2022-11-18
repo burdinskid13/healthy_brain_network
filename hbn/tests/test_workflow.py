@@ -48,7 +48,7 @@ def run(
     feature_spec = os.path.join(TEST_DATA, feature_spec)
     features = build_features.make_feature_files(feature_spec, out_dir=TEST_DATA)
 
-    list_of_ids = build_features.select_participants(diagnoses=['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv'])
+    # list_of_ids = build_features.select_participants(diagnoses=['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv'])
 
     # make model spec file
     model_spec = first_level.make_model_spec(feature_spec, participants=list_of_ids, out_dir=TEST_DATA)

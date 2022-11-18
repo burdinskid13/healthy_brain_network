@@ -257,24 +257,6 @@ def make_target_files(target_spec, out_dir=Defaults.FEATURE_DIR):
         return None
 
 
-def select_participants(diagnoses):
-    """make list of participants, combining different diagnoses
-
-    Args: 
-        diagnoses (list): list of participant csv files 
-    Returns:
-        returns combined list of participants 
-    """
-    participants = []
-    
-    for diagnosis in diagnoses:
-        diagnosis_csv = os.path.join(Defaults.MODEL_SPEC_DIR, diagnosis)
-        diagnosis_list = pd.read_csv(diagnosis_csv)["Identifiers"].values.tolist()
-        participants += diagnosis_list
-
-    return participants
-
-
 def make_feature_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
     """make feature sets (json spec files + feature csv files)
 

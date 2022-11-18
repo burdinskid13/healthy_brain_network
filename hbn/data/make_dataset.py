@@ -149,7 +149,7 @@ def get_participants(split='train', disorders=['ADHD-Combined Type', 'ADHD-Inatt
     for disorder in disorders:
         for sp in split:
             name = '_'.join(re.split(r'_|,|/| ', disorder))
-            fname = os.path.join(path, f'{sp}_participants-{name}.csv')
+            fname = os.path.join(path, sp, f'{sp}_participants-{name}.csv')
             if os.path.isfile(fname):
                 df = pd.read_csv(fname)
                 df_all = pd.concat([df, df_all])
