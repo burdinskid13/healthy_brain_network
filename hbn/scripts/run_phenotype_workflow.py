@@ -1,52 +1,78 @@
-import os
 import click
-from pathlib import Path
-
-from hbn.constants import Defaults
-
 import warnings
 warnings.filterwarnings("ignore")
 
 
-def parse_data():
+def preprocess_data():
+    import os
+    from hbn.constants import Defaults
     from hbn.data import make_dataset
 
-    make_dataset.parse_phenotypic_data(
-        assessment=['Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures']
-        )
+    assessments = ['Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures']
+    parent_file = os.path.join(Defaults, 'data-2022-08-24T16_37_18.263Z.csv')
 
+    for assessment in assessments:
+        fdir = os.path.join(Defaults.PHENO_DIR, '_'.join(assessment.split()))
+        if not os.path.isdir(fdir):
+            make_dataset.parse_phenotypic_data(
+                parent_file=parent_file,
+                assessment=assessment, 
+                out_dir=Defaults.PHENO_DIR
+                )
 
-def make_train_test(out_dir=Defaults.MODEL_SPEC_DIR):
-    from hbn.data import make_dataset
-
+    # creates new clinical diagnosis file
     make_dataset.make_summary()
-    make_dataset.make_train_test_splits(out_dir=out_dir)
 
 
 def make_specs():
+    import os
     import glob
+    from hbn import io
+    from hbn.data import make_dataset
     from hbn.features import build_features
     from hbn.models import first_level_modeling as first_level
+    from hbn.constants import Defaults
+
+    # makes test/train splits
+    make_dataset.make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR)
 
     # make parent spec file for features
     parent_spec = build_features.make_parent_spec(out_dir=Defaults.FEATURE_DIR)
     
     # make feature and target spec files
-    build_features.make_feature_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR)
-    build_features.make_target_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR)
+    build_features.make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
+    build_features.make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
 
-    feature_paths = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*features*.json'))
-    target_paths = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*targets*.json'))
-    participant_paths = os.path.join(Defaults.MODEL_SPEC_DIR, 'train', 'model-participants.json')
-    for (feature, target, participants) in zip(feature_paths, target_paths, participant_paths):
-        first_level.make_model_spec(feature_spec=feature, 
+    # makes model specs using feature, target, and participant specs
+    # some model functionality (e.g., classifiers) is hardcoded in `hbn.first_level_modeling.make_model_spec`
+    features = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*features*.json'))
+    targets = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*target*.json'))
+    
+    # which combination of participants do we want to include in model? all options are saved in Defaults.MODEL_SPEC_DIR
+    participants = ["train_participants-ADHD.csv", "train_participants-No_Diagnosis_Given.csv"]
+    participants = [os.path.join(Defaults.MODEL_SPEC_DIR, 'train', p) for p in participants]
+
+    # make multiple model specs using features, target, and participant specs 
+    for (feature, target) in zip(features, targets):
+
+        # make features dataframe
+        feature_path = first_level.make_model_features(feature_spec=feature, 
                                     target_spec=target,
-                                    participants=participants,
+                                    participant_files=participants)
+
+        # make model spec file
+        first_level.make_model_spec(features=feature_path,
                                     out_dir=Defaults.MODEL_SPEC_DIR
                                     )
 
 
-def run_models_first_level():
+def run_models_first_level(cachedir):
+    import glob
+    import os
+    from hbn import io
+    from hbn.constants import Defaults
+    from hbn.models import first_level_modeling as first_level
+
     # grab model specs and run modeling routine
     specs = glob.glob(os.path.join(Defaults.MODEL_SPEC_DIR, '*classifier*DX_01_Cat_binarize*json'))
     for model_spec in specs:
@@ -72,6 +98,10 @@ def run_models_second_level():
 
     Saves output in `../interim/models/`
     """
+    import os
+    import glob
+    from pathlib import Path
+    from hbn.constants import Defaults
     from hbn.models import second_level_modeling as second_level
 
     # grab list of models
@@ -116,15 +146,15 @@ def run_models_second_level():
 
 @click.command()
 @click.option("--cachedir")
-@click.option("--parse-data/--no-parse-data", default=False)
+@click.option("--parse/--no-parse", default=True)
 @click.option("--specs/--no-specs", default=True)
-@click.option("--run-models-first/--no-run-models-first", default=False)
+@click.option("--run-models-first/--no-run-models-first", default=True)
 @click.option("--run-models-second/--no-run-models-second", default=False)
 
 def run(
-    cachedir='/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/',
-    parse_data=False,
-    specs=False,
+    cachedir='/home/maedbh/.cache/pydra-ml/cache-wf/',
+    preprocess=True,
+    specs=True,
     run_models_first=True,
     run_models_second=True,
     ):
@@ -132,25 +162,18 @@ def run(
 
     Args: 
         cachedir (str): full path to model cache directory.
-        parse_data (bool): parse data from `/nese/mit/group/sig/projects/hbn/phenotype/data-2022-08-24T16_37_18.263Z.csv`. default is False because data have already been parsed and saved on OpenMind.
+        preprocess (bool): parse data from `/nese/mit/group/sig/projects/hbn/phenotype/data-2022-08-24T16_37_18.263Z.csv`. default is True. If data have already been parsed and saved on OpenMind, then parsing isn't re-done. However, nw summary files are created each time this function is run. 
         specs (bool): default is True. Saves feature and model specs (json files) to `/om2/user/maedbh/healthy_brain_network/features` and `/om2/user/maedbh/healthy_brain_network/model_specs`
         run_models_first (bool): default is True. Runs main predictive modeling routine: uses `https://github.com/nipype/pydra-ml` 
         run_models_second (bool): default is True. Wrapper function applied to output from `pydra-ml` to create model summaries, which are saved in `/nese/mit/group/sig/projects/hbn/phenotype/interim/models` 
-            on openmind I use: '/home/maedbh/.cache/pydra-ml/cache-wf/
+            on openmind I use: '/home/maedbh/.cache/pydra-ml/cache-wf/'
             on savio I use '/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/'
             on local I use '/Users/maedbhking/pydra-ml/cache-wf/'
     """
-    from hbn import io
-
-    # make cachedir if it doesn't exist
-    io.make_dirs(cachedir)
 
     # FIRST STEP
-    if parse_data:
-       parse_data()
-
-    # SECOND STEP 
-    make_train_test(out_dir=Defaults.MODEL_SPEC_DIR)
+    if preprocess:
+       preprocess_data()
 
     # THIRD STEP
     if specs:
@@ -158,7 +181,7 @@ def run(
 
     # RUNNING MODELS (FIRST LEVEL)
     if run_models_first:
-        run_models_first_level()
+        run_models_first_level(cachedir=cachedir)
     
     # RUNNING MODELS (SECOND LEVEL)
     if run_models_second:

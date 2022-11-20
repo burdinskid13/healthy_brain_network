@@ -96,12 +96,15 @@ def get_features(
 
 
 def get_targets(
-    target_info
+    target_info,
+    participants=None
     ):
     """Return target dataframe using arguments in `target_info` (data loaded from target spec file)
 
     Args:
-        target_info (dict): dictionary loaded from target spec file (e.g., targets-DX_01_Cat-spec.json)
+        target_info (dict): dictionary loaded from target spec file (e.g., target_DX_01_Cat_binarize-spec.json)
+        participants (list of str or None): (optional) if participants are passed, then returned dataframe filters for 'participants'
+
     Returns:
         dataframe (pd dataframe)
     """
@@ -117,6 +120,11 @@ def get_targets(
                 domains=[target_info['domain']],
                 measures=[target_info['measure']]
                 )
+
+    # optionally filter dataframe to contain certain participants
+    if participants is not None:
+        participants_df = pd.DataFrame(participants, columns=['Identifiers'])
+        df = df.merge(participants_df, on='Identifiers')
 
     # category of target
     col = target_info['target_column']
@@ -257,8 +265,8 @@ def make_target_files(target_spec, out_dir=Defaults.FEATURE_DIR):
         return None
 
 
-def make_feature_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
-    """make feature sets (json spec files + feature csv files)
+def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
+    """make feature sets (json spec files)
 
     Args: 
         parent_spec (str): full path to master spec file. saved in `out_dir`
@@ -295,7 +303,8 @@ def make_feature_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
         spec_filename = _make_filename(data)
 
         # define feature spec file
-        spec_info = {"filename": spec_filename + '.csv', 
+        spec_info = {
+                    # "filename": spec_filename + '.csv', 
                     "assessment": data['assessment'],
                     "domains": data['domains'],
                     "measures": data['measures'],
@@ -312,8 +321,8 @@ def make_feature_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
     return spec_files
 
 
-def make_target_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
-    """make target sets (json spec files + csv files)
+def make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
+    """make target sets (json spec files)
 
     Args: 
         parent_spec (str): full path to master spec file. saved in `out_dir`
@@ -333,7 +342,8 @@ def make_target_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
         spec_filename = 'target_' + data["outname"]
 
         # define target spec file
-        spec_info = {"filename":  spec_filename +'.csv',
+        spec_info = {
+                    # "filename":  spec_filename +'.csv',
                     "assessment": data["assessment"],
                     "domain": data["domain"],
                     "measure": data["measure"],
