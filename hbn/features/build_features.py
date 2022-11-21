@@ -189,82 +189,6 @@ def preprocess(
     return dataframe
 
 
-def make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR):
-    """makes features from spec file, preprocesses, and saves to `out_dir`
-
-    Args: 
-        feature_spec (str): full path to feature spec file
-        out_dir (str): save features csv to path. default is `Defaults.FEATURE_DIR`
-    Returns:   
-        features_out (full path to features file)
-    """
-    import os
-    from hbn import io
-
-    feature_info = io.read_json(feature_spec)
-
-    # get features (X)
-    features = get_features(
-                assessment=feature_info['assessment'],
-                domains=[feature_info['domains']],
-                measures=[feature_info['measures']],
-                min_num_participants=feature_info['min_num_participants']
-                )
-
-    # only process dataframe that has at least one feature
-    if len(features.columns)>1:
-
-        # preprocess
-        features_processed = preprocess(
-                        dataframe=features,   
-                        clf_info=feature_info['preprocessing'],
-                        cols_to_ignore=['Identifiers']
-                        )
-        
-        features_out = os.path.join(out_dir, feature_info['filename'])
-
-        # save to disk separately for features
-        features_processed.reset_index(drop=True).to_csv(features_out, index=False)
-
-        return features_out
-    else:
-        # remove spec file (because there won't be a corresponding feature csv)
-        os.remove(feature_spec)
-        return None
-
-
-def make_target_files(target_spec, out_dir=Defaults.FEATURE_DIR):
-    """makes features from spec file, preprocesses, and saves to `out_dir`
-
-    Args: 
-        feature_spec (str): full path to feature spec file
-        out_dir (str): save features csv to path. default is `Defaults.FEATURE_DIR`
-    Returns:   
-        features_out (full path to features file), target_out (full path to target file)
-    """
-    import os
-    from hbn import io
-
-    target_info = io.read_json(target_spec)
-
-    # get target(s)
-    targets = get_targets(target_info=target_info)
-
-    # only process dataframe that has at least one row
-    if len(targets)>1:
-        
-        target_out = os.path.join(out_dir, 'targets-' + target_info['outname'] + '.csv')
-
-        # save to disk separately for target
-        targets.reset_index(drop=True).to_csv(target_out, index=False)
-
-        return target_out
-    else:
-        # remove spec file (because there won't be a corresponding target csv)
-        os.remove(target_spec)
-        return None
-
-
 def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
     """make feature sets (json spec files)
 
@@ -395,38 +319,38 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "target_column": "DX_01",
                         "transform": "binarize",
                         "outname": "DX_01_binarize"
-                        },
-                        {"assessment": "Clinical Measures",
-                        "domain": None,
-                        "measure": "Clinical Diagnosis Demographics",
-                        "target_column": "DX_01",
-                        "transform": "factorize",
-                        "outname": "DX_01_factorize"
-                        },
-                        {"assessment": "Clinical Measures",
-                        "domain": None,
-                        "measure": "Children's Global Assessment Scale",
-                        "target_column": "CGAS,CGAS_Score",
-                        "transform": "numeric",
-                        "outname": "CGAS,CGAS_Score_numeric"
                         }
+                        # {"assessment": "Clinical Measures",
+                        # "domain": None,
+                        # "measure": "Clinical Diagnosis Demographics",
+                        # "target_column": "DX_01",
+                        # "transform": "factorize",
+                        # "outname": "DX_01_factorize"
+                        # },
+                        # {"assessment": "Clinical Measures",
+                        # "domain": None,
+                        # "measure": "Children's Global Assessment Scale",
+                        # "target_column": "CGAS,CGAS_Score",
+                        # "transform": "numeric",
+                        # "outname": "CGAS,CGAS_Score_numeric"
+                        # }
                     ],
                 },
-            "preprocessing": {
-                "numeric": [
-                    [
-                        "sklearn.impute",
-                        "SimpleImputer",
-                        {
-                            "strategy": "mean"
-                        }
+                "preprocessing": {
+                    "numeric": [
+                        [
+                            "sklearn.impute",
+                            "SimpleImputer",
+                            {
+                                "strategy": "mean"
+                            }
+                        ],
+                        [
+                            "sklearn.preprocessing",
+                            "StandardScaler",
+                            {}
+                        ]
                     ],
-                    [
-                        "sklearn.preprocessing",
-                        "StandardScaler",
-                        {}
-                    ]
-                ],
                 # "category": [
                 #     [
                 #         "sklearn.impute", 
