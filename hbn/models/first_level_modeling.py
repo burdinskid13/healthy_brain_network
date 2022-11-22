@@ -21,7 +21,6 @@ def make_model_spec(
     """
     import re
     import os
-    import random
     from hbn import io
     from pathlib import Path
 
@@ -60,8 +59,7 @@ def make_model_spec(
             }
     
     # write out model spec to disk ../model_specs/
-    random_number = round(random.random()*1000000000)
-    spec_name = 'classifier-' + '_'.join(re.split(r'_|,|/| ', feature_info['measures'])) + '-' + target_info['outname'] + f'-{random_number}-spec.json'
+    spec_name = 'classifier-' + '_'.join(re.split(r'_|,|/| ', feature_info['measures'])) + '-' + target_info['outname'] + '-spec.json'
     io.save_dict_as_JSON(fpath=os.path.join(out_dir, spec_name), data_dict=spec_info)
     print(f'save model specs to file for {spec_name}')
 

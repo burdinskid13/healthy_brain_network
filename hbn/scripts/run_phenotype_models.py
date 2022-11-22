@@ -56,11 +56,9 @@ def run_models_second_level():
 
 @click.command()
 @click.option("--cachedir")
-@click.option("--model_spec")
 
 def run(
-    model_spec,
-    cachedir='/home/maedbh/.cache/pydra-ml/cache-wf/',
+    cachedir='/om2/user/maedbh/.cache/pydra-ml/cache-wf/',
     ):
     """run first level modeling pipeline
 
@@ -68,16 +66,21 @@ def run(
         model_spec (str): model spec filename (not full path)
         cachedir (str): full path to  cache directory for pydra-ml intermediary outputs
     """
+    import glob
     import os
     from hbn.constants import Defaults
     from hbn.models import first_level_modeling as first_level
 
-    first_level.run_pipeline(
-        model_spec=model_spec, 
-        spec_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'files'), 
-        out_dir=Defaults.MODEL_DIR,
-        cachedir=cachedir
-        )
+    specs = glob.glob(os.path.join(Defaults.MODEL_SPEC_DIR, '*classifier*'))
+
+    # loop over model specs
+    for model_spec in specs:
+        first_level.run_pipeline(
+            model_spec=model_spec, 
+            spec_dir=Defaults.MODEL_SPEC_DIR, 
+            out_dir=Defaults.MODEL_DIR,
+            cachedir=cachedir
+            )
 
 if __name__ == "__main__":
     run()

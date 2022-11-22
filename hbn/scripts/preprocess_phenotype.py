@@ -3,6 +3,9 @@ warnings.filterwarnings("ignore")
 
 
 def run():
+    """Preprocess phenotypic data. Parses data from main file if it hasn't already been done.
+    Creates new summary diagnosis file
+    """
     import os
     from hbn.constants import Defaults
     from hbn.data import make_dataset
@@ -21,9 +24,17 @@ def run():
                 )
         print('phenotypic data have already been parsed...')
 
+    # create new questionnaires from Parents Intake Interview
+    make_dataset.parse_intake_interview()
+
     # creates new clinical diagnosis file
-    make_dataset.make_summary()
+    df = make_dataset.make_summary()
     print('created new clinical diagnosis file')
+
+    # makes test/train splits
+    make_dataset.make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR)
+
+    return df
 
 
 if __name__ == "__main__":
