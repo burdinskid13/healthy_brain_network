@@ -199,6 +199,26 @@ def define_new_categories(dataframe):
     return df_concat
 
 
+def parse_intake_interview():
+    import os
+    import pandas as pd
+    from hbn.constants import Defaults
+
+    fdir = os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Interview_of_Emotional_and_Psychological_Function')
+
+    # load intake interview
+    fpath = os.path.join(fdir, 'Intake_Interview.csv')
+
+    new_measures = ['Lang', 'FamHx,', 'EduHx', 'DevHx', 'Demos_Fam', 'FamHx_RDC', 'TxHx']
+
+    for measure in new_measures:
+        df = pd.read_csv(fpath)
+        identifiers = df[['Identifiers']]
+        df_out =  df.filter(like=measure)
+        df_out = pd.concat([identifiers, df_out], axis=1).reset_index(drop=True)
+        df_out.to_csv(os.path.join(fdir, f'Intake_Interview_PreInt_{measure}.csv'), index=False)
+
+
 def parse_phenotypic_data(
     parent_file=None,
     assessment='Child Measures', 

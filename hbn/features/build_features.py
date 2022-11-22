@@ -584,6 +584,20 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
     else:
         measures = info['Measure']
 
+    # add an exception here if the domain is `Interview_of_Emotional_and_Psychological_Function`
+    # then additional parsed intake interview measures need to be added
+    if all((assessment=='Parent Measures', domain=='Interview of Emotional and Psychological Function')):
+        try:
+            measures.extend(['Intake Interview PreInt Demos Fam',
+                            'Intake Interview PreInt DevHx',
+                            'Intake Interview PreInt EduHx',
+                            'Intake Interview PreInt FamHx',
+                            'Intake Interview PreInt FamHx RDC',
+                            'Intake Interview PreInt Lang',
+                            'Intake Interview PreInt TxHx'])
+        except:
+            pass
+
     return {domain: measures}
 
 

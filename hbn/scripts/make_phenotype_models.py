@@ -3,7 +3,7 @@ warnings.filterwarnings("ignore")
 
 from hbn.constants import Defaults
 
-def run(
+def make_spec(
     feature_spec,
     target_spec,
     participants,
@@ -32,7 +32,7 @@ def run(
     print(f'trying to make new filename: {filename}')
 
     model_spec = None
-    try: 
+    try:
         # make multiple model specs using features, target, and participant specs 
         dataframe = first_level.make_model_features(
                             feature_spec=feature_spec, 
@@ -43,8 +43,8 @@ def run(
         target_name = io.read_json(target_spec)['outname']
 
         # set certain conditionals for model spec to be run and model features to be created
-        # there have to be more than one column, more than one unique target, more than 100 participants
-        conditionals = all((dataframe.shape[1]>1, len(dataframe[target_name].unique())>1, dataframe.shape[0]>100))
+        # there have to be more than one column, more than one unique target, more than 100 participants and fewer than 1000 features
+        conditionals = all((dataframe.shape[1]>1, len(dataframe[target_name].unique())>1, dataframe.shape[0]>100, dataframe.shape[1]<1000))
         
         if conditionals:  
             # make model spec file
@@ -61,6 +61,34 @@ def run(
     except:
         print(f'failed to make model specs for {filename}')
 
+    return model_spec
+
+
+def run():
+    import glob
+    import os
+    from hbn.constants import Defaults
+
+    # get features
+    features = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*features*'))
+
+    # get full paths to participants
+    participants = ['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv']
+    all_participants = []
+    for participant in participants:
+        all_participants.append(os.path.join(Defaults.MODEL_SPEC_DIR, 'train', participant))
+
+    # get target
+    target = 'target_DX_01_Cat_binarize-spec.json'
+
+    for feature in features:
+        model_spec = make_spec(
+            feature_spec=os.path.join(Defaults.FEATURE_DIR, feature),
+            target_spec=os.path.join(Defaults.FEATURE_DIR, target),
+            participants=all_participants,
+            out_dir=Defaults.MODEL_SPEC_DIR
+            )
+        
     return model_spec
 
 if __name__ == "__main__":

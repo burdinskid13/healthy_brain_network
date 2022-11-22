@@ -3,12 +3,8 @@ warnings.filterwarnings("ignore")
 
 
 def run():
-    from hbn.data import make_dataset
     from hbn.features import build_features
     from hbn.constants import Defaults
-    
-    # makes test/train splits
-    make_dataset.make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR)
 
     # make parent spec file for features
     parent_spec = build_features.make_parent_spec(out_dir=Defaults.FEATURE_DIR)

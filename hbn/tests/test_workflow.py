@@ -45,7 +45,7 @@ def run(
 
     # FOURTH STEP
     first_level.run_pipeline(
-        model_spec=os.path.join(Defaults.MODEL_SPEC_DIR, model_spec), 
+        model_spec=model_spec, 
         spec_dir= Defaults.MODEL_SPEC_DIR, 
         out_dir=os.path.join(Defaults.TEST_DIR, 'test_data'),
         cachedir=cachedir

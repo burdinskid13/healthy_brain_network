@@ -19,62 +19,56 @@ ipython kernel install --name "hbn" --user
 ```
 
 ## Setting Paths and Accessing Data
+> see [OpenMind Setup](https://maedbhk.github.io/MIT-Projects/mentorship/openmind.html) for more detailed instructions on setting paths on OpenMind
+* Data are stored on OpenMind here: **/om2/user/maedbh/hbn_data**
+* Create symlinks from this folder (or copy over **hbn_data/raw** folder) to your directory so you can read/write new files to your own path
+Example Command:
+```
+cd /om2/user/"username"
+mkdir hbn_data
+cp -R /om2/user/maedbh/hbn_data/raw /om2/user/"username"/hbn_data/
+```
 * Go to **constants.py** and set __DATA_DIR__ to be the fullpath to your top-level directory of **hbn_data**
+> For example: DATA_DIR = PosixPath("/om2/user/"username"/hbn_data")
 
-* Create symlinks from this folder (or copy over **hbn_data** folder) to your directory so you can read/write new files to your own path
-
-```
-cp -R /om2/user/maedbh/hbn_data /om2/user/"username"/ 
-```
 
 Data Exploration
 ------------
 * To explore and visualize clinical diagnoses, check out **notebooks/clinical_dx.ipynb**
-    * if you're having difficulty opening notebooks on OpenMind, then you can always explore the data yourself by loading dataframe and using seaborn or plotly to do some visualizations
-    ```
-    from hbn.data import make_dataset
-    
-    df = make_dataset.make_summary()
-    ```
+* To explore any of the phenotypic measures yourself, check out **notebooks/data-exploration.ipynb**
 * To visualize output of predictive modeling, check out **notebooks/phenotype_models.ipynb**
+
+* You can explore the HBN data dictionary `Release9_DataDic`, which is located on OpenMind at **hbn_data/raw/phenotype**
 
 Features
 ------------
-* features (including X variables and y target variable) are created from a **spec file** using the following command:
+* feature specs are created using the following command:
     ```
-    import os
-    from hbn.features import build_features 
+    cd /om2/user/"username"/healthy_brain_network/hbn/scripts
 
-    TEST_DATA = os.path.join(Defaults.TEST_DIR, 'test_data')
+    # preprocess phenotypic data
+    python3 preprocess_phenotype.py
 
-    # example feature_spec
-    feature_spec = os.path.join(TEST_DATA, 'features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json')
-
-    # make feature csv
-    build_features.make_feature_files(feature_spec, out_dir=TEST_DATA)
+    # make features for modeling
+    python3 make_phenotype_features.py
     ```
-* for an example of a feature spec file (.json) and features file (.csv), see example files in **hbn/tests/data** with a more detailed description in **hbn/tests/README**
 
 Predictive Modeling
 ------------
 * Model spec files (.json) are created using the following command:
     ```
-    from hbn.models import first_level_modeling
+    # make model specs
+    python3 make_phenotype_models.py
 
-    TEST_DATA = os.path.join(Defaults.TEST_DIR, 'test_data')
-    
-    # example feature_spec
-    feature_spec = os.path.join(TEST_DATA, features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json')
-    
-    # make model spec file
-    model_spec = first_level.make_model_spec(feature_spec, participants='train_participants-ADHD.csv', out_dir=TEST_DATA)
+    # run model pipeline
+    python3 run_phenotype_models.py --model_spec --cachedir=/om2/users/"username"/bin/.cache/pydra-ml/cache-wf/
     ``` 
-* For an example of a model spec file (.json), see example file in **hbn/tests/data** with a more detailed description in **README**
+
 * To run a predictive modeling script on OpenMind: 
-    * 1) `cd hpc_scripts` 
-    * 2) `vim run_phenotype_workflow_openmind.sh` and change the **cachedir** input to point to your cache directory 
-    * 3) Run the bash script: `sbatch run_phenotype_workflow_openmind.sh`
-* The bash script executes the Python script **test_workflow.py**
+    * 1) `cd  /om2/user/"username"/healthy_brain_network/hpc_scripts` 
+    * 2) `vim test_phenotype_workflow.sh` and change the username
+    * 3) Run the bash script: `sbatch test_phenotype_workflow.sh`
+* The bash script executes the Python script **hbn/tests/test_workflow.py**
 
 Project Organization
 ------------
