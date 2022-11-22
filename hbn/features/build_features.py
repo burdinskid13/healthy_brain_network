@@ -96,12 +96,15 @@ def get_features(
 
 
 def get_targets(
-    target_info
+    target_info,
+    participants=None
     ):
     """Return target dataframe using arguments in `target_info` (data loaded from target spec file)
 
     Args:
-        target_info (dict): dictionary loaded from target spec file (e.g., targets-DX_01_Cat-spec.json)
+        target_info (dict): dictionary loaded from target spec file (e.g., target_DX_01_Cat_binarize-spec.json)
+        participants (list of str or None): (optional) if list of identifiers are passed, then returned dataframe filters for 'participants'
+
     Returns:
         dataframe (pd dataframe)
     """
@@ -117,6 +120,11 @@ def get_targets(
                 domains=[target_info['domain']],
                 measures=[target_info['measure']]
                 )
+
+    # optionally filter dataframe to contain certain participants
+    if participants is not None:
+        participants_df = pd.DataFrame(participants, columns=['Identifiers'])
+        df = df.merge(participants_df, on='Identifiers')
 
     # category of target
     col = target_info['target_column']
@@ -181,84 +189,8 @@ def preprocess(
     return dataframe
 
 
-def make_feature_files(feature_spec, out_dir=Defaults.FEATURE_DIR):
-    """makes features from spec file, preprocesses, and saves to `out_dir`
-
-    Args: 
-        feature_spec (str): full path to feature spec file
-        out_dir (str): save features csv to path. default is `Defaults.FEATURE_DIR`
-    Returns:   
-        features_out (full path to features file)
-    """
-    import os
-    from hbn import io
-
-    feature_info = io.read_json(feature_spec)
-
-    # get features (X)
-    features = get_features(
-                assessment=feature_info['assessment'],
-                domains=[feature_info['domains']],
-                measures=[feature_info['measures']],
-                min_num_participants=feature_info['min_num_participants']
-                )
-
-    # only process dataframe that has at least one feature
-    if len(features.columns)>1:
-
-        # preprocess
-        features_processed = preprocess(
-                        dataframe=features,   
-                        clf_info=feature_info['preprocessing'],
-                        cols_to_ignore=['Identifiers']
-                        )
-        
-        features_out = os.path.join(out_dir, feature_info['filename'])
-
-        # save to disk separately for features
-        features_processed.reset_index(drop=True).to_csv(features_out, index=False)
-
-        return features_out
-    else:
-        # remove spec file (because there won't be a corresponding feature csv)
-        os.remove(feature_spec)
-        return None
-
-
-def make_target_files(target_spec, out_dir=Defaults.FEATURE_DIR):
-    """makes features from spec file, preprocesses, and saves to `out_dir`
-
-    Args: 
-        feature_spec (str): full path to feature spec file
-        out_dir (str): save features csv to path. default is `Defaults.FEATURE_DIR`
-    Returns:   
-        features_out (full path to features file), target_out (full path to target file)
-    """
-    import os
-    from hbn import io
-
-    target_info = io.read_json(target_spec)
-
-    # get target(s)
-    targets = get_targets(target_info=target_info)
-
-    # only process dataframe that has at least one row
-    if len(targets)>1:
-        
-        target_out = os.path.join(out_dir, 'targets-' + target_info['outname'] + '.csv')
-
-        # save to disk separately for target
-        targets.reset_index(drop=True).to_csv(target_out, index=False)
-
-        return target_out
-    else:
-        # remove spec file (because there won't be a corresponding target csv)
-        os.remove(target_spec)
-        return None
-
-
-def make_feature_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
-    """make feature sets (json spec files + feature csv files)
+def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
+    """make feature sets (json spec files)
 
     Args: 
         parent_spec (str): full path to master spec file. saved in `out_dir`
@@ -295,7 +227,8 @@ def make_feature_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
         spec_filename = _make_filename(data)
 
         # define feature spec file
-        spec_info = {"filename": spec_filename + '.csv', 
+        spec_info = {
+                    # "filename": spec_filename + '.csv', 
                     "assessment": data['assessment'],
                     "domains": data['domains'],
                     "measures": data['measures'],
@@ -312,8 +245,8 @@ def make_feature_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
     return spec_files
 
 
-def make_target_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
-    """make target sets (json spec files + csv files)
+def make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
+    """make target sets (json spec files)
 
     Args: 
         parent_spec (str): full path to master spec file. saved in `out_dir`
@@ -333,7 +266,8 @@ def make_target_spec_files(parent_spec, out_dir=Defaults.FEATURE_DIR):
         spec_filename = 'target_' + data["outname"]
 
         # define target spec file
-        spec_info = {"filename":  spec_filename +'.csv',
+        spec_info = {
+                    # "filename":  spec_filename +'.csv',
                     "assessment": data["assessment"],
                     "domain": data["domain"],
                     "measure": data["measure"],
@@ -385,38 +319,38 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "target_column": "DX_01",
                         "transform": "binarize",
                         "outname": "DX_01_binarize"
-                        },
-                        {"assessment": "Clinical Measures",
-                        "domain": None,
-                        "measure": "Clinical Diagnosis Demographics",
-                        "target_column": "DX_01",
-                        "transform": "factorize",
-                        "outname": "DX_01_factorize"
-                        },
-                        {"assessment": "Clinical Measures",
-                        "domain": None,
-                        "measure": "Children's Global Assessment Scale",
-                        "target_column": "CGAS,CGAS_Score",
-                        "transform": "numeric",
-                        "outname": "CGAS,CGAS_Score_numeric"
                         }
+                        # {"assessment": "Clinical Measures",
+                        # "domain": None,
+                        # "measure": "Clinical Diagnosis Demographics",
+                        # "target_column": "DX_01",
+                        # "transform": "factorize",
+                        # "outname": "DX_01_factorize"
+                        # },
+                        # {"assessment": "Clinical Measures",
+                        # "domain": None,
+                        # "measure": "Children's Global Assessment Scale",
+                        # "target_column": "CGAS,CGAS_Score",
+                        # "transform": "numeric",
+                        # "outname": "CGAS,CGAS_Score_numeric"
+                        # }
                     ],
                 },
-            "preprocessing": {
-                "numeric": [
-                    [
-                        "sklearn.impute",
-                        "SimpleImputer",
-                        {
-                            "strategy": "mean"
-                        }
+                "preprocessing": {
+                    "numeric": [
+                        [
+                            "sklearn.impute",
+                            "SimpleImputer",
+                            {
+                                "strategy": "mean"
+                            }
+                        ],
+                        [
+                            "sklearn.preprocessing",
+                            "StandardScaler",
+                            {}
+                        ]
                     ],
-                    [
-                        "sklearn.preprocessing",
-                        "StandardScaler",
-                        {}
-                    ]
-                ],
                 # "category": [
                 #     [
                 #         "sklearn.impute", 

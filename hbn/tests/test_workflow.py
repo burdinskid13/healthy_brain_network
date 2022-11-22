@@ -1,65 +1,56 @@
 import click
 
 @click.command()
-@click.option("--feature_spec")
 @click.option("--cachedir")
 
 def run(
-    feature_spec='features-Parent_Measures-Interview_of_Emotional_and_Psychological_Function-Intake_Interview-DX_01_Cat_binarize-spec.json',
     cachedir='/home/maedbh/.cache/pydra-ml/cache-wf/'
     ):
     """
-    FIRST STEP: 
-        makes 'participants.csv' and 'Clinical_Diagnosis_Demographics.csv' that are used in later modeling routine
-    SECOND STEP: 
-        make feature csv file using `feature_spec`
-    THIRD STEP: 
-        make participants file using `first_level_modeling.make_train_test_splits`
-    FOURTH STEP:
-        make model spec file using `feature_spec` and `participants` and other information hardcoded in `first_level_modeling.make_model_spec`
-    FIFTH STEP:
-        run modeling routine: uses `https://github.com/nipype/pydra-ml` 
+    FIRST STEP: parse raw data (if not already parsed), create summary files for clinical diagnoses  
+    SECOND STEP: make feature and target spec files using the source spec file `features/features-parent_spec.json`  
+    THIRD STEP: make model spec files using feature, target, and participant files 
+    FOURTH STEP: run modeling routine: uses `https://github.com/nipype/pydra-ml` 
     
     Args: 
-        feature_spec (str): feature spec file, contains all configurations that are needed to create feature files, model spec file, and run modeling routine.
         cachedir (str): full path to model cache directory.
             on openmind I use: '/home/maedbh/.cache/pydra-ml/cache-wf/
             on local I use '/Users/maedbhking/pydra-ml/cache-wf/'
             on savio I use: '/global/scratch/users/maedbhking/bin/pydra-ml/cache-wf/'
     """
     import os
-    from hbn import io
-    import pandas as pd
+    from hbn.scripts import preprocess_phenotype
+    from hbn.scripts import make_phenotype_features
+    from hbn.scripts import make_phenotype_models
     from hbn.constants import Defaults
-    from hbn.data import make_dataset
-    from hbn.features import build_features
     from hbn.models import first_level_modeling as first_level
 
-    # make cachedir if it doesn't exist
-    io.make_dirs(cachedir)
+    # FIRST STEP
+    preprocess_phenotype.run()
 
-    # make summary files 
-    make_dataset.make_summary()
-    make_dataset.make_train_test_splits()
+    # SECOND STEP
+    make_phenotype_features.run()
 
-    TEST_DATA = os.path.join(Defaults.TEST_DIR, 'test_data')
+    # THIRD STEP
+    feature_spec = 'features-Parent_Measures-Demographic_Questionnaire_Measures-Extended_Strengths_and_Weaknesses_Assessment_of_Normal_Behavior-Parent_Report-spec.json'
+    target_spec =  'target_DX_01_Cat_binarize-spec.json'
 
-    # Make feature csv
-    feature_spec = os.path.join(TEST_DATA, feature_spec)
-    features = build_features.make_feature_files(feature_spec, out_dir=TEST_DATA)
+    MODEL_SPEC_TRAIN = os.path.join(Defaults.MODEL_SPEC_DIR, 'train')
+    model_spec = make_phenotype_models.run(
+                            feature_spec=os.path.join(Defaults.FEATURE_DIR, feature_spec),
+                            target_spec=os.path.join(Defaults.FEATURE_DIR, target_spec),
+                            participants = [MODEL_SPEC_TRAIN + '/train_participants-ADHD.csv', 
+                                            MODEL_SPEC_TRAIN + '/train_participants-No_Diagnosis_Given.csv']
+                                            )
 
-    # list_of_ids = build_features.select_participants(diagnoses=['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv'])
-
-    # make model spec file
-    model_spec = first_level.make_model_spec(feature_spec, participants=list_of_ids, out_dir=TEST_DATA)
-    model_info = io.read_json(model_spec)
-
-    # Run main predictive modeling routine: calls `https://github.com/nipype/pydra-ml` 
+    # FOURTH STEP
     first_level.run_pipeline(
-            model_spec=model_spec, 
-            features=features,
-            cachedir=cachedir, 
-            out_dir=Defaults.MODEL_DIR)
+        model_spec=os.path.join(Defaults.MODEL_SPEC_DIR, model_spec), 
+        spec_dir= Defaults.MODEL_SPEC_DIR, 
+        out_dir=os.path.join(Defaults.TEST_DIR, 'test_data'),
+        cachedir=cachedir
+        )
+
 
 if __name__ == "__main__":
     run()
