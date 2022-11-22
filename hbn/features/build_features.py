@@ -103,7 +103,7 @@ def get_targets(
 
     Args:
         target_info (dict): dictionary loaded from target spec file (e.g., target_DX_01_Cat_binarize-spec.json)
-        participants (list of str or None): (optional) if participants are passed, then returned dataframe filters for 'participants'
+        participants (list of str or None): (optional) if list of identifiers are passed, then returned dataframe filters for 'participants'
 
     Returns:
         dataframe (pd dataframe)
