@@ -1,19 +1,67 @@
 import os
+from hbn.constants import Defaults
+
+def run_pipeline(
+    results_dir,
+    out_dir=Defaults.MODEL_DIR
+    ):
+    """Makes model and feature summary files from results output from `run_model_pipeline_firstlevel`
+
+    Saves output in `../interim/models/`
+
+    Args:
+        results_dir (str): fullpath to top-level results dir. for example '../interim/models/out-localspec-<>'
+        out_dir (str): directory where second level modeling summary will be saved
+    """
+    import glob
+    import os
+    from pathlib import Path
+
+    # get results file
+    model_name = Path(results_dir).stem
+    results_file = os.path.join(results_dir, f'results-{model_name}.pkl')
+
+    # get model spec file
+    spec_file = glob.glob(os.path.join(results_dir, '*.json'))[0]
+
+    # load results
+    results, spec_info = load_results(results=results_file, spec_file=spec_file)
+    clf = Path(spec_file).name.split('-')[0] # 'classifier' or 'regression'
+
+    # loop over results and get feature and permuation importances
+    for res in results:
+        # get feature importances
+        df_features = get_feature_importance(results=res, spec_info=spec_info)
+        feature_fname = f'{clf}-feature_importance.csv'
+        _save_to_existing_file(model_name, dataframe=df_features, fpath=os.path.join(out_dir, feature_fname))
+
+        # get permuation importances
+        df_permutation = get_permutation_importance(results=res, spec_info=spec_info)
+        permutation_fname = f'{clf}-permutation_importance.csv'
+        _save_to_existing_file(model_name, dataframe=df_permutation, fpath=os.path.join(out_dir, permutation_fname))
+
+    # get model summary (and save to disk)
+    model_dataframe = make_model_summary(
+                    results=results, 
+                    spec_info=spec_info, 
+                    )
+    model_fname = f'{clf}-all-phenotypic-models-performance.csv'
+    _save_to_existing_file(model_name, dataframe=model_dataframe, fpath=os.path.join(out_dir, model_fname))
 
 
-def load_results(model_file, spec_file):
+def load_results(results_file, spec_file):
     """load results from `results-<modelname>.pkl` file
 
     Args: 
-        model_file (str): full path to results file
-        spec_file (str): full path to spec file
+        results_file (str): full path to results file
+        spec_file (str): full path to model spec file
     Returns:
         results (list of dict)
     """
     import pickle as pk
     from hbn import io
 
-    with open(model_file, "rb") as fp:
+    with open(results_file, "rb") as fp:
         results = pk.load(fp)
 
     # load spec info from file
@@ -22,56 +70,27 @@ def load_results(model_file, spec_file):
     return results, spec_info
 
 
-def _add_model_parameters(df, spec_info, results):
+def _add_model_parameters(dataframe, model_name, spec_info, results):
     """add model parameters to dataframe
     """
-    df['clf'] = results['ml_wf.clf_info'][1]
-    df['target'] = spec_info['target_vars'][0]
-    df['features'] = '-'.join(spec_info['filename'].split('-')[1:-1]) 
+    from pathlib import Path
+
+    # get modelname
+    dataframe['model'] = model_name
+    dataframe['clf'] = results['ml_wf.clf_info'][1]
+    dataframe['target'] = spec_info['target_vars'][0]
+    dataframe['features'] = '-'.join(spec_info['filename'].split('-')[1:-1]) 
     for idx,col in enumerate(['Assessment', 'Domain', 'Measure']):
-        df[col] = df['features'].str.split('-').str.get(idx)
+        dataframe[col] = dataframe['features'].str.split('-').str.get(idx)
 
-    return df
-
-
-def get_features(
-    results, 
-    spec_info,
-    feature_importance=True, 
-    permutation_importance=False
-    ):
-    """get feature and permutation importances if they exist in `results`
-
-    Args: 
-        results (list of dict): data loaded from `out-localspec-<modelname>/results-<modelname>.pkl` (output from pydra-ml modeling routine)
-    Returns: 
-        df_feature_importance (pd dataframe), df_permutation_importance (pd dataframe)
-    """
-    import pandas as pd
-
-    df_feature_importance = pd.DataFrame(); df_permutation_importance = pd.DataFrame()
-    for res in results:
-        
-        wf_permute = res[0]['ml_wf.permute']
-        if not wf_permute:
-
-            # get feature importance
-            if feature_importance:
-                df_feature_importance = _get_feature_importance(model_output=res[1].output)
-                df_feature_importance = _add_model_parameters(df_feature_importance, spec_info=spec_info, results=res[0])
-
-            # get permutation importance
-            if permutation_importance:
-                df_permutation_importance = _get_permutation_importance(model_output=res[1].output)
-                df_permutation_importance = _add_model_parameters(df_permutation_importance, spec_info=spec_info, results=res[0])
-
-    return df_feature_importance, df_permutation_importance
+    return dataframe
 
 
-def get_model_summary(results, spec_info):
+def make_model_summary(model_name, results, spec_info):
     """get model summary for `results`. code has only been tested on results which have one classifier.
 
     Args: 
+        model_name (str): model name
         results (list of dict): results output from `load_results`
         spec_file (str): full path to *.json spec file for each model. stored in `out-localspec-<modelname>`
     Returns:
@@ -95,18 +114,18 @@ def get_model_summary(results, spec_info):
         df = pd.DataFrame(np.array(res[1].output.score), columns=spec_info['metrics'])
         df['data'] = data
         df['splits'] = df.index
-        df = _add_model_parameters(df, spec_info=spec_info, results=res[0])
+        df = _add_model_parameters(df, model_name, spec_info=spec_info, results=res[0])
 
         df_all = pd.concat([df_all, df])
     
     return df_all
 
 
-def _get_feature_importance(model_output):
+def get_feature_importance(model_name, results, spec_info):
     """get feature importances across splits
 
     Args:
-        model_output (dict): `results.output` len(list) = # of splits
+        results (list of dict): 
     """
     import numpy as np  
     import pandas as pd
@@ -114,8 +133,8 @@ def _get_feature_importance(model_output):
     df_features = pd.DataFrame()
 
     # extract feature importance
-    feature_splits = np.array(model_output.feature_importance)
-    feature_names = np.array(model_output.feature_names)
+    feature_splits = np.array(results[1].output.feature_importance)
+    feature_names = np.array(results[1].output.feature_names)
 
     n_splits, n_feats = feature_splits.shape
 
@@ -134,14 +153,16 @@ def _get_feature_importance(model_output):
 
         df_features = pd.concat([df_rank, df_common, df_sum], axis=1)
 
+    df_features = _add_model_parameters(df_features, model_name, spec_info=spec_info, results=results[0])
+
     return df_features
 
 
-def _get_permutation_importance(model_output):
+def get_permutation_importance(model_name, results, spec_info):
     """get feature permuation across splits
 
     Args:
-        model_output (dict): `results.output` len(list) = # of splits
+        results (list of dict): 
     """
     pass
 

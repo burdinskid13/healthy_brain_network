@@ -30,14 +30,14 @@ username=maedbh
 
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 
-# preprocess
-python3 preprocess_phenotype.py
+# # preprocess
+# python3 preprocess_phenotype.py
 
-# make features
-python3 make_phenotype_features.py
+# # make features
+# python3 make_phenotype_features.py
 
-# make model specs
-python3 make_phenotype_models.py
+# # make model specs
+# python3 make_phenotype_models.py
 
 # run workflow
-python3 run_phenotype_models.py --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
+python3 run_phenotype_models.py --no-first-level --second-level --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
