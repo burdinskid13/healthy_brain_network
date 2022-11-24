@@ -17,6 +17,9 @@ def run_pipeline(
     import os
     from pathlib import Path
 
+    # make model spec if it doesn't already exist
+    os.makedirs(out_dir)
+
     # get results file
     model_name = Path(results_dir).name.split('-')[2]
     results_file = os.path.join(results_dir, f'results-{model_name}.pkl')

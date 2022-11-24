@@ -21,6 +21,7 @@ def run(
     """
     import glob
     import os
+    import datetime
     from hbn.constants import Defaults
     from hbn.models import first_level_modeling as first_level
     from hbn.models import second_level_modeling as second_level
@@ -29,11 +30,12 @@ def run(
 
     if first_level:
         # loop over model specs
+        ct = datetime.datetime.now()
         for model_spec in specs:
             first_level.run_pipeline(
                 model_spec=model_spec, 
                 spec_dir=Defaults.MODEL_SPEC_DIR, 
-                out_dir=Defaults.MODEL_DIR,
+                out_dir=os.path.join(Defaults.MODEL_DIR, '_'.join(f'{ct}'.split(' '))),
                 cachedir=cachedir
                 )
 

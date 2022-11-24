@@ -64,7 +64,10 @@ def make_spec(
     return model_spec
 
 
-def run():
+def run(
+    participants=['train_participants-Generalized_Anxiety_Disorder.csv', 'train_participants-No_Diagnosis_Given.csv'],
+    target='target_DX_01_Cat_binarize-spec.json'
+    ):
     import glob
     import os
     from hbn.constants import Defaults
@@ -73,13 +76,9 @@ def run():
     features = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*features*'))
 
     # get full paths to participants
-    participants = ['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv']
     all_participants = []
     for participant in participants:
         all_participants.append(os.path.join(Defaults.MODEL_SPEC_DIR, 'train', participant))
-
-    # get target
-    target = 'target_DX_01_Cat_binarize-spec.json'
 
     for feature in features:
         model_spec = make_spec(

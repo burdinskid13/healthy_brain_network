@@ -146,6 +146,7 @@ def run_pipeline(
 
     # create cachedir if it hasn't already been created
     io.make_dirs(cachedir)
+    io.make_dirs(out_dir)
 
     # load model spec json
     spec_info = io.read_json(model_spec)
