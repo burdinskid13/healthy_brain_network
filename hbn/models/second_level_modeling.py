@@ -30,15 +30,17 @@ def run_pipeline(
 
     # loop over results and get feature and permuation importances
     for res in results:
-        # get feature importances
-        df_features = get_feature_importance(model_name, results=res, spec_info=spec_info)
-        feature_fname = f'{clf}-feature_importance.csv'
-        _save_to_existing_file(dataframe=df_features, fpath=os.path.join(out_dir, feature_fname))
+        if not res[0]['ml_wf.permute']:
+            # only if data are not permuted
+            # get feature importances
+            df_features = get_feature_importance(model_name, results=res, spec_info=spec_info)
+            feature_fname = f'{clf}-feature_importance.csv'
+            _save_to_existing_file(dataframe=df_features, fpath=os.path.join(out_dir, feature_fname))
 
-        # get permuation importances
-        df_permutation = get_permutation_importance(model_name, results=res, spec_info=spec_info)
-        permutation_fname = f'{clf}-permutation_importance.csv'
-        _save_to_existing_file(dataframe=df_permutation, fpath=os.path.join(out_dir, permutation_fname))
+            # get permuation importances
+            df_permutation = get_permutation_importance(model_name, results=res, spec_info=spec_info)
+            permutation_fname = f'{clf}-permutation_importance.csv'
+            _save_to_existing_file(dataframe=df_permutation, fpath=os.path.join(out_dir, permutation_fname))
 
     # get model summary (and save to disk)
     model_dataframe = make_model_summary(
@@ -74,15 +76,17 @@ def load_results(results, spec_file):
 def _add_model_parameters(dataframe, model_name, spec_info, results):
     """add model parameters to dataframe
     """
-    from pathlib import Path
+
+    features = spec_info['feature_spec']['assessment'] + '-' + spec_info['feature_spec']['domains'] +'-' + spec_info['feature_spec']['measures']
 
     # get modelname
     dataframe['model'] = model_name
     dataframe['clf'] = results['ml_wf.clf_info'][1]
     dataframe['target'] = spec_info['target_vars'][0]
-    dataframe['features'] = '-'.join(spec_info['filename'].split('-')[1:-1]) 
-    for idx,col in enumerate(['Assessment', 'Domain', 'Measure']):
-        dataframe[col] = dataframe['features'].str.split('-').str.get(idx)
+    dataframe['features'] = features
+    dataframe['assessment'] = spec_info['feature_spec']['assessment']
+    dataframe['domains'] = spec_info['feature_spec']['domains']
+    dataframe['measures'] = spec_info['feature_spec']['measures']
 
     return dataframe
 
@@ -154,7 +158,8 @@ def get_feature_importance(model_name, results, spec_info):
 
         df_features = pd.concat([df_rank, df_common, df_sum], axis=1)
 
-    df_features = _add_model_parameters(df_features, model_name, spec_info=spec_info, results=results[0])
+        # add model parameters
+        df_features = _add_model_parameters(df_features, model_name, spec_info=spec_info, results=results[0])
 
     return df_features
 
