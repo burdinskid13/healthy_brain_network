@@ -12,10 +12,10 @@
 #SBATCH -c 16 # 16 hyperthreaded cores 
 #
 # Memory:
-#SBATCH --mem=20G
+#SBATCH --mem=10G
 #
 # Wall clock limit:
-#SBATCH --time=24:00:00 # 5 hours
+#SBATCH --time=1:00:00 # 5 hours
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu

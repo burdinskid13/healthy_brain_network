@@ -18,7 +18,7 @@ def run_pipeline(
     from pathlib import Path
 
     # get results file
-    model_name = Path(results_dir).stem
+    model_name = Path(results_dir).name.split('-')[2]
     results_file = os.path.join(results_dir, f'results-{model_name}.pkl')
 
     # get model spec file
@@ -31,29 +31,30 @@ def run_pipeline(
     # loop over results and get feature and permuation importances
     for res in results:
         # get feature importances
-        df_features = get_feature_importance(results=res, spec_info=spec_info)
+        df_features = get_feature_importance(model_name, results=res, spec_info=spec_info)
         feature_fname = f'{clf}-feature_importance.csv'
-        _save_to_existing_file(model_name, dataframe=df_features, fpath=os.path.join(out_dir, feature_fname))
+        _save_to_existing_file(dataframe=df_features, fpath=os.path.join(out_dir, feature_fname))
 
         # get permuation importances
-        df_permutation = get_permutation_importance(results=res, spec_info=spec_info)
+        df_permutation = get_permutation_importance(model_name, results=res, spec_info=spec_info)
         permutation_fname = f'{clf}-permutation_importance.csv'
-        _save_to_existing_file(model_name, dataframe=df_permutation, fpath=os.path.join(out_dir, permutation_fname))
+        _save_to_existing_file(dataframe=df_permutation, fpath=os.path.join(out_dir, permutation_fname))
 
     # get model summary (and save to disk)
     model_dataframe = make_model_summary(
+                    model_name,
                     results=results, 
                     spec_info=spec_info, 
                     )
     model_fname = f'{clf}-all-phenotypic-models-performance.csv'
-    _save_to_existing_file(model_name, dataframe=model_dataframe, fpath=os.path.join(out_dir, model_fname))
+    _save_to_existing_file(dataframe=model_dataframe, fpath=os.path.join(out_dir, model_fname))
 
 
-def load_results(results_file, spec_file):
+def load_results(results, spec_file):
     """load results from `results-<modelname>.pkl` file
 
     Args: 
-        results_file (str): full path to results file
+        results (str): full path to results file
         spec_file (str): full path to model spec file
     Returns:
         results (list of dict)
@@ -61,7 +62,7 @@ def load_results(results_file, spec_file):
     import pickle as pk
     from hbn import io
 
-    with open(results_file, "rb") as fp:
+    with open(results, "rb") as fp:
         results = pk.load(fp)
 
     # load spec info from file
