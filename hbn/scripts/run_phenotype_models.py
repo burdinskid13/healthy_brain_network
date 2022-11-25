@@ -31,23 +31,27 @@ def run(
     if first_level:
         # loop over model specs
         ct = datetime.datetime.now()
+        ct_name = '_'.join(f'{ct}'.split(' '))
         for model_spec in specs:
             first_level.run_pipeline(
                 model_spec=model_spec, 
                 spec_dir=Defaults.MODEL_SPEC_DIR, 
-                out_dir=os.path.join(Defaults.MODEL_DIR, '_'.join(f'{ct}'.split(' '))),
+                out_dir=os.path.join(Defaults.MODEL_DIR, ct_name),
                 cachedir=cachedir
                 )
 
-    results = glob.glob(os.path.join(Defaults.MODEL_DIR, '*out-localspec*'))
+    # get models
+    models = glob.glob(os.path.join(Defaults.MODEL_DIR, '*'))
 
     if second_level:
-        # loop over results files
-        for result in results:
-            second_level.run_pipeline(
-                results_dir=result,
-                out_dir=Defaults.MODEL_DIR
-                )
+        for model in models:
+            results = glob.glob(os.path.join(model, '*out-localspec*'))
+            # loop over results files
+            for result in results:
+                second_level.run_pipeline(
+                    results_dir=result,
+                    out_dir=Defaults.MODEL_DIR
+                    )
 
 if __name__ == "__main__":
     run()
