@@ -16,9 +16,10 @@ def run_pipeline(
     import glob
     import os
     from pathlib import Path
+    from hbn import io
 
     # make model spec if it doesn't already exist
-    os.makedirs(out_dir)
+    io.make_dirs(out_dir)
 
     # get results file
     model_name = Path(results_dir).name.split('-')[2]
