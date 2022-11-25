@@ -43,15 +43,17 @@ def run(
                 )
 
     if second_level:
-        # temporary file
+        print('running second level')
+        # get models
         models = glob.glob(os.path.join(Defaults.MODEL_DIR, '*'))
         for model_dir in models:
             results = glob.glob(os.path.join(model_dir, '*out-localspec*'))
+            # loop over results files
             for result in results:
-                spec_file = glob.glob(os.path.join(result, '*.json'))[0]
-                filename = io.read_json(spec_file)['filename']
-                source = os.path.join(Defaults.MODEL_SPEC_DIR, filename)
-                shutil.move(source, result)
+                second.run_pipeline(
+                    results_dir=result,
+                    out_dir=model_dir
+                    )
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ def make_model_spec(
         filename (str): full path to features filename. Saved in MODEL_SPEC_DIR
         target_spec (str): full path to target spec file. SAVED IN FEATURE_DIR
         feature_spec (str): full path to feature spec file. SAVED IN FEATURE_DIR
-       participants (list of str): list of fullpaths to participant files. Example ['../train_participants-ADHD.csv', '../train_participants-No_Diagnosis_Given.csv']
+        participants (list of str): list of fullpaths to participant files. Example ['../train_participants-ADHD.csv', '../train_participants-No_Diagnosis_Given.csv']
         out_dir (str): full path to model spec output directory. default is `Defaults.MODEL_SPEC_DIR`
     Returns:
         full outpath to `model_spec` JSON
@@ -130,7 +130,7 @@ def run_pipeline(
 
     Args:
         model_spec (str): full path to model spec file
-        spec_dir (str): model spec directory (where `filename` in model_spec is stored)
+        spec_dir (str): model spec directory (where `filename` in model_spec is temporarily stored)
         cachedir (str): default is '/Users/maedbhking/pydra-ml/cache-wf/'
         out_dir (str): full path to model output directory
     Returns: 

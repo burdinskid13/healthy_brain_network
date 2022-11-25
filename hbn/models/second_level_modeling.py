@@ -80,10 +80,10 @@ def load_results(results, spec_file):
 def _add_model_parameters(dataframe, model_name, spec_info, results):
     """add model parameters to dataframe
     """
-
+    # add spec info 
     features = spec_info['feature_spec']['assessment'] + '-' + spec_info['feature_spec']['domains'] +'-' + spec_info['feature_spec']['measures']
 
-    # get modelname
+    dataframe['participants'] =  spec_info['participants']
     dataframe['model'] = model_name
     dataframe['clf'] = results['ml_wf.clf_info'][1]
     dataframe['target'] = spec_info['target_vars'][0]
