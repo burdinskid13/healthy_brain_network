@@ -26,9 +26,8 @@ def run(
     from hbn.models import first_level_modeling as first_level
     from hbn.models import second_level_modeling as second_level
 
-    specs = glob.glob(os.path.join(Defaults.MODEL_SPEC_DIR, '*classifier*'))
-
     if first_level:
+        specs = glob.glob(os.path.join(Defaults.MODEL_SPEC_DIR, '*classifier*'))
         # loop over model specs
         ct = datetime.datetime.now()
         ct_name = '_'.join(f'{ct}'.split(' '))
@@ -40,10 +39,9 @@ def run(
                 cachedir=cachedir
                 )
 
-    # get models
-    models = glob.glob(os.path.join(Defaults.MODEL_DIR, '*'))
-
     if second_level:
+        # get models
+        models = glob.glob(os.path.join(Defaults.MODEL_DIR, '*'))
         for model_dir in models:
             results = glob.glob(os.path.join(model_dir, '*out-localspec*'))
             # loop over results files

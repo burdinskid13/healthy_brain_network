@@ -34,18 +34,19 @@ def run(
     # THIRD STEP
     feature_spec = 'features-Parent_Measures-Demographic_Questionnaire_Measures-Extended_Strengths_and_Weaknesses_Assessment_of_Normal_Behavior-Parent_Report-spec.json'
     target_spec =  'target_DX_01_Cat_binarize-spec.json'
+    model_spec = 'classifier-Extended_Strengths_and_Weaknesses_Assessment_of_Normal_Behavior-Parent_Report-DX_01_Cat_binarize-spec.json'
 
     MODEL_SPEC_TRAIN = os.path.join(Defaults.MODEL_SPEC_DIR, 'train')
-    model_spec = make_phenotype_models.run(
-                            feature_spec=os.path.join(Defaults.FEATURE_DIR, feature_spec),
-                            target_spec=os.path.join(Defaults.FEATURE_DIR, target_spec),
-                            participants = [MODEL_SPEC_TRAIN + '/train_participants-ADHD.csv', 
-                                            MODEL_SPEC_TRAIN + '/train_participants-No_Diagnosis_Given.csv']
-                                            )
+    make_phenotype_models.run(
+                    feature_spec=os.path.join(Defaults.FEATURE_DIR, feature_spec),
+                    target_spec=os.path.join(Defaults.FEATURE_DIR, target_spec),
+                    participants = [MODEL_SPEC_TRAIN + '/train_participants-ADHD.csv', 
+                                    MODEL_SPEC_TRAIN + '/train_participants-No_Diagnosis_Given.csv']
+                                    )
 
     # FOURTH STEP
     first_level.run_pipeline(
-        model_spec=model_spec, 
+        model_spec=os.path.join(Defaults.MODEL_SPEC_DIR, model_spec), 
         spec_dir= Defaults.MODEL_SPEC_DIR, 
         out_dir=os.path.join(Defaults.TEST_DIR, 'test_data'),
         cachedir=cachedir

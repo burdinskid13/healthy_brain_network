@@ -1,7 +1,9 @@
 import warnings
 warnings.filterwarnings("ignore")
+import click
 
 from hbn.constants import Defaults
+
 
 def make_spec(
     feature_spec,
@@ -63,16 +65,19 @@ def make_spec(
 
     return model_spec
 
+@click.command()
+@click.option("--target")
+@click.option("--participants")
 
 def run(
-    participants=['train_participants-Depressive_Disorders.csv', 'train_participants-No_Diagnosis_Given.csv'],
-    target='target_DX_01_Cat_binarize-spec.json'
+    target='target_DX_01_Cat_binarize-spec.json',
+    participants=['train_participants-Depressive_Disorders.csv', 'train_participants-No_Diagnosis_Given.csv']
     ):
     import glob
     import os
     from hbn.constants import Defaults
 
-    # get features
+    # get all features
     features = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*features*'))
 
     # get full paths to participants
@@ -81,14 +86,13 @@ def run(
         all_participants.append(os.path.join(Defaults.MODEL_SPEC_DIR, 'train', participant))
 
     for feature in features:
-        model_spec = make_spec(
+        make_spec(
             feature_spec=os.path.join(Defaults.FEATURE_DIR, feature),
             target_spec=os.path.join(Defaults.FEATURE_DIR, target),
             participants=all_participants,
             out_dir=Defaults.MODEL_SPEC_DIR
             )
-        
-    return model_spec
+    
 
 if __name__ == "__main__":
     run()
