@@ -12,10 +12,10 @@
 #SBATCH -c 16 # 16 hyperthreaded cores 
 #
 # Memory:
-#SBATCH --mem=20G
+#SBATCH --mem=15G
 #
 # Wall clock limit:
-#SBATCH --time=24:00:00 # 5 hours
+#SBATCH --time=15:00:00 # 
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -30,14 +30,14 @@ username=maedbh
 
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 
-# preprocess
-python3 preprocess_phenotype.py
+# # preprocess
+# python3 preprocess_phenotype.py
 
-# make features
-python3 make_phenotype_features.py
+# # make features
+# python3 make_phenotype_features.py
 
-# make model specs
-python3 make_phenotype_models.py
+# # make model specs
+#python3 make_phenotype_models.py --target=target_DX_01_Cat_binarize-spec.json
 
 # run workflow
-python3 run_phenotype_models.py --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
+python3 run_phenotype_models.py --no-first-level --second-level --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/

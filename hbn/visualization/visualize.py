@@ -25,6 +25,7 @@ def plotting_style():
     sns.set_context(rc={'lines.markeredgewidth': 0.1})
     np.set_printoptions(formatter={'float_kind':'{:f}'.format})
 
+
 def wordcloud(dataframe, column):
     """print a word cloud from `column` of a `dataframe`
 
@@ -68,6 +69,7 @@ def wordcloud(dataframe, column):
     
     plt.show()
 
+
 def umap_embeddings(dataframe, target):
     """compute and visualize umap embeddings for `dataframe` and `target`
 
@@ -101,3 +103,28 @@ def umap_embeddings(dataframe, target):
     plt.gca().set_aspect('equal', 'datalim')
     plt.title('UMAP projection', fontsize=24)
     plt.show()
+
+
+def predictive_modeling(df, x='features', y='roc_auc_score'):
+    import plotly.graph_objects as go
+    import matplotlib.pyplot as plt
+    
+    fig = go.Figure()
+
+    fig.add_trace(go.Violin(x=df[x][df['data']=='data'],
+                            y=df[y][df['data']=='data'],
+                            legendgroup='Null', scalegroup='Null', name='Null',
+                            side='negative',
+                            line_color='blue')
+                 )
+    fig.add_trace(go.Violin(x=df[x][df['data']=='null'],
+                            y=df[y][df['data']=='null'],
+                            legendgroup='Data', scalegroup='Data', name='Data',
+                            side='positive',
+                            line_color='orange')
+                 )
+    fig.update_traces(meanline_visible=True, box_visible=False)
+    fig.update_layout(violingap=0, violinmode='overlay')
+    fig.update_xaxes(showticklabels=False)
+    fig.update_yaxes(title_text=y)
+    fig.show()

@@ -14,7 +14,7 @@ def make_model_spec(
         filename (str): full path to features filename. Saved in MODEL_SPEC_DIR
         target_spec (str): full path to target spec file. SAVED IN FEATURE_DIR
         feature_spec (str): full path to feature spec file. SAVED IN FEATURE_DIR
-       participants (list of str): list of fullpaths to participant files. Example ['../train_participants-ADHD.csv', '../train_participants-No_Diagnosis_Given.csv']
+        participants (list of str): list of fullpaths to participant files. Example ['../train_participants-ADHD.csv', '../train_participants-No_Diagnosis_Given.csv']
         out_dir (str): full path to model spec output directory. default is `Defaults.MODEL_SPEC_DIR`
     Returns:
         full outpath to `model_spec` JSON
@@ -130,7 +130,7 @@ def run_pipeline(
 
     Args:
         model_spec (str): full path to model spec file
-        spec_dir (str): model spec directory (where `filename` in model_spec is stored)
+        spec_dir (str): model spec directory (where `filename` in model_spec is temporarily stored)
         cachedir (str): default is '/Users/maedbhking/pydra-ml/cache-wf/'
         out_dir (str): full path to model output directory
     Returns: 
@@ -146,6 +146,7 @@ def run_pipeline(
 
     # create cachedir if it hasn't already been created
     io.make_dirs(cachedir)
+    io.make_dirs(out_dir)
 
     # load model spec json
     spec_info = io.read_json(model_spec)
@@ -157,11 +158,13 @@ def run_pipeline(
     print(f'running {model_spec}...\n')
     print("spec info", spec_info)
     
-    spec_info['filename'] = os.path.join(spec_dir, spec_info['filename']) # full path to csv file
+    filename = os.path.join(spec_dir, spec_info['filename'])
+    spec_info['filename'] = filename # full path to csv file
     wf = gen_workflow(spec_info, cache_dir=cachedir)
     run_workflow(wf, "cf", {"n_procs": 1})
 
     # move model output to new directory + add model spec file
     out_models = glob.glob(os.path.join(os.getcwd(), '*out-localspec*'))
-    shutil.copy(model_spec, out_models[0])
+    shutil.move(model_spec, out_models[0])
+    shutil.move(filename, out_models[0])
     shutil.move(out_models[0], out_dir)
