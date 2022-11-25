@@ -45,7 +45,7 @@ def run(
 
     if second_level:
         for model_dir in models:
-            results = glob.glob(os.path.join(model, '*out-localspec*'))
+            results = glob.glob(os.path.join(model_dir, '*out-localspec*'))
             # loop over results files
             for result in results:
                 second_level.run_pipeline(
