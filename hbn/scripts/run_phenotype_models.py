@@ -44,13 +44,13 @@ def run(
     models = glob.glob(os.path.join(Defaults.MODEL_DIR, '*'))
 
     if second_level:
-        for model in models:
+        for model_dir in models:
             results = glob.glob(os.path.join(model, '*out-localspec*'))
             # loop over results files
             for result in results:
                 second_level.run_pipeline(
                     results_dir=result,
-                    out_dir=Defaults.MODEL_DIR
+                    out_dir=model_dir
                     )
 
 if __name__ == "__main__":
