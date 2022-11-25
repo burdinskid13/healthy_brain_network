@@ -158,11 +158,13 @@ def run_pipeline(
     print(f'running {model_spec}...\n')
     print("spec info", spec_info)
     
-    spec_info['filename'] = os.path.join(spec_dir, spec_info['filename']) # full path to csv file
+    filename = os.path.join(spec_dir, spec_info['filename'])
+    spec_info['filename'] = filename # full path to csv file
     wf = gen_workflow(spec_info, cache_dir=cachedir)
     run_workflow(wf, "cf", {"n_procs": 1})
 
     # move model output to new directory + add model spec file
     out_models = glob.glob(os.path.join(os.getcwd(), '*out-localspec*'))
-    shutil.copy(model_spec, out_models[0])
+    shutil.move(model_spec, out_models[0])
+    shutil.move(filename, out_models[0])
     shutil.move(out_models[0], out_dir)

@@ -22,6 +22,8 @@ def run(
     import glob
     import os
     import datetime
+    from hbn import io
+    import shutil
     from hbn.constants import Defaults
     from hbn.models import first_level_modeling as first
     from hbn.models import second_level_modeling as second
@@ -41,17 +43,16 @@ def run(
                 )
 
     if second_level:
-        print('running second level')
-        # get models
+        # temporary file
         models = glob.glob(os.path.join(Defaults.MODEL_DIR, '*'))
         for model_dir in models:
             results = glob.glob(os.path.join(model_dir, '*out-localspec*'))
-            # loop over results files
             for result in results:
-                second.run_pipeline(
-                    results_dir=result,
-                    out_dir=model_dir
-                    )
+                spec_file = glob.glob(os.path.join(result, '*.json'))[0]
+                filename = io.read_json(spec_file)['filename']
+                source = os.path.join(Defaults.MODEL_SPEC_DIR, filename)
+                shutil.move(source, result)
+
 
 if __name__ == "__main__":
     run()
