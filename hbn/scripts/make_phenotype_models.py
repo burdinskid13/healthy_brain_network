@@ -1,6 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore")
 import click
+import ast
 
 from hbn.constants import Defaults
 
@@ -65,9 +66,19 @@ def make_spec(
 
     return model_spec
 
+
+class PythonLiteralOption(click.Option):
+
+    def type_cast_value(self, ctx, value):
+        try:
+            return ast.literal_eval(value)
+        except:
+            raise click.BadParameter(value)
+
+
 @click.command()
 @click.option("--target")
-@click.option("--participants")
+@click.option('--participants', cls=PythonLiteralOption, default=[])
 
 def run(
     target='target_DX_01_Cat_binarize-spec.json',
