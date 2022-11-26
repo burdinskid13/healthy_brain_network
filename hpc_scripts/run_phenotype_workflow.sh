@@ -37,7 +37,7 @@ cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 # python3 make_phenotype_features.py
 
 # # make model specs
-#python3 make_phenotype_models.py --target=target_DX_01_Cat_binarize-spec.json
+python3 make_phenotype_models.py --target=target_DX_01_Cat_binarize-spec.json --participants="['train_participants-Autism_Spectrum_Disorder.csv', 'train_participants-No_Diagnosis_Given.csv']"
 
 # run workflow
-python3 run_phenotype_models.py --no-first-level --second-level --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
+python3 run_phenotype_models.py --first-level --second-level --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/

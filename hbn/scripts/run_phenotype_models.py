@@ -22,8 +22,6 @@ def run(
     import glob
     import os
     import datetime
-    from hbn import io
-    import shutil
     from hbn.constants import Defaults
     from hbn.models import first_level_modeling as first
     from hbn.models import second_level_modeling as second
