@@ -71,7 +71,7 @@ def make_spec(
 
 def run(
     target='target_DX_01_Cat_binarize-spec.json',
-    participants=['train_participants-Depressive_Disorders.csv', 'train_participants-No_Diagnosis_Given.csv']
+    participants=['train_participants-Autism_Spectrum_Disorder.csv', 'train_participants-No_Diagnosis_Given.csv']
     ):
     import glob
     import os
