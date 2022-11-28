@@ -23,7 +23,7 @@ def run(
     from hbn.scripts import make_phenotype_features
     from hbn.scripts import make_phenotype_models
     from hbn.constants import Defaults
-    from hbn.models import first_level_modeling as first_level
+    from hbn.models import predictive_modeling
 
     # FIRST STEP
     preprocess_phenotype.run()
@@ -45,7 +45,7 @@ def run(
                                     )
 
     # FOURTH STEP
-    first_level.run_pipeline(
+    predictive_modeling.run_pydra_ml(
         model_spec=os.path.join(Defaults.MODEL_SPEC_DIR, model_spec), 
         spec_dir= Defaults.MODEL_SPEC_DIR, 
         out_dir=os.path.join(Defaults.TEST_DIR, 'test_data'),

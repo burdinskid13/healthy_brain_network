@@ -5,66 +5,69 @@ import ast
 
 from hbn.constants import Defaults
 
-
-def make_spec(
-    feature_spec,
-    target_spec,
-    participants,
-    out_dir=Defaults.MODEL_SPEC_DIR
-    ):
-    """make model spec file using the following: 'feature_spec', 'target_spec' and 'participants'
-
-    Grabs all existing feature specs and targets and `participants` and create a model spec file
-
-    Args: 
-        feature_spec (str): fullpath to feature spec
-        target_spec (str): fullpath to target spec
-        participants (list of str): For example: ['../train_participants-ADHD.csv', '../train_participants-No_Diagnosis_Given.csv']
-        out_dir (str): directory where model spec and feature file should be saved
+def make_model_spec(
+            filename,
+            target_spec,
+            feature_spec,
+            participants,
+            out_dir=Defaults.MODEL_SPEC_DIR
+             ):
+    """make model specs (json spec files) from the feature specs stored in `FEATURE_DIR`.
+    model specs are saved out to `out_dir`
+    Args:
+        filename (str): full path to features file. Saved in MODEL_SPEC_DIR
+        target_spec (str): full path to target spec file. SAVED IN FEATURE_DIR
+        feature_spec (str): full path to feature spec file. SAVED IN FEATURE_DIR
+        participants (list of str): list of fullpaths to participant files. Example ['../train_participants-ADHD.csv', '../train_participants-No_Diagnosis_Given.csv']
+        out_dir (str): full path to model spec output directory. default is `Defaults.MODEL_SPEC_DIR`
     Returns:
-        model_spec (str): full path to model spec
+        full outpath to `model_spec` JSON
     """
+    import re
     import os
     from hbn import io
-    import random
-    from hbn.models import first_level_modeling as first_level
-    from hbn.constants import Defaults
+    from pathlib import Path
 
-    random_number = round(random.random()*1000000000)
-    filename = f'model_features_{random_number}.csv'
-    print(f'trying to make new filename: {filename}')
+    target_info = io.read_json(target_spec)
+    feature_info = io.read_json(feature_spec)
 
-    model_spec = None
-    try:
-        # make multiple model specs using features, target, and participant specs 
-        dataframe = first_level.make_model_features(
-                            feature_spec=feature_spec, 
-                            target_spec=target_spec,
-                            participants=participants
-                            )
-        # load target info
-        target_name = io.read_json(target_spec)['outname']
+    # get participant filenames
+    participant_fnames = []
+    for participant in participants:
+        participant_fnames.append(Path(participant).name)
 
-        # set certain conditionals for model spec to be run and model features to be created
-        # there have to be more than one column, more than one unique target, more than 100 participants and fewer than 1000 features
-        conditionals = all((dataframe.shape[1]>1, len(dataframe[target_name].unique())>1, dataframe.shape[0]>100, dataframe.shape[1]<1000))
-        
-        if conditionals:  
-            # make model spec file
-            model_spec = first_level.make_model_spec(filename,
-                                        target_spec=target_spec,
-                                        feature_spec=feature_spec,
-                                        participants=participants,
-                                        out_dir=Defaults.MODEL_SPEC_DIR
-                                        )
-            dataframe.to_csv(os.path.join(out_dir, f'model_features_{random_number}.csv'), index=False)
+    # define spec file
+    spec_info = {
+                "filename": Path(filename).name,
+                "feature_spec": feature_info,
+                "target_spec": target_info,
+                "participants": participant_fnames,
+                "x_indices":[],
+                "target_vars": [target_info['outname']],
+                "group_var": None,
+                "n_splits": 50,
+                "test_size": 0.2,
+                "clf_info": [
+                            ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}],
+                            ],
+                "permute": [True, False],
+                "gen_feature_importance": True,
+                "gen_permutation_importance": False,
+                "permutation_importance_n_repeats": 5,
+                "permutation_importance_scoring": "accuracy",
+                "gen_shap": False,
+                "nsamples": "auto",
+                "l1_reg": "aic",
+                "plot_top_n_shap": 10,
+                "metrics": ['roc_auc_score', 'f1_score', 'precision_score', 'recall_score']
+            }
+    
+    # write out model spec to disk ../model_specs/
+    spec_name = 'classifier-' + '_'.join(re.split(r'_|,|/| ', feature_info['measures'])) + '-' + target_info['outname'] + '-spec.json'
+    io.save_dict_as_JSON(fpath=os.path.join(out_dir, spec_name), data_dict=spec_info)
+    print(f'save model specs to file for {spec_name}')
 
-        else:
-            print(f'model spec not created for {filename} because one of the following conditions was not met: more than 1 feature, more than one unique target, more than 100 participants')
-    except:
-        print(f'failed to make model specs for {filename}')
-
-    return model_spec
+    return os.path.join(out_dir, spec_name)
 
 
 class PythonLiteralOption(click.Option):
@@ -87,6 +90,7 @@ def run(
     import glob
     import os
     from hbn.constants import Defaults
+    from hbn.models import predictive_modeling
 
     # get all features
     features = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*features*'))
@@ -97,7 +101,7 @@ def run(
         all_participants.append(os.path.join(Defaults.MODEL_SPEC_DIR, 'train', participant))
 
     for feature in features:
-        make_spec(
+        predictive_modeling.make_spec(
             feature_spec=os.path.join(Defaults.FEATURE_DIR, feature),
             target_spec=os.path.join(Defaults.FEATURE_DIR, target),
             participants=all_participants,

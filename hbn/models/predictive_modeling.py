@@ -1,7 +1,119 @@
 import os
 from hbn.constants import Defaults
+    
 
-def run_pipeline(
+def make_spec(
+    feature_spec,
+    target_spec,
+    participants,
+    out_dir=Defaults.MODEL_SPEC_DIR
+    ):
+    """make model spec file using the following: 'feature_spec', 'target_spec' and 'participants'
+
+    Grabs all existing feature specs and targets and `participants` and create a model spec file
+
+    Args: 
+        feature_spec (str): fullpath to feature spec
+        target_spec (str): fullpath to target spec
+        participants (list of str): For example: ['../train_participants-ADHD.csv', '../train_participants-No_Diagnosis_Given.csv']
+        out_dir (str): directory where model spec and feature file should be saved
+    Returns:
+        model_spec (str): full path to model spec
+    """
+    import os
+    from hbn import io
+    import random
+    from hbn.models import predictive_modeling 
+    from hbn.features import feature_selection
+    from hbn.constants import Defaults
+
+    random_number = round(random.random()*1000000000)
+    filename = f'model_features_{random_number}.csv'
+    print(f'trying to make new filename: {filename}')
+
+    model_spec = None
+    try:
+        # make multiple model specs using features, target, and participant specs 
+        dataframe = feature_selection.phenotype_features(
+                            feature_spec=feature_spec, 
+                            target_spec=target_spec,
+                            participants=participants
+                            )
+        # load target info
+        target_name = io.read_json(target_spec)['outname']
+
+        # set certain conditionals for model spec to be run and model features to be created
+        # there have to be more than one column, more than one unique target, more than 100 participants and fewer than 1000 features
+        conditionals = all((dataframe.shape[1]>1, len(dataframe[target_name].unique())>1, dataframe.shape[0]>100, dataframe.shape[1]<1000))
+        
+        if conditionals:  
+            # make model spec file
+            model_spec = predictive_modeling.make_model_spec(filename,
+                                        target_spec=target_spec,
+                                        feature_spec=feature_spec,
+                                        participants=participants,
+                                        out_dir=Defaults.MODEL_SPEC_DIR
+                                        )
+            dataframe.to_csv(os.path.join(out_dir, f'model_features_{random_number}.csv'), index=False)
+
+        else:
+            print(f'model spec not created for {filename} because one of the following conditions was not met: more than 1 feature, more than one unique target, more than 100 participants')
+    except:
+        print(f'failed to make model specs for {filename}')
+
+    return model_spec
+
+
+def run_pydra_ml(
+    model_spec, 
+    spec_dir,
+    cachedir='/home/maedbh/.cache/pydra-ml/cache-wf/',
+    out_dir=Defaults.MODEL_DIR):
+    """ run predictive models using pydra-ml. must provide `model_spec` json and `filename` in `model_spec` must be a csv of features saved in ../features/
+
+    Args:
+        model_spec (str): full path to model spec file
+        spec_dir (str): model spec directory (where `filename` in model_spec is temporarily stored)
+        cachedir (str): default is '/Users/maedbhking/pydra-ml/cache-wf/'
+        out_dir (str): full path to model output directory
+    Returns: 
+        saves (pickled) model to ../data/interim/
+    """
+    # load libraries
+    import os
+    import pandas as pd
+    import glob
+    import shutil
+    from hbn import io
+    from pydra_ml.classifier import gen_workflow, run_workflow
+
+    # create cachedir if it hasn't already been created
+    io.make_dirs(cachedir)
+    io.make_dirs(out_dir)
+
+    # load model spec json
+    spec_info = io.read_json(model_spec)
+
+    # load dataframe
+    dataframe = pd.read_csv(os.path.join(spec_dir, spec_info['filename']))
+    spec_info['x_indices'] =  range(1,len(dataframe.columns)-1)
+
+    print(f'running {model_spec}...\n')
+    print("spec info", spec_info)
+    
+    filename = os.path.join(spec_dir, spec_info['filename'])
+    spec_info['filename'] = filename # full path to csv file
+    wf = gen_workflow(spec_info, cache_dir=cachedir)
+    run_workflow(wf, "cf", {"n_procs": 1})
+
+    # move model output to new directory + add model spec file
+    out_models = glob.glob(os.path.join(os.getcwd(), '*out-localspec*'))
+    shutil.move(model_spec, out_models[0])
+    shutil.move(filename, out_models[0])
+    shutil.move(out_models[0], out_dir)
+
+
+def secondlevel_summary(
     results_dir,
     out_dir=Defaults.MODEL_DIR
     ):

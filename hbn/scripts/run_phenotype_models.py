@@ -23,8 +23,7 @@ def run(
     import os
     import datetime
     from hbn.constants import Defaults
-    from hbn.models import first_level_modeling as first
-    from hbn.models import second_level_modeling as second
+    from hbn.models import predictive_modeling
 
     if first_level:
         print('running first level')
@@ -33,7 +32,7 @@ def run(
         ct = datetime.datetime.now()
         ct_name = '_'.join(f'{ct}'.split(' '))
         for model_spec in specs:
-            first.run_pipeline(
+            predictive_modeling.run_pydra_ml(
                 model_spec=model_spec, 
                 spec_dir=Defaults.MODEL_SPEC_DIR, 
                 out_dir=os.path.join(Defaults.MODEL_DIR, ct_name),
@@ -48,7 +47,7 @@ def run(
             results = glob.glob(os.path.join(model_dir, '*out-localspec*'))
             # loop over results files
             for result in results:
-                second.run_pipeline(
+                predictive_modeling.secondlevel_summary(
                     results_dir=result,
                     out_dir=model_dir
                     )
