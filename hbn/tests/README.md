@@ -11,7 +11,7 @@ python3 test_workflow.py --cachedir=/home/shreyark/.cache/pydra-ml/cache-wf/
 ```
 
 ### Model Specs
-* **classifier-Extended_Strengths_and_Weaknesses_Assessment_of_Normal_Behavior-Parent_Report-DX_01_Cat_binarize-733973276-spec.json** is a model spec file
+* **classifier-Extended_Strengths_and_Weaknesses_Assessment_of_Normal_Behavior-Parent_Report-DX_01_Cat_binarize-spec.json** is a model spec file
 * The spec file contains all of the information needed to run the model that is input to **hbn.models.first_level_modeling.run_pipeline**
 > Note: model spec files can be created programatically with ** hbn.models.first_level_modeling.make_model_spec**
 
