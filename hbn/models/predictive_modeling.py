@@ -1,7 +1,142 @@
 import os
 from hbn.constants import Defaults
+    
 
-def run_pipeline(
+def make_model(
+    feature_spec,
+    target_spec,
+    pydraml_spec,
+    participants,
+    out_dir=Defaults.MODEL_SPEC_DIR
+    ):
+    """make model spec file using the following:`feature specs`, `targets`, `participants`, `pydraml_spec`  
+    
+    Models are only created if they satisfy the following conditions:
+    more than one feature, more than one target class, more than 100 participants and fewer than 1000 features
+
+    Args: 
+        feature_spec (str): fullpath to feature spec
+        target_spec (str): fullpath to target spec
+        pydraml_spec (str): fullpath to pydraml spec
+        participants (list of str): For example: ['../train_participants-ADHD.csv', '../train_participants-No_Diagnosis_Given.csv']
+        out_dir (str): directory where model spec and feature file should be saved
+    Returns:
+        model_spec (str): full path to model spec
+    """
+    import re
+    import os
+    from hbn import io
+    import pandas as pd
+    import random
+    from pathlib import Path
+    from hbn.features import feature_selection
+
+    # load in spec files
+    target_info = io.read_json(target_spec)
+    feature_info = io.read_json(feature_spec)
+    
+    # set spec + features filenames
+    spec_name = 'classifier-' + '_'.join(re.split(r'_|,|/| ', feature_info['measures'])) + '-' + target_info['outname'] + '-spec.json'
+    random_number = round(random.random()*1000000000)
+    filename = f'model_features_{random_number}.csv'
+    print(f'trying to make new filename: {filename}')
+
+    # get participant identifiers
+    participants_all = pd.DataFrame()
+    for participant in participants:
+        participants_all = pd.concat([participants_all, pd.read_csv(participant)])
+
+    model_spec = None; model_features = None
+    try:
+        # make multiple model specs using features, target, and participant specs 
+        dataframe = feature_selection.phenotype_features(
+                            feature_spec=feature_spec, 
+                            target_spec=target_spec,
+                            participants=participants
+                            )
+
+        # set certain conditionals for model spec to be run and model features to be created
+        # there have to be more than one column, more than one unique target, more than 100 participants and fewer than 1000 features
+        conditionals = all((dataframe.shape[1]>1, len(dataframe[target_info['outname']].unique())>1, dataframe.shape[0]>100, dataframe.shape[1]<1000))
+        
+        if conditionals: 
+
+            # chain together dictionaries
+            pydraml_info = io.read_json(pydraml_spec)
+            pydraml_info.update({'target_spec': target_info})
+            pydraml_info.update({'feature_spec': feature_info})
+            pydraml_info.update({'participants': participants_all['Identifiers'].tolist()}) 
+
+            # update model spec with features filename
+            model_features = os.path.join(out_dir, filename)
+            pydraml_info['filename'] = Path(model_features).name
+            pydraml_info['x_indices'] =  [*range(1,len(dataframe.columns)-1)]
+            pydraml_info['target_vars'] = target_info['outname']
+
+            # get model spec name
+            model_spec = os.path.join(out_dir, spec_name)
+            io.save_dict_as_JSON(model_spec, pydraml_info)
+
+            # save out model features
+            dataframe.to_csv(model_features, index=False)
+
+        else:
+            print(f'model spec not created for {filename} because one of the following conditions was not met: more than 1 feature, more than one unique target, more than 100 participants')
+    except:
+       print(f'failed to make model specs for {filename}')
+
+    return model_spec, model_features
+
+
+def run_pydra_ml(
+    model_spec, 
+    spec_dir,
+    cachedir='/home/maedbh/.cache/pydra-ml/cache-wf/',
+    out_dir=Defaults.MODEL_DIR):
+    """ run predictive models using pydra-ml. must provide `model_spec` json and `filename` in `model_spec` must be a csv of features saved in ../features/
+
+    Args:
+        model_spec (str): full path to model spec file
+        spec_dir (str): model spec directory (where `filename` in model_spec is temporarily stored)
+        cachedir (str): default is '/Users/maedbhking/pydra-ml/cache-wf/'
+        out_dir (str): full path to model output directory
+    Returns: 
+        saves (pickled) model to ../data/interim/
+    """
+    # load libraries
+    import os
+    import pandas as pd
+    import glob
+    import shutil
+    from hbn import io
+    from pydra_ml.classifier import gen_workflow, run_workflow
+
+    # create cachedir if it hasn't already been created
+    io.make_dirs(cachedir)
+    io.make_dirs(out_dir)
+
+    # load model spec json
+    spec_info = io.read_json(model_spec)
+
+    # load dataframe
+    dataframe = pd.read_csv(os.path.join(spec_dir, spec_info['filename']))
+
+    print(f'running {model_spec}...\n')
+    print("spec info", spec_info)
+    
+    filename = os.path.join(spec_dir, spec_info['filename'])
+    spec_info['filename'] = filename # full path to csv file
+    wf = gen_workflow(spec_info, cache_dir=cachedir)
+    run_workflow(wf, "cf", {"n_procs": 1})
+
+    # move model output to new directory + add model spec file
+    out_models = glob.glob(os.path.join(os.getcwd(), '*out-localspec*'))
+    shutil.move(model_spec, out_models[0])
+    shutil.move(filename, out_models[0])
+    shutil.move(out_models[0], out_dir)
+
+
+def secondlevel_summary(
     results_dir,
     out_dir=Defaults.MODEL_DIR
     ):

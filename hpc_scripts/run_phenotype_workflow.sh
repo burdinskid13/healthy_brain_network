@@ -15,7 +15,7 @@
 #SBATCH --mem=15G
 #
 # Wall clock limit:
-#SBATCH --time=15:00:00 # 
+#SBATCH --time=10:00:00 # 
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -37,7 +37,10 @@ cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 # python3 make_phenotype_features.py
 
 # # make model specs
-python3 make_phenotype_models.py --target=target_DX_01_Cat_binarize-spec.json --participants="['train_participants-Autism_Spectrum_Disorder.csv', 'train_participants-No_Diagnosis_Given.csv']"
+#python3 make_phenotype_models.py --pydraml_spec=pydraml_spec2.json --target=target_DX_01_Cat_binarize-spec.json --participants="['train_participants-Neurodevelopmental_Disorders.csv', 'train_participants-No_Diagnosis_Given.csv']"
 
 # run workflow
-python3 run_phenotype_models.py --first-level --second-level --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
+#python3 run_phenotype_models.py --first-level --second-level --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
+
+# delete pydra-ml cache from openmind (takes up to omuch space)
+python3 delete_cache.py --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/

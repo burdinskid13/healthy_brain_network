@@ -113,18 +113,42 @@ def predictive_modeling(df, x='features', y='roc_auc_score'):
 
     fig.add_trace(go.Violin(x=df[x][df['data']=='data'],
                             y=df[y][df['data']=='data'],
-                            legendgroup='Null', scalegroup='Null', name='Null',
+                            legendgroup='data', scalegroup='data', name='data',
                             side='negative',
                             line_color='blue')
                  )
     fig.add_trace(go.Violin(x=df[x][df['data']=='null'],
                             y=df[y][df['data']=='null'],
-                            legendgroup='Data', scalegroup='Data', name='Data',
+                            legendgroup='null', scalegroup='null', name='null',
                             side='positive',
                             line_color='orange')
                  )
+    fig.add_hline(y=.5, line_width=1, line_dash="dash", line_color="black")
     fig.update_traces(meanline_visible=True, box_visible=False)
     fig.update_layout(violingap=0, violinmode='overlay')
+    fig.update_xaxes(showticklabels=False)
+    fig.update_yaxes(title_text=y)
+    fig.show()
+
+def predictive_modeling_group(df, x='participant_group', y='roc_auc_score', title=None):
+    import plotly.graph_objects as go
+    import matplotlib.pyplot as plt
+    
+    fig = go.Figure()
+
+    for group in df[x].unique():
+
+        df1 = df[(df[x]==group) & (df['data']=="data")]
+
+        fig.add_trace(go.Violin(x=df1[x][df1[x]==group],
+                                y=df1[y][df1[x]==group],
+                                name=group,
+                                )
+                    )
+        fig.add_hline(y=.5, line_width=1, line_dash="dash", line_color="black")
+
+    fig.update_traces(meanline_visible=True, box_visible=False)
+    fig.update_layout(violingap=0, violinmode='overlay', title=title)
     fig.update_xaxes(showticklabels=False)
     fig.update_yaxes(title_text=y)
     fig.show()
