@@ -40,7 +40,7 @@ Data Exploration
 
 * You can explore the HBN data dictionary `Release9_DataDic`, which is located on OpenMind at **hbn_data/raw/phenotype**
 
-Features
+Example for creating specs:
 ------------
 * feature specs are created using the following command:
     ```
@@ -50,10 +50,10 @@ Features
     python3 preprocess_phenotype.py
 
     # make features for modeling
-    python3 make_phenotype_features.py
+    python3 make_phenotype_specs.py
     ```
 
-Predictive Modeling
+Example for running modeling routine:
 ------------
 * Model spec files (.json) are created using the following command:
     ```
@@ -61,7 +61,7 @@ Predictive Modeling
     python3 make_phenotype_models.py
 
     # run model pipeline
-    python3 run_phenotype_models.py --model_spec --cachedir=/om2/users/"username"/bin/.cache/pydra-ml/cache-wf/
+    python3 run_phenotype_models.py --cachedir=/om2/users/"username"/bin/.cache/pydra-ml/cache-wf/
     ``` 
 
 * To run a predictive modeling script on OpenMind: 
