@@ -12,7 +12,7 @@ def make_model(
     """make model spec file using the following:`feature specs`, `targets`, `participants`, `pydraml_spec`  
     
     Models are only created if they satisfy the following conditions:
-    more than one feature, more than one target class, more than 100 participants and fewer than 1000 features
+    more than one feature, more than one target class, more than 100 participants
 
     Args: 
         feature_spec (str): fullpath to feature spec
@@ -57,7 +57,7 @@ def make_model(
 
         # set certain conditionals for model spec to be run and model features to be created
         # there have to be more than one column, more than one unique target, more than 100 participants and fewer than 1000 features
-        conditionals = all((dataframe.shape[1]>1, len(dataframe[target_info['outname']].unique())>1, dataframe.shape[0]>100, dataframe.shape[1]<1000))
+        conditionals = all((dataframe.shape[1]>1, len(dataframe[target_info['outname']].unique())>1, dataframe.shape[0]>100))
         
         if conditionals: 
 
