@@ -77,7 +77,7 @@ def get_features(
 
                 if len(df)>=min_num_participants:
                     df_all = df_all.merge(df, on='Identifiers')
-                    print(f'reading {measure} into dataframe')
+                    #print(f'reading {measure} into dataframe')
                 else:
                     logger = _setup_logger('first_logger', 'too-few-features.log')
                     logger.info(Path(measure).name)

@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import logging
 
 from hbn.constants import Defaults
 
@@ -255,15 +256,13 @@ def parse_phenotypic_data(
     info, domain = assessment_list(assessment=assessment)
 
     # parse columns
-    info['abbrev_parsed'] = info[Abbreviation].str.split(r'_|,')
     info['measure_parsed'] = info['Measure'].str.split(r'_|,|/| ')
     if domain:
         info['domain_parsed'] = info['Domain'].str.split(r'_|,|/| ')
     
     # loop over rows
     for row in info.index:
-        abbrev = info.iloc[row]['abbrev_parsed'][0] 
-        
+
         # create separately outdir if `Domain` is present
         out_dir = assessment_dir
         if domain:
@@ -274,15 +273,21 @@ def parse_phenotypic_data(
             if not os.path.isdir(out_dir):
                 os.makedirs(out_dir)
 
+        abbrevs = info.iloc[row][Abbreviation].replace(' ','').split(',')
+        
         # subset the dataframe based on `Abbreviation`
-        df_subset = df.filter(like=abbrev)
-        df_subset = pd.concat([df['Identifiers'], df_subset], axis=1).set_index('Identifiers') # add identifiers
+        for abbrev in abbrevs:
+            df_subset = df.filter(like=abbrev)
+            df_subset = pd.concat([df['Identifiers'], df_subset], axis=1).set_index('Identifiers') # add identifiers
 
         # only save out datasets that aren't empty
         if not df_subset.empty:
             df_subset = df_subset.dropna(how='all').reset_index() # drop rows where all values are missing
             df_subset.to_csv(os.path.join(out_dir, '_'.join(info.iloc[row]['measure_parsed'])) + '.csv', index=None)
             print(f'saving to dir {out_dir}')
+        else:
+            logger = _setup_logger('first_logger', os.path.join(Defaults.PHENO_DIR, f'{assessment}-not-parsed.log'))
+            logger.info(info.iloc[row]['measure_parsed'])
 
 
 def assessment_list(assessment, save=True):
@@ -395,3 +400,18 @@ def add_CGAS_Score(dataframe):
     df_merged = df_score[['Identifiers', 'CGAS_Score']].merge(dataframe, on='Identifiers')
 
     return df_merged
+
+
+def _setup_logger(name, log_file, level=logging.INFO):
+    """To setup as many loggers as you want"""
+
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+
+    handler = logging.FileHandler(log_file)        
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+
+    return logger

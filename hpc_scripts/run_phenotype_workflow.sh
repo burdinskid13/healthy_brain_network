@@ -30,17 +30,17 @@ username=maedbh
 
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 
-# # preprocess
-# python3 preprocess_phenotype.py
+# preprocess
+python3 preprocess_phenotype.py
 
 # # make features
-# python3 make_phenotype_features.py
+python3 make_phenotype_features.py
 
 # # make model specs
-#python3 make_phenotype_models.py --pydraml_spec=pydraml_spec2.json --target=target_DX_01_Cat_binarize-spec.json --participants="['train_participants-Neurodevelopmental_Disorders.csv', 'train_participants-No_Diagnosis_Given.csv']"
+python3 make_phenotype_models.py --pydraml_spec=pydraml_spec2.json --target=target_DX_01_Cat_binarize-spec.json --participants="['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv']"
 
 # run workflow
-#python3 run_phenotype_models.py --first-level --second-level --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
+python3 run_phenotype_models.py --first-level --second-level --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
 
 # delete pydra-ml cache from openmind (takes up to omuch space)
-python3 delete_cache.py --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
+#python3 delete_cache.py --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
