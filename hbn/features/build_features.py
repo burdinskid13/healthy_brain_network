@@ -319,14 +319,21 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "target_column": "DX_01",
                         "transform": "binarize",
                         "outname": "DX_01_binarize"
+                        },
+                         {"assessment": "Clinical Measures",
+                         "domain": None,
+                         "measure": "Clinical Diagnosis Demographics",
+                         "target_column": "DX_01",
+                         "transform": "factorize",
+                         "outname": "DX_01_factorize"
+                        },
+                        {"assessment": "Clinical Measures",
+                        "domain": None,
+                        "measure": "Clinical Diagnosis Demographics",
+                        "target_column": "Sex",
+                        "transform": "binarize",
+                        "outname": "Sex_binarize"
                         }
-                        # {"assessment": "Clinical Measures",
-                        # "domain": None,
-                        # "measure": "Clinical Diagnosis Demographics",
-                        # "target_column": "DX_01",
-                        # "transform": "factorize",
-                        # "outname": "DX_01_factorize"
-                        # },
                         # {"assessment": "Clinical Measures",
                         # "domain": None,
                         # "measure": "Children's Global Assessment Scale",
