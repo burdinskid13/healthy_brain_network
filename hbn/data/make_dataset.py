@@ -250,7 +250,7 @@ def parse_phenotypic_data(
 
     df = pd.read_csv(parent_file);
     df = df.replace('.', np.float("NaN")) # replace '.' with NaN (easier to drop these rows)
-    df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|')
+    df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|').str.extract(r'(\w+)', expand=False)
 
     # load excel containing descriptions of phenotypic assessment
     info, domain = assessment_list(assessment=assessment)
@@ -276,14 +276,16 @@ def parse_phenotypic_data(
         abbrevs = info.iloc[row][Abbreviation].replace(' ','').split(',')
         
         # subset the dataframe based on `Abbreviation`
+        df_all = pd.DataFrame()
         for abbrev in abbrevs:
             df_subset = df.filter(like=abbrev)
-            df_subset = pd.concat([df['Identifiers'], df_subset], axis=1).set_index('Identifiers') # add identifiers
+            df_all = pd.concat([df_all, df_subset], axis=1)
 
         # only save out datasets that aren't empty
         if not df_subset.empty:
-            df_subset = df_subset.dropna(how='all').reset_index() # drop rows where all values are missing
-            df_subset.to_csv(os.path.join(out_dir, '_'.join(info.iloc[row]['measure_parsed'])) + '.csv', index=None)
+            df_all = pd.concat([df['Identifiers'], df_all], axis=1).set_index("Identifiers")
+            df_all = df_all.dropna(how='all').reset_index() # drop rows where all values are missing
+            df_all.to_csv(os.path.join(out_dir, '_'.join(info.iloc[row]['measure_parsed'])) + '.csv', index=None)
             print(f'saving to dir {out_dir}')
         else:
             logger = _setup_logger('first_logger', os.path.join(Defaults.PHENO_DIR, f'{assessment}-not-parsed.log'))

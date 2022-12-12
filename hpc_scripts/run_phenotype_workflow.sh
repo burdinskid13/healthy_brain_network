@@ -34,7 +34,7 @@ cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 python3 preprocess_phenotype.py
 
 # # make features
-python3 make_phenotype_features.py
+python3 make_phenotype_specs.py
 
 # # make model specs
 python3 make_phenotype_models.py --pydraml_spec=pydraml_spec2.json --target=target_DX_01_Cat_binarize-spec.json --participants="['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv']"
