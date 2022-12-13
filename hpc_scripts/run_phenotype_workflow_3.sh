@@ -37,7 +37,7 @@ cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 python3 make_phenotype_specs.py
 
 # # make model specs
-python3 make_phenotype_models.py --pydraml_spec=pydraml_spec2.json --target=target_DX_01_factorize-spec.json --participants="['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv']"
+python3 make_phenotype_models.py --pydraml_spec=pydraml_spec2.json --target=target_DX_01_factorize-spec.json --participants="['train_participants-ADHD-Combined_Type.csv', 'train_participants-ADHD-Hyperactive_Impulsive_Type.csv', 'train_participants-ADHD-Inattentive_Type.csv', 'train_participants-Other_Specified_Attention-Deficit_Hyperactivity_Disorder.csv', 'train_participants-No_Diagnosis_Given.csv']"
 
 # run workflow
 python3 run_phenotype_models.py --first-level --second-level --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/

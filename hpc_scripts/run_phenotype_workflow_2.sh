@@ -42,10 +42,10 @@ TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}
 
 # make model specs
-python3 make_phenotype_models.py --out_dir=spec_dir --pydraml_spec=pydraml_spec2.json --target=target_Sex_binarize-spec.json --participants="['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv']"
+python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --target=target_Sex_binarize-spec.json --participants="['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv']"
 
 # run workflow on model specs created in command above
-python3 run_phenotype_models.py --spec_dir=spec_dir --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
+python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
 
 # delete pydra-ml cache from openmind (takes up to omuch space)
 #python3 delete_cache.py --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
