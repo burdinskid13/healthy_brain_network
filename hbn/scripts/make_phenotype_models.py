@@ -33,13 +33,12 @@ def run(
         features (list of str or None): optional input arg. Default is None. If None, all features are used to create model specs
         target (str): target spec filename. should be stored in 'Defaults.FEATURE_DIR'
         pydraml_spec (str): pydraml spec filename. should be stored in `spec_dir`
-        spec_dir (str): where model spec files will be saved. Default is Defaults.MODEL_SPEC_DIR
+        out_dir (str): where model spec files will be saved. Default is Defaults.MODEL_SPEC_DIR
         participants (list of str): participant filenames
     """
     import glob
     import os
     from hbn.models import predictive_modeling
-
 
     # get all features
     if features is None:
@@ -47,6 +46,9 @@ def run(
 
     if not isinstance(features, list):
         features = [features]
+
+    if out_dir is None:
+        out_dir = Defaults.MODEL_SPEC_DIR
 
     # get full paths to participants
     all_participants = []

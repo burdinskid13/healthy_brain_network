@@ -67,6 +67,7 @@ def make_model(
             pydraml_info.update({'participants': participants_all['Identifiers'].tolist()}) 
 
             # update model spec with features filename
+            io.make_dirs(out_dir) # make directory if it doesn't already exist
             model_features = os.path.join(out_dir, filename)
             pydraml_info['filename'] = Path(model_features).name
             pydraml_info['x_indices'] =  [*range(1,len(dataframe.columns)-1)]
