@@ -41,7 +41,7 @@ TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}
 
 # # make model specs
-python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --target=target_DX_01_factorize-spec.json --participants="['train_participants-ADHD-Combined_Type.csv', 'train_participants-ADHD-Hyperactive_Impulsive_Type.csv', 'train_participants-ADHD-Inattentive_Type.csv', 'train_participants-Other_Specified_Attention-Deficit_Hyperactivity_Disorder.csv', 'train_participants-No_Diagnosis_Given.csv']"
+python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --target=target_DX_01_factorize-spec.json --participants="['train_participants-ADHD-Combined_Type.csv', 'train_participants-ADHD-Hyperactive_Impulsive_Type.csv', 'train_participants-ADHD-Inattentive_Type.csv', 'train_participants-Other_Specified_Attention-Deficit_Hyperactivity_Disorder.csv']"
 
 # run workflow
 python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
