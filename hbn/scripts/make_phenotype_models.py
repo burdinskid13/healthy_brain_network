@@ -2,6 +2,7 @@ import warnings
 warnings.filterwarnings("ignore")
 import click
 import ast
+from hbn.constants import Defaults
 
 class PythonLiteralOption(click.Option):
 
@@ -16,12 +17,14 @@ class PythonLiteralOption(click.Option):
 @click.option('--features', required=False)
 @click.option("--target")
 @click.option("--pydraml_spec")
+@click.option("--out_dir", required=False)
 @click.option('--participants', cls=PythonLiteralOption, default=[])
 
 def run(
     features=None,
     target='target_DX_01_Cat_binarize-spec.json',
     pydraml_spec='pydraml_spec2.json',
+    out_dir=Defaults.MODEL_SPEC_DIR,
     participants=['train_participants-Specific_Learning_Disorder_with_Impairment_in_Reading.csv', 'train_participants-No_Diagnosis_Given.csv']
     ):
     """Make phenotype model(s) using the following:`feature specs`, `targets`, `participants`, `pydraml_spec`  
@@ -29,13 +32,14 @@ def run(
     Args:
         features (list of str or None): optional input arg. Default is None. If None, all features are used to create model specs
         target (str): target spec filename. should be stored in 'Defaults.FEATURE_DIR'
-        pydraml_spec (str): pydraml spec filename. should be stored in 'Defaults.MODEL_SPEC_DIR'
+        pydraml_spec (str): pydraml spec filename. should be stored in `spec_dir`
+        spec_dir (str): where model spec files will be saved. Default is Defaults.MODEL_SPEC_DIR
         participants (list of str): participant filenames
     """
     import glob
     import os
-    from hbn.constants import Defaults
     from hbn.models import predictive_modeling
+
 
     # get all features
     if features is None:
@@ -55,7 +59,7 @@ def run(
                                     target_spec=os.path.join(Defaults.FEATURE_DIR, target),
                                     pydraml_spec=os.path.join(Defaults.MODEL_SPEC_DIR, pydraml_spec),
                                     participants=all_participants,
-                                    out_dir=Defaults.MODEL_SPEC_DIR
+                                    out_dir=out_dir
                                     )
     
 

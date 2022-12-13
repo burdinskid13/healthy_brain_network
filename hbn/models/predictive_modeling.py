@@ -36,7 +36,6 @@ def make_model(
     feature_info = io.read_json(feature_spec)
     
     # set spec + features filenames
-    spec_name = 'classifier-' + '_'.join(re.split(r'_|,|/| ', feature_info['measures'])) + '-' + target_info['outname'] + '-spec.json'
     random_number = round(random.random()*1000000000)
     filename = f'model_features_{random_number}.csv'
     print(f'trying to make new filename: {filename}')
@@ -74,6 +73,7 @@ def make_model(
             pydraml_info['target_vars'] = target_info['outname']
 
             # get model spec name
+            spec_name = 'classifier-' + '_'.join(re.split(r'_|,|/| ', feature_info['measures'])) + '-' + target_info['outname'] + '-spec.json'
             model_spec = os.path.join(out_dir, spec_name)
             io.save_dict_as_JSON(model_spec, pydraml_info)
 
@@ -117,9 +117,6 @@ def run_pydra_ml(
 
     # load model spec json
     spec_info = io.read_json(model_spec)
-
-    # load dataframe
-    dataframe = pd.read_csv(os.path.join(spec_dir, spec_info['filename']))
 
     print(f'running {model_spec}...\n')
     print("spec info", spec_info)
