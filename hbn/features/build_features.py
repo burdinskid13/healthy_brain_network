@@ -109,12 +109,6 @@ def get_targets(
         dataframe (pd dataframe)
     """
 
-    def _binarize_diagnosis(x):
-        if 'No Diagnosis Given' in x:
-            return 0
-        else:
-            return 1
-
     # get questionnaire
     df = get_features(assessment=target_info['assessment'],
                 domains=[target_info['domain']],
@@ -131,15 +125,9 @@ def get_targets(
     target = target_info['transform']
     new_target = target_info['outname']
     
-    # do some cleanup
-    if 'DX' in col:
-        df[col] = df[col].fillna('No Diagnosis Given')
-
+    # get new targets (binarize, factorize, or leave as is)
     if target=='binarize':
-        if 'DX' in col:
-            df[new_target] = df[col].apply(lambda x: _binarize_diagnosis(x))
-        else:
-            df[new_target] = df[col].factorize()[0]
+        df[new_target] = df[col].factorize()[0]
     elif target=='factorize':
         df[new_target] = df[col].factorize()[0]
     else:

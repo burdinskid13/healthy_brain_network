@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=2_workflow
+#SBATCH --job-name=4_workflow
 #
 # Partition:
 #SBATCH --partition=gablab

@@ -46,45 +46,45 @@ def make_model(
         participants_all = pd.concat([participants_all, pd.read_csv(participant)])
 
     model_spec = None; model_features = None
-    try:
-        # make multiple model specs using features, target, and participant specs 
-        dataframe = feature_selection.phenotype_features(
-                            feature_spec=feature_spec, 
-                            target_spec=target_spec,
-                            participants=participants
-                            )
+    #try:
+    # make multiple model specs using features, target, and participant specs 
+    dataframe = feature_selection.phenotype_features(
+                        feature_spec=feature_spec, 
+                        target_spec=target_spec,
+                        participants=participants
+                        )
 
-        # set certain conditionals for model spec to be run and model features to be created
-        # there have to be more than one column, more than one unique target, more than 100 participants
-        conditionals = all((dataframe.shape[1]>1, len(dataframe[target_info['outname']].unique())>1, dataframe.shape[0]>100))
-        
-        if conditionals: 
+    # set certain conditionals for model spec to be run and model features to be created
+    # there have to be more than one column, more than one unique target, more than 100 participants
+    conditionals = all((dataframe.shape[1]>1, len(dataframe[target_info['outname']].unique())>1, dataframe.shape[0]>100))
+    
+    if conditionals: 
 
-            # chain together dictionaries
-            pydraml_info = io.read_json(pydraml_spec)
-            pydraml_info.update({'target_spec': target_info})
-            pydraml_info.update({'feature_spec': feature_info})
-            pydraml_info.update({'participants': participants_all['Identifiers'].tolist()}) 
+        # chain together dictionaries
+        pydraml_info = io.read_json(pydraml_spec)
+        pydraml_info.update({'target_spec': target_info})
+        pydraml_info.update({'feature_spec': feature_info})
+        pydraml_info.update({'participants': participants_all['Identifiers'].tolist()}) 
 
-            # update model spec with features filename
-            io.make_dirs(out_dir) # make directory if it doesn't already exist
-            model_features = os.path.join(out_dir, filename)
-            pydraml_info['filename'] = Path(model_features).name
-            pydraml_info['x_indices'] =  [*range(1,len(dataframe.columns)-1)]
-            pydraml_info['target_vars'] = target_info['outname']
+        # update model spec with features filename
+        io.make_dirs(out_dir) # make directory if it doesn't already exist
+        model_features = os.path.join(out_dir, filename)
+        pydraml_info['filename'] = Path(model_features).name
+        pydraml_info['x_indices'] =  [*range(1,len(dataframe.columns)-1)]
+        pydraml_info['target_vars'] = target_info['outname']
 
-            # get model spec name
-            spec_name = 'classifier-' + '_'.join(re.split(r'_|,|/| ', feature_info['measures'])) + '-' + target_info['outname'] + '-spec.json'
-            model_spec = os.path.join(out_dir, spec_name)
-            io.save_dict_as_JSON(model_spec, pydraml_info)
+        # get model spec name
+        spec_name = 'classifier-' + '_'.join(re.split(r'_|,|/| ', feature_info['measures'])) + '-' + target_info['outname'] + '-spec.json'
+        model_spec = os.path.join(out_dir, spec_name)
+        io.save_dict_as_JSON(model_spec, pydraml_info)
 
-            # save out model features
-            dataframe.to_csv(model_features, index=False)
+        # save out model features
+        dataframe.to_csv(model_features, index=False)
 
-        else:
-            print(f'model spec not created for {filename} because one of the following conditions was not met: more than 1 feature, more than one unique target, more than 100 participants')
-    except:
-       print(f'failed to make model specs for {filename}')
+    else:
+        print(f'model spec not created for {filename} because one of the following conditions was not met: more than 1 feature, more than one unique target, more than 100 participants')
+    #except:
+       #print(f'failed to make model specs for {filename}')
 
     return model_spec, model_features
 
