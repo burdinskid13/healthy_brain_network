@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=workflow_phenotype_hbn_3
+#SBATCH --job-name=3_workflow
 #
 # Partition:
 #SBATCH --partition=gablab
