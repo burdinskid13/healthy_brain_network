@@ -35,14 +35,14 @@ cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 #python3 preprocess_phenotype.py
 
 # # make features
-#python3 make_phenotype_specs.py
+python3 make_phenotype_specs.py
 
 # make timestamp for this workflow
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}
 
 # make model specs
-python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --target=target_Sex_binarize-spec.json --participants="['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv']"
+python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --target=target_Sex_binarize-spec.json --participants="['train_participants-ADHD.csv']"
 
 # run workflow on model specs created in command above
 python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
