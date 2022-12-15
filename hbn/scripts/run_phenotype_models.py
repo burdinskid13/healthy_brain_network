@@ -1,17 +1,16 @@
 import click
 import warnings
+from hbn.constants import Defaults
 warnings.filterwarnings("ignore")
 
 
 @click.command()
 @click.option("--cachedir")
-@click.option("--first-level/--no-first-level", default=False)
-@click.option("--second-level/--no-second-level", default=True)
+@click.option("--spec_dir", required=False)
 
 def run(
     cachedir='/om2/user/maedbh/.cache/pydra-ml/cache-wf/',
-    first_level=False,
-    second_level=True,
+    spec_dir=Defaults.MODEL_SPEC_DIR,
     ):
     """run first level modeling pipeline
 
@@ -22,35 +21,36 @@ def run(
     import glob
     import os
     import datetime
-    from hbn.constants import Defaults
     from hbn.models import predictive_modeling
 
-    if first_level:
-        print('running first level')
-        specs = glob.glob(os.path.join(Defaults.MODEL_SPEC_DIR, '*classifier*'))
-        # loop over model specs
-        ct = datetime.datetime.now()
-        ct_name = '_'.join(f'{ct}'.split(' '))
-        for model_spec in specs:
-            predictive_modeling.run_pydra_ml(
-                model_spec=model_spec, 
-                spec_dir=Defaults.MODEL_SPEC_DIR, 
-                out_dir=os.path.join(Defaults.MODEL_DIR, ct_name),
-                cachedir=cachedir
-                )
 
-    if second_level:
-        print('running second level')
-        # get models
-        models = glob.glob(os.path.join(Defaults.MODEL_DIR, '*'))
-        for model_dir in models:
-            results = glob.glob(os.path.join(model_dir, '*out-localspec*'))
-            # loop over results files
-            for result in results:
-                predictive_modeling.secondlevel_summary(
-                    results_dir=result,
-                    out_dir=model_dir
-                    )
+    print('running first level')
+
+    # get model specs
+    specs = glob.glob(os.path.join(spec_dir, '*.json*'))
+
+    # loop over model specs
+    ct = datetime.datetime.now()
+    ct_name = '_'.join(f'{ct}'.split(' '))
+
+    # get model directory (where pydra-ml outputs are stored)
+    model_dir = os.path.join(Defaults.MODEL_DIR, ct_name)
+    for model_spec in specs:
+        predictive_modeling.run_pydra_ml(
+            model_spec=model_spec, 
+            spec_dir=spec_dir, 
+            out_dir=model_dir,
+            cachedir=cachedir
+            )
+
+    print('running second level')
+    results = glob.glob(os.path.join(model_dir, '*out-localspec*'))
+    # loop over results files
+    for result in results:
+        predictive_modeling.secondlevel_summary(
+            results_dir=result,
+            out_dir=model_dir
+            )
 
 
 if __name__ == "__main__":

@@ -77,7 +77,7 @@ def get_features(
 
                 if len(df)>=min_num_participants:
                     df_all = df_all.merge(df, on='Identifiers')
-                    print(f'reading {measure} into dataframe')
+                    #print(f'reading {measure} into dataframe')
                 else:
                     logger = _setup_logger('first_logger', 'too-few-features.log')
                     logger.info(Path(measure).name)
@@ -109,12 +109,6 @@ def get_targets(
         dataframe (pd dataframe)
     """
 
-    def _binarize_diagnosis(x):
-        if 'No Diagnosis Given' in x:
-            return 0
-        else:
-            return 1
-
     # get questionnaire
     df = get_features(assessment=target_info['assessment'],
                 domains=[target_info['domain']],
@@ -131,15 +125,9 @@ def get_targets(
     target = target_info['transform']
     new_target = target_info['outname']
     
-    # do some cleanup
-    if 'DX' in col:
-        df[col] = df[col].fillna('No Diagnosis Given')
-
+    # get new targets (binarize, factorize, or leave as is)
     if target=='binarize':
-        if 'DX' in col:
-            df[new_target] = df[col].apply(lambda x: _binarize_diagnosis(x))
-        else:
-            df[new_target] = df[col].factorize()[0]
+        df[new_target] = df[col].factorize()[0]
     elif target=='factorize':
         df[new_target] = df[col].factorize()[0]
     else:
@@ -235,6 +223,8 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
                     "preprocessing": parent_spec_info['preprocessing'], 
                     "min_num_participants": parent_spec_info['min_num_participants']
                     }
+        if data['assessment']=='Teacher Measures': # no domain name for 'Teacher Measures'
+            spec_info['domains'] = None
 
         # save json to `FEATURE_DIR`
         spec_fpath = os.path.join(out_dir, spec_filename + '-spec.json')
@@ -319,14 +309,21 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "target_column": "DX_01",
                         "transform": "binarize",
                         "outname": "DX_01_binarize"
+                        },
+                         {"assessment": "Clinical Measures",
+                         "domain": None,
+                         "measure": "Clinical Diagnosis Demographics",
+                         "target_column": "DX_01",
+                         "transform": "factorize",
+                         "outname": "DX_01_factorize"
+                        },
+                        {"assessment": "Clinical Measures",
+                        "domain": None,
+                        "measure": "Clinical Diagnosis Demographics",
+                        "target_column": "Sex",
+                        "transform": "binarize",
+                        "outname": "Sex_binarize"
                         }
-                        # {"assessment": "Clinical Measures",
-                        # "domain": None,
-                        # "measure": "Clinical Diagnosis Demographics",
-                        # "target_column": "DX_01",
-                        # "transform": "factorize",
-                        # "outname": "DX_01_factorize"
-                        # },
                         # {"assessment": "Clinical Measures",
                         # "domain": None,
                         # "measure": "Children's Global Assessment Scale",
