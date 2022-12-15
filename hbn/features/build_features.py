@@ -223,6 +223,8 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
                     "preprocessing": parent_spec_info['preprocessing'], 
                     "min_num_participants": parent_spec_info['min_num_participants']
                     }
+        if data['assessment']=='Teacher Measures': # no domain name for 'Teacher Measures'
+            spec_info['domains'] = None
 
         # save json to `FEATURE_DIR`
         spec_fpath = os.path.join(out_dir, spec_filename + '-spec.json')
