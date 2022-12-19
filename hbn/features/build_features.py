@@ -544,10 +544,9 @@ def get_domains(assessment='Child Measures'):
 
     if 'Domain' in info.columns:
         domains = info['Domain'].unique().tolist()
-    elif 'Measure' in info.columns:
-        domains = info['Measure'].unique().tolist()
-
-    return {assessment: domains + ['all']}
+        return {assessment: domains + ['all']}
+    else:
+        return {assessment: None}
 
 
 def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
@@ -555,7 +554,7 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
 
     Args:
         assessment (str): options: 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
-        domain (str): specific for each assessment. if 'all', then measures for all domains are returned
+        domain (str or None): specific for each assessment. if 'all', then measures for all domains are returned.
     Returns:
         list of str: list of domains
     """
@@ -613,14 +612,23 @@ def _get_feature_combinations(parent_spec):
     spec_info = []
     for assess in parent_spec['data']['features']['assessment']:
         domains = get_domains(assess)[assess]
-        domains.remove('all')
-        for domain in domains:
-            measures = get_measures(assess, domain)[domain]
+        if domains is not None:
+            domains.remove('all')
+            for domain in domains:
+                measures = get_measures(assess, domain)[domain]
+                for measure in measures:
+                    spec_info.append({'assessment': assess,
+                            'domains': domain,
+                            'measures': measure,
+                            })
+        else:
+            measures = get_measures(assess, domain)
             for measure in measures:
                 spec_info.append({'assessment': assess,
                         'domains': domain,
                         'measures': measure,
                         })
+
     return spec_info
 
 
