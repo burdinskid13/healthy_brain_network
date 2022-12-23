@@ -1,2 +1,0 @@
-,AdaBoost,DecisionTree,ExtraTrees,GaussianNB,LogisticRegression,MLP,RandomForest,SVC
-0,0.95 [0.89–1.0; 0.93],0.86 [0.77–0.95; 0.91],1.0 [1.0–1.0; 1.0],0.66 [0.51–0.86; 0.64],1.0 [0.92–1.0; 1.0],0.96 [0.88–1.0; 0.95],1.0 [1.0–1.0; 1.0],1.0 [0.91–1.0; 1.0]

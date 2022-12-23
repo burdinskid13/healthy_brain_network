@@ -1,6 +1,0 @@
-{
-  "@context": "https://raw.githubusercontent.com/nipype/pydra/master/pydra/schema/context.jsonld",
-  "@id": "uid:6b6c80eab84041cb9bcc547905fd07fc",
-  "endedAtTime": "2022-12-02T11:46:43.758031",
-  "errored": false
-}
