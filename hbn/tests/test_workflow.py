@@ -26,32 +26,35 @@ def run(
     from hbn.models import predictive_modeling
 
     # FIRST STEP
-    preprocess_phenotype.run()
+    # preprocess_phenotype.run()
 
     # SECOND STEP
-    make_phenotype_specs.run()
+    # make_phenotype_specs.run()
 
     # THIRD STEP
-    feature_spec = 'features-Parent_Measures-Demographic_Questionnaire_Measures-Extended_Strengths_and_Weaknesses_Assessment_of_Normal_Behavior-Parent_Report-spec.json'
+    feature_spec = 'features-Child_Measures-All-spec.json'
     target_spec =  'target_DX_01_Cat_binarize-spec.json'
-    pydraml_spec = 'pydraml_spec2.json'
+    pydraml_spec = 'pydraml_spec3.json'
 
     MODEL_SPEC_TRAIN = os.path.join(Defaults.MODEL_SPEC_DIR, 'train')
-    model_spec, _ = make_phenotype_models.run(
-                                        feature_spec=os.path.join(Defaults.FEATURE_DIR, feature_spec),
-                                        target_spec=os.path.join(Defaults.FEATURE_DIR, target_spec),
-                                        pydraml_spec=os.path.join(Defaults.MODEL_SPEC_DIR, pydraml_spec),
-                                        participants = [MODEL_SPEC_TRAIN + '/train_participants-ADHD.csv', 
-                                                        MODEL_SPEC_TRAIN + '/train_participants-No_Diagnosis_Given.csv']
-                                        )
+    # for illness in ["/train_participants-ADHD.csv", "/train_participants-Anxiety_Disorders.csv", "/train_participants-Depressive_Disorders.csv", 
+    # "/train_participants-Autism_Spectrum_Disorder.csv", "/train_participants-Specific_Learning_Disorder_with_Impairment_in_Reading.csv"]:
+    for illness in ["/train_participants-ADHD.csv"]:
+        model_spec, _ = make_phenotype_models.run(
+                                                features=os.path.join(Defaults.FEATURE_DIR, feature_spec),
+                                                target=os.path.join(Defaults.FEATURE_DIR, target_spec),
+                                                pydraml_spec=os.path.join(Defaults.MODEL_SPEC_DIR, pydraml_spec),
+                                                participants = [MODEL_SPEC_TRAIN + illness, 
+                                                                MODEL_SPEC_TRAIN + '/train_participants-No_Diagnosis_Given.csv']
+                                            )
 
-    # FOURTH STEP
-    predictive_modeling.run_pydra_ml(
-        model_spec=os.path.join(Defaults.MODEL_SPEC_DIR, model_spec), 
-        spec_dir= Defaults.MODEL_SPEC_DIR, 
-        out_dir=os.path.join(Defaults.TEST_DIR, 'test_data'),
-        cachedir=cachedir
-        )
+        # FOURTH STEP
+        predictive_modeling.run_pydra_ml(
+            model_spec=os.path.join(Defaults.MODEL_SPEC_DIR, model_spec), 
+            spec_dir= Defaults.MODEL_SPEC_DIR, 
+            out_dir=os.path.join(Defaults.TEST_DIR, 'test_data'),
+            cachedir=cachedir
+            )
 
 
 if __name__ == "__main__":

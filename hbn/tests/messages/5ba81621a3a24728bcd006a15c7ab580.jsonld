@@ -1,0 +1,7 @@
+{
+  "@context": "https://raw.githubusercontent.com/nipype/pydra/master/pydra/schema/context.jsonld",
+  "@id": "uid:1a24d46a5502491fb42f142af88b2ed1",
+  "@type": "monitor",
+  "startedAtTime": "2022-12-15T19:44:05.322755",
+  "wasStartedBy": "uid:f0342efc046a4c5a87a9ef638f472139"
+}

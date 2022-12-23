@@ -45,7 +45,7 @@ def make_model(
     participants_all = pd.DataFrame()
     for participant in participants:
         participants_all = pd.concat([participants_all, pd.read_csv(participant)])
-
+    
     model_spec = None; model_features = None
     try:
         # make multiple model specs using features, target, and participant specs 
@@ -57,8 +57,8 @@ def make_model(
 
         # set certain conditionals for model spec to be run and model features to be created
         # there have to be more than one column, more than one unique target, more than 100 participants and fewer than 1000 features
-        conditionals = all((dataframe.shape[1]>1, len(dataframe[target_info['outname']].unique())>1, dataframe.shape[0]>100, dataframe.shape[1]<1000))
-        
+        conditionals = all((dataframe.shape[1]>1, len(dataframe[target_info['outname']].unique())>1, dataframe.shape[0]>100))#, dataframe.shape[1]<1000))
+
         if conditionals: 
 
             # chain together dictionaries

@@ -26,7 +26,7 @@ module load openmind/anaconda/3-2022.05 # load python module
 source ~/.bash_profile # set paths
 source $(pipenv --venv)/bin/activate # activate virtual environment
 
-username=maedbh
+username=shreyark
 
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 

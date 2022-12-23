@@ -27,6 +27,7 @@ openpyxl = "*"
 pydra-ml = "*"
 hbn = {editable = true, path = "."}
 mljar-mercury = "*"
+smote = "*"
 
 [requires]
 python_version = "3.9.12"

@@ -1,0 +1,9 @@
+{
+  "@context": "https://raw.githubusercontent.com/nipype/pydra/master/pydra/schema/context.jsonld",
+  "rss_peak_gb": 3.06717300390625,
+  "vms_peak_gb": 8.892173767578125,
+  "cpu_peak_percent": 215.6,
+  "@id": "uid:ea4975d34e0e430e87d42f231faf9e00",
+  "@type": "runtime",
+  "prov:wasGeneratedBy": "uid:67e7d917005a4d97b8ddd63d8c37bed8"
+}
