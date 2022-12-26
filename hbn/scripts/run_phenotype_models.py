@@ -23,7 +23,6 @@ def run(
     import datetime
     from hbn.models import predictive_modeling
 
-
     print('running first level')
 
     # get model specs
