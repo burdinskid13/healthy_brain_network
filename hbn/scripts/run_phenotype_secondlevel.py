@@ -10,7 +10,7 @@ def run():
     from hbn.models import predictive_modeling
 
     print('running second level')
-    model_dirs = glob.glob(Defaults.MODEL_DIR)
+    model_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, '*'))
     for model_dir in model_dirs:
         results = glob.glob(os.path.join(model_dir, '*out-localspec*'))
         # loop over results files
