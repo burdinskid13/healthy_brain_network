@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import logging
 
 from hbn.constants import Defaults
 
@@ -249,21 +250,19 @@ def parse_phenotypic_data(
 
     df = pd.read_csv(parent_file)
     df = df.replace('.', np.float("NaN")) # replace '.' with NaN (easier to drop these rows)
-    df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|')
+    df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|').str.extract(r'(\w+)', expand=False)
 
     # load excel containing descriptions of phenotypic assessment
     info, domain = assessment_list(assessment=assessment)
 
     # parse columns
-    info['abbrev_parsed'] = info[Abbreviation].str.split(r'_|,')
     info['measure_parsed'] = info['Measure'].str.split(r'_|,|/| ')
     if domain:
         info['domain_parsed'] = info['Domain'].str.split(r'_|,|/| ')
     
     # loop over rows
     for row in info.index:
-        abbrev = info.iloc[row]['abbrev_parsed'][0] 
-        
+
         # create separately outdir if `Domain` is present
         out_dir = assessment_dir
         if domain:
@@ -274,15 +273,23 @@ def parse_phenotypic_data(
             if not os.path.isdir(out_dir):
                 os.makedirs(out_dir)
 
+        abbrevs = info.iloc[row][Abbreviation].replace(' ','').split(',')
+        
         # subset the dataframe based on `Abbreviation`
-        df_subset = df.filter(like=abbrev)
-        df_subset = pd.concat([df['Identifiers'], df_subset], axis=1).set_index('Identifiers') # add identifiers
+        df_all = pd.DataFrame()
+        for abbrev in abbrevs:
+            df_subset = df.filter(like=abbrev)
+            df_all = pd.concat([df_all, df_subset], axis=1)
 
         # only save out datasets that aren't empty
         if not df_subset.empty:
-            df_subset = df_subset.dropna(how='all').reset_index() # drop rows where all values are missing
-            df_subset.to_csv(os.path.join(out_dir, '_'.join(info.iloc[row]['measure_parsed'])) + '.csv', index=None)
+            df_all = pd.concat([df['Identifiers'], df_all], axis=1).set_index("Identifiers")
+            df_all = df_all.dropna(how='all').reset_index() # drop rows where all values are missing
+            df_all.to_csv(os.path.join(out_dir, '_'.join(info.iloc[row]['measure_parsed'])) + '.csv', index=None)
             print(f'saving to dir {out_dir}')
+        else:
+            logger = _setup_logger('first_logger', os.path.join(Defaults.PHENO_DIR, f'{assessment}-not-parsed.log'))
+            logger.info(info.iloc[row]['measure_parsed'])
 
 
 def assessment_list(assessment, save=True):
@@ -395,3 +402,18 @@ def add_CGAS_Score(dataframe):
     df_merged = df_score[['Identifiers', 'CGAS_Score']].merge(dataframe, on='Identifiers')
 
     return df_merged
+
+
+def _setup_logger(name, log_file, level=logging.INFO):
+    """To setup as many loggers as you want"""
+
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+
+    handler = logging.FileHandler(log_file)        
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+
+    return logger

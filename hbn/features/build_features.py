@@ -74,16 +74,10 @@ def get_features(
             # only read in files that exist
             if os.path.isfile(measure):
                 df = pd.read_csv(measure)
-                if 'all' in domains:
-                    # no min participants required
-                    df_all = df_all.merge(df, on = "Identifiers", how = 'outer')
-                    print(f'reading {measure} into dataframe')
-                elif len(df)>=min_num_participants:
-                    df_all = df_all.merge(df, on='Identifiers')
-                    print(f'reading {measure} into dataframe')
-                else:
-                    logger = _setup_logger('first_logger', 'too-few-features.log')
-                    logger.info(Path(measure).name)
+                df['Identifiers'] = df['Identifiers'].str.strip('_1') # specific for Teacher Measures
+                # no min participants required
+                df_all = df_all.merge(df, on="Identifiers", how='outer')
+                print(f'reading {measure} into dataframe')
             else:
                 super_logger = _setup_logger('second_logger', 'features-nonexistent.log')
                 super_logger.info(Path(measure).name)
@@ -112,12 +106,6 @@ def get_targets(
         dataframe (pd dataframe)
     """
 
-    def _binarize_diagnosis(x):
-        if 'No Diagnosis Given' in x:
-            return 0
-        else:
-            return 1
-
     # get questionnaire
     df = get_features(assessment=target_info['assessment'],
                 domains=[target_info['domain']],
@@ -134,15 +122,9 @@ def get_targets(
     target = target_info['transform']
     new_target = target_info['outname']
     
-    # do some cleanup
-    if 'DX' in col:
-        df[col] = df[col].fillna('No Diagnosis Given')
-
+    # get new targets (binarize, factorize, or leave as is)
     if target=='binarize':
-        if 'DX' in col:
-            df[new_target] = df[col].apply(lambda x: _binarize_diagnosis(x))
-        else:
-            df[new_target] = df[col].factorize()[0]
+        df[new_target] = df[col].factorize()[0]
     elif target=='factorize':
         df[new_target] = df[col].factorize()[0]
     else:
@@ -219,18 +201,27 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
         Returns:
             spec_file (str): spec filename
         """
+
         # define spec filename
         vals = []
         for val in ['features', 'assessment', 'domains', 'measures']:
-            if val in data.keys():
+            if val in data.keys() and data[val] is not None:
                 vals.append('_'.join(re.split(r'_|,|/| ', data[val])))
             else:
                 vals.append(val)
         spec_file = '-'.join(vals)
+
         return spec_file
     
     spec_files = []
     for data in feature_combinations:
+
+        # clean up domain folder name (remove superfluous spaces - should match directory)
+        if data['domains'] is not None:
+            domains_parsed = re.split(r'_|,|/| ', data['domains'])
+            while("" in domains_parsed) :
+                domains_parsed.remove("") 
+            data['domains'] = '_'.join(domains_parsed)
         
         spec_filename = _make_filename(data)
 
@@ -327,14 +318,21 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "target_column": "DX_01",
                         "transform": "binarize",
                         "outname": "DX_01_binarize"
+                        },
+                         {"assessment": "Clinical Measures",
+                         "domain": None,
+                         "measure": "Clinical Diagnosis Demographics",
+                         "target_column": "DX_01",
+                         "transform": "factorize",
+                         "outname": "DX_01_factorize"
+                        },
+                        {"assessment": "Clinical Measures",
+                        "domain": None,
+                        "measure": "Clinical Diagnosis Demographics",
+                        "target_column": "Sex",
+                        "transform": "binarize",
+                        "outname": "Sex_binarize"
                         }
-                        # {"assessment": "Clinical Measures",
-                        # "domain": None,
-                        # "measure": "Clinical Diagnosis Demographics",
-                        # "target_column": "DX_01",
-                        # "transform": "factorize",
-                        # "outname": "DX_01_factorize"
-                        # },
                         # {"assessment": "Clinical Measures",
                         # "domain": None,
                         # "measure": "Children's Global Assessment Scale",
@@ -565,10 +563,9 @@ def get_domains(assessment='Child Measures'):
 
     if 'Domain' in info.columns:
         domains = info['Domain'].unique().tolist()
-    elif 'Measure' in info.columns:
-        domains = info['Measure'].unique().tolist()
-
-    return {assessment: domains + ['all']}
+        return {assessment: domains + ['all']}
+    else:
+        return {assessment: None}
 
 
 def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
@@ -576,7 +573,7 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
 
     Args:
         assessment (str): options: 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
-        domain (str): specific for each assessment. if 'all', then measures for all domains are returned
+        domain (str or None): specific for each assessment. if 'all', then measures for all domains are returned.
     Returns:
         list of str: list of domains
     """
@@ -631,17 +628,35 @@ def _get_feature_combinations(parent_spec):
 
     parent_spec = io.read_json(parent_spec)
 
+    assessments = parent_spec['data']['features']['assessment']
+    domains = parent_spec['data']['features']['domains']
+    measures = parent_spec['data']['features']['measures']
+
+    # check arguments
+    if not isinstance(assessments, list):
+        assessments = [assessments]
+    if (not isinstance(domains, list) and (domains!='all')):
+        domains = [domains]
+    if (not isinstance(measures, list) and (measures!='all')):
+        measures = [measures]
+
     spec_info = []
-    for assess in parent_spec['data']['features']['assessment']:
-        domains = get_domains(assess)[assess]
-        domains.remove('all')
-        for domain in domains:
-            measures = get_measures(assess, domain)[domain]
-            for measure in measures:
+    for assess in assessments:
+        if domains=='all':
+            domain_names = get_domains(assess)[assess]
+            if domain_names is not None:
+                domain_names.remove('all')
+            elif domain_names is None:
+                domain_names = [domain_names]
+        for domain in domain_names:
+            if measures=='all':
+                measure_names = get_measures(assess, domain)[domain]
+            for measure in measure_names:
                 spec_info.append({'assessment': assess,
                         'domains': domain,
                         'measures': measure,
                         })
+
     return spec_info
 
 
