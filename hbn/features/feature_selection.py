@@ -42,6 +42,8 @@ def phenotype_features(
                 min_num_participants=feature_info['min_num_participants']
                 )
 
+    # analyze missing data
+    #features.to_csv('/om2/user/shreyark/healthy_brain_network/hbn/features/features_preprocessed.csv')
     # preprocess
     if preprocess:
         features = build_features.preprocess(
@@ -60,12 +62,16 @@ def phenotype_features(
         targets = build_features.get_targets(
                                 target_info=target_info, 
                                 participants=identifiers
-                                )
-
+                                )   
     if drop_identifiers:
-        return features_participants.merge(targets, on='Identifiers').drop(['Identifiers'], axis=1)
+        features_final = features_participants.merge(targets, on='Identifiers').drop(['Identifiers'], axis=1)
     else:
-        return features_participants.merge(targets, on='Identifiers')
+        features_final = features_participants.merge(targets, on='Identifiers')
+        
+    # upsample minority class using smote 
+    features_final = build_features.smote(features_final)
+    
+    return features_final
 
 
 def feature_selection_from_models():

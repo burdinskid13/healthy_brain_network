@@ -63,6 +63,7 @@ def run(
                                     participants=all_participants,
                                     out_dir=out_dir
                                     )
+    return model_spec, model_features
     
 
 if __name__ == "__main__":

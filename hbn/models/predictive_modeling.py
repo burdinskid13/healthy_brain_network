@@ -44,9 +44,8 @@ def make_model(
     participants_all = pd.DataFrame()
     for participant in participants:
         participants_all = pd.concat([participants_all, pd.read_csv(participant)])
-
+    
     model_spec = None; model_features = None
-    #try:
     # make multiple model specs using features, target, and participant specs 
     dataframe = feature_selection.phenotype_features(
                         feature_spec=feature_spec, 
@@ -83,8 +82,6 @@ def make_model(
 
     else:
         print(f'model spec not created for {filename} because one of the following conditions was not met: more than 1 feature, more than one unique target, more than 100 participants')
-    #except:
-       #print(f'failed to make model specs for {filename}')
 
     return model_spec, model_features
 

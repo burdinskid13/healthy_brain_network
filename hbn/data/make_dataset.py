@@ -248,7 +248,7 @@ def parse_phenotypic_data(
     if parent_file is None:
         parent_file = os.path.join(out_dir, 'data-2022-08-24T16_37_18.263Z.csv')
 
-    df = pd.read_csv(parent_file);
+    df = pd.read_csv(parent_file)
     df = df.replace('.', np.float("NaN")) # replace '.' with NaN (easier to drop these rows)
     df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|').str.extract(r'(\w+)', expand=False)
 

@@ -8,6 +8,7 @@ import itertools
 import glob
 import re
 import warnings
+from imblearn.over_sampling import SMOTE
 
 from hbn.data import make_dataset
 from hbn import io
@@ -57,7 +58,6 @@ def get_features(
     if not os.path.isfile(participants_fpath):
         make_dataset.get_summary()
     identifiers = pd.read_csv(participants_fpath)['Identifiers']
-
     # loop over domains
     df_all = pd.DataFrame({'Identifiers': identifiers})
     for domain in domain_dir:
@@ -74,21 +74,17 @@ def get_features(
             # only read in files that exist
             if os.path.isfile(measure):
                 df = pd.read_csv(measure)
-
-                if len(df)>=min_num_participants:
-                    df['Identifiers'] = df['Identifiers'].str.strip('_1') # specific for Teacher Measures
-                    df_all = df_all.merge(df, on='Identifiers')
-                    #print(f'reading {measure} into dataframe')
-                else:
-                    logger = _setup_logger('first_logger', 'too-few-features.log')
-                    logger.info(Path(measure).name)
+                df['Identifiers'] = df['Identifiers'].str.strip('_1') # specific for Teacher Measures
+                # no min participants required
+                df_all = df_all.merge(df, on="Identifiers", how='outer')
+                print(f'reading {measure} into dataframe')
             else:
                 super_logger = _setup_logger('second_logger', 'features-nonexistent.log')
                 super_logger.info(Path(measure).name)
 
     # drop NaN
-    df_all = df_all.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
-    df_all = df_all.dropna(how='all', axis=0)
+    # df_all = df_all.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
+    # df_all = df_all.dropna(how='all', axis=0)
 
     if incl_data_type is not None:
         df_all = df_all.select_dtypes(include=incl_data_type)
@@ -115,7 +111,7 @@ def get_targets(
                 domains=[target_info['domain']],
                 measures=[target_info['measure']]
                 )
-
+    
     # optionally filter dataframe to contain certain participants
     if participants is not None:
         participants_df = pd.DataFrame(participants, columns=['Identifiers'])
@@ -154,7 +150,6 @@ def preprocess(
         clf_info (dict of lists of scikit-learn classifiers or None): see `hbn/features/features-example.json` for example of structure
         cols_to_ignore (list of str): columns to ignore in preprocessing
     """
-    
     # do some scrubbing (e.g., remove superfluous columns)
     df_all = pd.DataFrame()
     for filter in cols_to_drop:
@@ -165,13 +160,19 @@ def preprocess(
     dataframe.drop(df_all.columns, axis=1, inplace=True)
 
     # drop any all NaN rows
-    dataframe = dataframe.dropna(how='all', axis=0)
-    dataframe = dataframe.dropna(how='all', axis=1)
+    # dataframe = dataframe.dropna(how='all', axis=0)
+    # dataframe = dataframe.dropna(how='all', axis=1)
+
+    # modified to drop by threshold of NaN rows and columns 
+    limitPerCols = dataframe.shape[1] * .50
+    limitPerRows = dataframe.shape[0] * .20
+    dataframe = dataframe.dropna(thresh=limitPerCols, axis='columns')
+    dataframe = dataframe.dropna(thresh=limitPerRows, axis='index')
+    dataframe = dataframe.reset_index(drop=True)
 
     # preprocessing: column transformation
     if clf_info is not None:
         dataframe = column_transform(dataframe=dataframe, clf_info=clf_info, cols_to_ignore=cols_to_ignore)
-
     dataframe = dataframe.reset_index(drop=True)
     dataframe = dataframe.loc[:, ~dataframe.columns.str.contains('^Unnamed')]
 
@@ -457,6 +458,16 @@ def column_transform(
         df_transformed = pd.concat([dataframe_to_ignore, df_transformed], axis=1)
 
     return df_transformed
+
+def smote(dataframe):
+    y_train = dataframe[dataframe.columns[-1:]].to_numpy() 
+    X_train = dataframe[dataframe.columns[1:-1]].to_numpy() 
+    sm = SMOTE(random_state = 42, sampling_strategy=0.5)
+    X_train_oversampled, y_train_oversampled = sm.fit_resample(X_train, y_train)
+    new_x = pd.DataFrame(X_train_oversampled, columns=dataframe.columns[1:-1])
+    new_y = pd.DataFrame(y_train_oversampled, columns=dataframe.columns[-1:])
+    df_smote = pd.concat([new_x, new_y], axis=1)
+    return df_smote
 
 
 def get_feature_names(column_transformer):
