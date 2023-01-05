@@ -219,7 +219,10 @@ def _add_model_parameters(dataframe, model_name, spec_info, results):
     dataframe['participants'] = '-'.join(spec_info['participants'])
     dataframe['model'] = model_name
     dataframe['clf'] = results['ml_wf.clf_info'][1]
-    dataframe['target'] = spec_info['target_vars'][0]
+    try:
+        dataframe['target'] = spec_info['target_vars']
+    except:
+        dataframe['target'] = spec_info['target_vars'][0]
     dataframe['features'] = features
     dataframe['assessment'] = spec_info['feature_spec']['assessment']
     dataframe['domains'] = spec_info['feature_spec']['domains']
