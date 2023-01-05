@@ -76,6 +76,7 @@ def get_features(
                 df = pd.read_csv(measure)
 
                 if len(df)>=min_num_participants:
+                    df['Identifiers'] = df['Identifiers'].str.strip('_1') # specific for Teacher Measures
                     df_all = df_all.merge(df, on='Identifiers')
                     #print(f'reading {measure} into dataframe')
                 else:
@@ -199,18 +200,27 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
         Returns:
             spec_file (str): spec filename
         """
+
         # define spec filename
         vals = []
         for val in ['features', 'assessment', 'domains', 'measures']:
-            if val in data.keys():
+            if val in data.keys() and data[val] is not None:
                 vals.append('_'.join(re.split(r'_|,|/| ', data[val])))
             else:
                 vals.append(val)
         spec_file = '-'.join(vals)
+
         return spec_file
     
     spec_files = []
     for data in feature_combinations:
+
+        # clean up domain folder name (remove superfluous spaces - should match directory)
+        if data['domains'] is not None:
+            domains_parsed = re.split(r'_|,|/| ', data['domains'])
+            while("" in domains_parsed) :
+                domains_parsed.remove("") 
+            data['domains'] = '_'.join(domains_parsed)
         
         spec_filename = _make_filename(data)
 
@@ -223,8 +233,6 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
                     "preprocessing": parent_spec_info['preprocessing'], 
                     "min_num_participants": parent_spec_info['min_num_participants']
                     }
-        if data['assessment']=='Teacher Measures': # no domain name for 'Teacher Measures'
-            spec_info['domains'] = None
 
         # save json to `FEATURE_DIR`
         spec_fpath = os.path.join(out_dir, spec_filename + '-spec.json')
@@ -609,21 +617,30 @@ def _get_feature_combinations(parent_spec):
 
     parent_spec = io.read_json(parent_spec)
 
+    assessments = parent_spec['data']['features']['assessment']
+    domains = parent_spec['data']['features']['domains']
+    measures = parent_spec['data']['features']['measures']
+
+    # check arguments
+    if not isinstance(assessments, list):
+        assessments = [assessments]
+    if (not isinstance(domains, list) and (domains!='all')):
+        domains = [domains]
+    if (not isinstance(measures, list) and (measures!='all')):
+        measures = [measures]
+
     spec_info = []
-    for assess in parent_spec['data']['features']['assessment']:
-        domains = get_domains(assess)[assess]
-        if domains is not None:
-            domains.remove('all')
-            for domain in domains:
-                measures = get_measures(assess, domain)[domain]
-                for measure in measures:
-                    spec_info.append({'assessment': assess,
-                            'domains': domain,
-                            'measures': measure,
-                            })
-        else:
-            measures = get_measures(assess, domain)
-            for measure in measures:
+    for assess in assessments:
+        if domains=='all':
+            domain_names = get_domains(assess)[assess]
+            if domain_names is not None:
+                domain_names.remove('all')
+            elif domain_names is None:
+                domain_names = [domain_names]
+        for domain in domain_names:
+            if measures=='all':
+                measure_names = get_measures(assess, domain)[domain]
+            for measure in measure_names:
                 spec_info.append({'assessment': assess,
                         'domains': domain,
                         'measures': measure,
