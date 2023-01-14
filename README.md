@@ -5,20 +5,25 @@ cerebellar fingerprints for neurodevelopmental disorders
 
 First Steps
 ------------
-This project uses [**pipenv**](https://github.com/pypa/pipenv) for virtual environment and python package management
-> see [OpenMind Setup](https://maedbhk.github.io/MIT-Projects/openmind/setup.html) for more detailed instructions on setting up virtual environments on OpenMind
 
+* Clone Repo
 > Clone the repo to your own path on OpenMind at **/om2/user/"username"**
 ```
 git clone git@github.com:maedbhk/healthy_brain_network.git`
 ```
 
+* Activate Virtual Environment
+You can use either [**pipenv**](https://github.com/pypa/pipenv) or [**conda**](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) for virtual environment and python package management
+> see [OpenMind Setup](https://maedbhk.github.io/MIT-Projects/openmind/setup.html) for more detailed instructions on setting up virtual environments on OpenMind
+
+
+* Activate jupyter notebook kernel
 > To run jupyter notebook using modules installed in virtual env, run the following command in top-level directory of repo
 ```
 ipython kernel install --name "hbn" --user
 ```
 
-## Setting Paths and Accessing Data
+* Setting Paths and Accessing Data
 > see [OpenMind Setup](https://maedbhk.github.io/MIT-Projects/mentorship/openmind.html) for more detailed instructions on setting paths on OpenMind
 * Data are stored on OpenMind here: **/om2/user/maedbh/hbn_data**
 * Create symlinks from this folder (or copy over **hbn_data/raw** folder) to your directory so you can read/write new files to your own path

@@ -8,10 +8,9 @@ pylint = "*"
 
 [packages]
 ipykernel = "*"
-scipy = "*"
 seaborn = "*"
 nibabel= "*"
-scikit-learn= "==1.1.2"
+scikit-learn= "*"
 Jupyter= "*"
 pandas = "*"
 numpy = "*"
@@ -25,9 +24,9 @@ wordcloud = "*"
 xlrd = "*"
 openpyxl = "*"
 pydra-ml = "*"
+imbalanced-learn = "*"
 hbn = {editable = true, path = "."}
-mljar-mercury = "*"
-smote = "*"
+
 
 [requires]
 python_version = "3.9.12"

@@ -1,0 +1,20 @@
+name: healthy-brain-network
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pip
+  - ipykernel
+  - scikit-learn
+  - pandas
+  - seaborn 
+  - nibabel 
+  - nilearn
+  - plotly
+  - h5py
+  - deepdish
+  - umap-learn
+  - imbalanced-learn
+  - sentence-transformers
+  - pip:
+    - pydra-ml

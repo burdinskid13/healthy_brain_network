@@ -8,7 +8,7 @@ import itertools
 import glob
 import re
 import warnings
-from imblearn.over_sampling import SMOTE
+#from imblearn.over_sampling import SMOTE
 
 from hbn.data import make_dataset
 from hbn import io
