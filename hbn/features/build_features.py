@@ -459,6 +459,7 @@ def column_transform(
 
     return df_transformed
 
+
 def smote(dataframe):
     y_train = dataframe[dataframe.columns[-1:]].to_numpy() 
     X_train = dataframe[dataframe.columns[1:-1]].to_numpy() 
