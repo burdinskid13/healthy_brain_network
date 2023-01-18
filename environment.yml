@@ -16,5 +16,6 @@ dependencies:
   - umap-learn
   - imbalanced-learn
   - sentence-transformers
+  - openpyxl
   - pip:
     - pydra-ml

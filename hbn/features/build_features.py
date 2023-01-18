@@ -8,7 +8,7 @@ import itertools
 import glob
 import re
 import warnings
-#from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTE
 
 from hbn.data import make_dataset
 from hbn import io
@@ -19,7 +19,6 @@ def get_features(
     assessment='Child Measures',
     domains='all',
     measures='all',
-    min_num_participants=2000,
     incl_data_type=None
     ):
     """read in data from `data/raw/phenotype/Assessment_List_Jan2019.xlsx`:
@@ -29,7 +28,6 @@ def get_features(
         assessment (str): options: 'Child Measures', 'Parent Measures', 'Teacher Measures', 'Clinical Measures'. Default is 'Child Measures'
         domains (list of str or 'all'): exhaustive list, find options here: `data/raw/phenotype/Assessment_List_Jan2019.xlsx`. Default is 'all'. If `domains` is 'all', all domains are loaded
         measures (list of str or 'all'): exhaustive list, find options here: `data/raw/phenotype/Assessment_List_Jan2019.xlsx`. Default is 'all'. If `measures` is 'all', all measures are loaded for `domains`
-        min_num_participants (int): min_num_participants for inclusion of assessment/domain/measure as features
         incl_data_type (list of pd.DataFrame.dtypes or None): if None, all categories are returned. default is None. pd.DataFrame.dtypes options: 'number', 'float', 'int', 'datetime', 'object'
     Returns:
         df_all (pd dataframe)
@@ -83,8 +81,8 @@ def get_features(
                 super_logger.info(Path(measure).name)
 
     # drop NaN
-    # df_all = df_all.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
-    # df_all = df_all.dropna(how='all', axis=0)
+    df_all = df_all.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
+    df_all = df_all.dropna(how='all', axis=0)
 
     if incl_data_type is not None:
         df_all = df_all.select_dtypes(include=incl_data_type)
@@ -139,16 +137,18 @@ def preprocess(
         dataframe,
         cols_to_drop=['EID', 'Comment_ID', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'],
         clf_info=None,
-        cols_to_ignore=['DX_01_Cat_factorize']
+        cols_to_ignore=['DX_01_Cat_factorize'],
+        threshold=False
         ):
 
     """Preprocess the features (data cleaning, scaling, imputation, standarization, one-hot encoding)
 
     Args:
         dataframe (pd dataframe): pandas dataframe to preprocess, should include X features and y target var, output from `get_features`
-        cols_to_drop (list of str): list of columns to drop from dataframe
-        clf_info (dict of lists of scikit-learn classifiers or None): see `hbn/features/features-example.json` for example of structure
-        cols_to_ignore (list of str): columns to ignore in preprocessing
+        cols_to_drop (list of str): (optional) list of columns to drop from dataframe
+        clf_info (dict of lists of scikit-learn classifiers or None): (optional) see `hbn/features/features-example.json` for example of structure
+        cols_to_ignore (list of str or None): (optional) columns to ignore in preprocessing
+        threshold (bool): threshold dataframe based on some fixed criterion. We are using 50% for columns and 20% for rows. If threshold is False, then only NaN entries are removed (no thresholding applied)
     """
     # do some scrubbing (e.g., remove superfluous columns)
     df_all = pd.DataFrame()
@@ -159,15 +159,15 @@ def preprocess(
     # drop superfluous columns
     dataframe.drop(df_all.columns, axis=1, inplace=True)
 
-    # drop any all NaN rows
-    # dataframe = dataframe.dropna(how='all', axis=0)
-    # dataframe = dataframe.dropna(how='all', axis=1)
-
-    # modified to drop by threshold of NaN rows and columns 
-    limitPerCols = dataframe.shape[1] * .50
-    limitPerRows = dataframe.shape[0] * .20
-    dataframe = dataframe.dropna(thresh=limitPerCols, axis='columns')
-    dataframe = dataframe.dropna(thresh=limitPerRows, axis='index')
+    if threshold:
+        # drop by threshold of NaN rows and columns 
+        limitPerCols = dataframe.shape[1] * .50
+        limitPerRows = dataframe.shape[0] * .20
+        dataframe = dataframe.dropna(thresh=limitPerCols, axis='columns')
+        dataframe = dataframe.dropna(thresh=limitPerRows, axis='index')
+    else:
+        # remove NaN entries
+        dataframe = dataframe.dropna(how='any')
     dataframe = dataframe.reset_index(drop=True)
 
     # preprocessing: column transformation
@@ -225,14 +225,17 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
         
         spec_filename = _make_filename(data)
 
+        # get data dic abbrev
+        abbrevs = get_datadic(measure=data['measures'])
+
         # define feature spec file
         spec_info = {
                     # "filename": spec_filename + '.csv', 
                     "assessment": data['assessment'],
                     "domains": data['domains'],
                     "measures": data['measures'],
+                    "datadic": abbrevs,
                     "preprocessing": parent_spec_info['preprocessing'], 
-                    "min_num_participants": parent_spec_info['min_num_participants']
                     }
 
         # save json to `FEATURE_DIR`
@@ -274,7 +277,6 @@ def make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
                     "transform": data["transform"], 
                     "outname": data["outname"],
                     "preprocessing": parent_spec_info['preprocessing'], 
-                    "min_num_participants": parent_spec_info['min_num_participants']
                     }
 
         # save json to `FEATURE_DIR`
@@ -371,7 +373,6 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                 #     ]
                 # ]
             },
-            "min_num_participants": 2000
             }
     outpath = os.path.join(out_dir, 'features-parent_spec.json')
     io.save_dict_as_JSON(outpath, spec_info)
@@ -461,6 +462,13 @@ def column_transform(
 
 
 def smote(dataframe):
+    """oversamples `dataframe` for minority samples
+
+    Args: 
+        dataframe (pd dataframe):
+    Returns:
+        df_smote (pd dataframe)
+    """
     y_train = dataframe[dataframe.columns[-1:]].to_numpy() 
     X_train = dataframe[dataframe.columns[1:-1]].to_numpy() 
     sm = SMOTE(random_state = 42, sampling_strategy=0.5)
@@ -580,7 +588,7 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
     """
     fname = '_'.join(assessment.split())
 
-    # master info file
+    # info file
     fpath = os.path.join(Defaults.PHENO_DIR, f'Assessment_List_Jan2019_{fname}.csv')
 
     if not os.path.isfile(fpath):
@@ -615,6 +623,40 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
             pass
 
     return {domain: measures}
+
+
+def get_datadic(measure='Grooved Pegboard'):
+    """get data dictionaries (.xlsx) for each `measure`
+
+    Args:
+        measure (str): default is 'Grooved Pegboard'
+    Returns:
+        list of dicts
+    """
+    assessments = ['Child_Measures', 'Parent_Measures', 'Teacher_Measures']
+    abbrev = 'Abbreviation(s) LORIS'
+
+    # loop over assessments
+    for assessment in assessments:
+        if assessment=='Teacher_Measures':
+            abbrev = 'Abbreviation'
+        fpath = os.path.join(Defaults.PHENO_DIR, f'Assessment_List_Jan2019_{assessment}.csv')
+
+        if not os.path.isfile(fpath):
+            make_dataset.assessment_list(assessment=assessment)
+    
+        # read in corrected assessment list
+        info = pd.read_csv(fpath)
+
+        # loop over measures
+        match = info[info['Measure']==measure]
+        if not match.empty:
+            if 'PreInt' in measure:
+                datadic = '_'.join(measure.split(' ')[2:])
+                return datadic
+            else:
+                datadic = match[abbrev].tolist()
+                return datadic
 
 
 def _get_feature_combinations(parent_spec):
