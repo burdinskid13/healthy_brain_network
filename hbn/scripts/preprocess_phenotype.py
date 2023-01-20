@@ -2,30 +2,31 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def run():
+def run(parse=False):
     """Preprocess phenotypic data. Parses data from main file if it hasn't already been done.
     Creates new summary diagnosis file
     """
     import os
+    import glob
+    import pandas as pd
     from hbn.constants import Defaults
     from hbn.data import make_dataset
 
-    assessments = ['Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures']
-    parent_file = os.path.join(Defaults.PHENO_DIR, 'data-2022-08-24T16_37_18.263Z.csv')
+    if parse:
+        # do some minimal preprocessing on the files (ONLY NEED TO DO THIS ONCE)
+        assessments = ['Child_Measures', 'Parent_Measures', 'Clinical_Measures', 'Teacher_Measures']
+        for assessment in assessments:
+            # save out assessments as separate csvs
+            make_dataset.assessment_list(' '.join(assessment.split("_")), save=True)
 
-    # parses data if hasn't already been done
-    for assessment in assessments:
-        fdir = os.path.join(Defaults.PHENO_DIR, '_'.join(assessment.split()))
-        if not os.path.isdir(fdir):
-            make_dataset.parse_phenotypic_data(
-                parent_file=parent_file,
-                assessment=assessment, 
-                out_dir=Defaults.PHENO_DIR
-                )
-        print('phenotypic data have already been parsed...')
-
-    # create new questionnaires from Parents Intake Interview
-    make_dataset.parse_intake_interview()
+            fdir = os.path.join(Defaults.PHENO_DIR, assessment)
+            fpaths = glob.glob(f'{fdir}/*/*.csv')
+            for fpath in fpaths:
+                df = pd.read_csv(fpath)
+                df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|').str.extract(r'(\w+)', expand=False)
+                df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+                df = df[~df['Identifiers'].isna()]
+                df.to_csv(fpath, index=False)
 
     # creates new clinical diagnosis file
     df = make_dataset.make_summary()

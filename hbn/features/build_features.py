@@ -159,6 +159,8 @@ def preprocess(
     # drop superfluous columns
     dataframe.drop(df_all.columns, axis=1, inplace=True)
 
+    keyboard
+
     if threshold:
         # drop by threshold of NaN rows and columns 
         limitPerCols = dataframe.shape[1] * .50
@@ -204,7 +206,7 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
 
         # define spec filename
         vals = []
-        for val in ['features', 'assessment', 'domains', 'measures']:
+        for val in ['features', 'assessment', 'domains', 'measures', 'abbrevs']:
             if val in data.keys() and data[val] is not None:
                 vals.append('_'.join(re.split(r'_|,|/| ', data[val])))
             else:
@@ -225,16 +227,13 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
         
         spec_filename = _make_filename(data)
 
-        # get data dic abbrev
-        abbrevs = get_datadic(measure=data['measures'])
-
         # define feature spec file
         spec_info = {
                     # "filename": spec_filename + '.csv', 
                     "assessment": data['assessment'],
                     "domains": data['domains'],
                     "measures": data['measures'],
-                    "datadic": abbrevs,
+                    "abbrevs": data['abbrevs'],
                     "preprocessing": parent_spec_info['preprocessing'], 
                     }
 
@@ -297,7 +296,8 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                 "features": {
                     "assessment": ["Child Measures", "Parent Measures", "Teacher Measures"],
                     "domains": "all",
-                    "measures": "all"
+                    "measures": "all",
+                    "abbrevs": 'all'
                     },
                 "target": [
                         {"assessment": "Clinical Measures",
@@ -608,20 +608,6 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
     else:
         measures = info['Measure']
 
-    # add an exception here if the domain is `Interview_of_Emotional_and_Psychological_Function`
-    # then additional parsed intake interview measures need to be added
-    if all((assessment=='Parent Measures', domain=='Interview of Emotional and Psychological Function')):
-        try:
-            measures.extend(['Intake Interview PreInt Demos Fam',
-                            'Intake Interview PreInt DevHx',
-                            'Intake Interview PreInt EduHx',
-                            'Intake Interview PreInt FamHx',
-                            'Intake Interview PreInt FamHx RDC',
-                            'Intake Interview PreInt Lang',
-                            'Intake Interview PreInt TxHx'])
-        except:
-            pass
-
     return {domain: measures}
 
 
@@ -651,12 +637,8 @@ def get_datadic(measure='Grooved Pegboard'):
         # loop over measures
         match = info[info['Measure']==measure]
         if not match.empty:
-            if 'PreInt' in measure:
-                datadic = '_'.join(measure.split(' ')[2:])
-                return datadic
-            else:
-                datadic = match[abbrev].tolist()
-                return datadic
+            datadic = match[abbrev].tolist()
+            return datadic
 
 
 def _get_feature_combinations(parent_spec):
@@ -674,6 +656,7 @@ def _get_feature_combinations(parent_spec):
     assessments = parent_spec['data']['features']['assessment']
     domains = parent_spec['data']['features']['domains']
     measures = parent_spec['data']['features']['measures']
+    abbrevs = parent_spec['data']['features']['abbrevs']
 
     # check arguments
     if not isinstance(assessments, list):
@@ -683,6 +666,7 @@ def _get_feature_combinations(parent_spec):
     if (not isinstance(measures, list) and (measures!='all')):
         measures = [measures]
 
+    ## clumsy - should be a cleaner way to write this
     spec_info = []
     for assess in assessments:
         if domains=='all':
@@ -695,10 +679,13 @@ def _get_feature_combinations(parent_spec):
             if measures=='all':
                 measure_names = get_measures(assess, domain)[domain]
             for measure in measure_names:
-                spec_info.append({'assessment': assess,
-                        'domains': domain,
-                        'measures': measure,
-                        })
+                abbrevs = get_datadic(measure)
+                for abbrev in abbrevs:
+                    spec_info.append({'assessment': assess,
+                            'domains': domain,
+                            'measures': measure,
+                            'abbrevs': abbrev
+                            })
 
     return spec_info
 

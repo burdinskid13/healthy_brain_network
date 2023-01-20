@@ -8,20 +8,17 @@ from hbn.constants import Defaults
 
 def make_summary(save=True):
     """
-    Save summary of dataset (clinical diagnosis + demographics) and save out participant identifiers: `Clinical_Diagnosis.csv` is parsed from master data (`phenotype.parse_data`) but is incorrect. `Clinical_Diagnosis_2022.csv`
-    was downloaded directly from LORIS and is correct, the latter is returned by this function.
+    Save summary of dataset `(Diagnosis_ClinicianConsensus` + `Basic_Demos`) and save out participant identifiers
     Returns: 
         dx (pd dataframe)
     """
     
     # READ CLINICAL CONSENSUS
-    dx_file = os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_2022.csv')
+    dx_file = os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Diagnosis_ClinicianConsensus.csv')
     dx = pd.read_csv(dx_file)
 
     # do some clean up
-    # dx.columns = dx.columns.str.replace('ConsensusDx,', '')
     dx.columns = dx.columns.str.replace('Diagnosis_ClinicianConsensus,', '')
-    dx['Identifiers'] = dx['Identifiers'].str.strip(',assessment')
 
     # new disorder category
     diagnoses = [f'DX_{f:02}' for f in np.arange(1,11)]
@@ -33,9 +30,6 @@ def make_summary(save=True):
     # bucket ages: over and under 10 yrs of age
     dx.loc[dx['Age']>10, 'Age_bracket'] = "over10"
     dx.loc[dx['Age']<=10, 'Age_bracket'] = "under10"
-
-    # add race/ethnicity
-    # dx = _add_race_ethnicity(dataframe=dx)
 
     # deal with missing values and NaN
     dx = dx.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
@@ -50,7 +44,7 @@ def make_summary(save=True):
     if save:
         dx['Identifiers'].to_csv(os.path.join(Defaults.PHENO_DIR, 'participants.csv'))
         # updated clinical diagnosis
-        dx.to_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
+        dx.to_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'), index=False)
 
     return dx
 
@@ -74,7 +68,7 @@ def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
     io.make_dirs(os.path.join(out_dir, 'test'))
 
     # get dataframe containing all participants + diagnoses
-    dataframe = make_summary()
+    dataframe = make_summary(save=False)
     dataframe['Sex_binarize'] = dataframe['Sex'].map({'male': 0, 'female': 1})
     dataframe['DX_01_Cat_new_factorize'] = dataframe['DX_01_Cat_new'].factorize()[0]
 
@@ -200,98 +194,6 @@ def define_new_categories(dataframe):
     return df_concat
 
 
-def parse_intake_interview():
-    import os
-    import pandas as pd
-    from hbn.constants import Defaults
-
-    fdir = os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Interview_of_Emotional_and_Psychological_Function')
-
-    # load intake interview
-    fpath = os.path.join(fdir, 'Intake_Interview.csv')
-
-    new_measures = ['Lang', 'FamHx,', 'EduHx', 'DevHx', 'Demos_Fam', 'FamHx_RDC', 'TxHx']
-
-    for measure in new_measures:
-        df = pd.read_csv(fpath)
-        identifiers = df[['Identifiers']]
-        df_out =  df.filter(like=measure)
-        df_out = pd.concat([identifiers, df_out], axis=1).reset_index(drop=True)
-        df_out.to_csv(os.path.join(fdir, f'Intake_Interview_PreInt_{measure}.csv'), index=False)
-
-
-def parse_phenotypic_data(
-    parent_file=None,
-    assessment='Child Measures', 
-    out_dir=Defaults.PHENO_DIR
-    ):
-    """parse phenotype assessments from 
-
-    Args: 
-        parent_file (str or None): full path to parent file to parse, if None, then looks in `Defaults.PHENO_DIR`
-        assessment (str): options: 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
-        out_dir (str): full path to directory where parsed data should be saved. Default is `Defaults.PHENO_DIR
-    Returns: 
-        dataframe (pd dataframe): `assessment` parsed and saved to disk
-    """
-    # loop over assessments
-    Abbreviation = 'Abbreviation(s) COINS'
-    if assessment=="Teacher Measures":
-        Abbreviation='Abbreviation'
-
-    # set up directory
-    assessment_dir = os.path.join(out_dir, '_'.join(assessment.split()))
-    if not os.path.isdir(assessment_dir):
-        os.makedirs(assessment_dir)
-
-    # load in master dataframe
-    if parent_file is None:
-        parent_file = os.path.join(out_dir, 'data-2022-08-24T16_37_18.263Z.csv')
-
-    df = pd.read_csv(parent_file)
-    df = df.replace('.', np.float("NaN")) # replace '.' with NaN (easier to drop these rows)
-    df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|').str.extract(r'(\w+)', expand=False)
-
-    # load excel containing descriptions of phenotypic assessment
-    info, domain = assessment_list(assessment=assessment)
-
-    # parse columns
-    info['measure_parsed'] = info['Measure'].str.split(r'_|,|/| ')
-    if domain:
-        info['domain_parsed'] = info['Domain'].str.split(r'_|,|/| ')
-    
-    # loop over rows
-    for row in info.index:
-
-        # create separately outdir if `Domain` is present
-        out_dir = assessment_dir
-        if domain:
-            domain_name = info.iloc[row]['domain_parsed']
-            while("" in domain_name) :
-                domain_name.remove("") 
-            out_dir = os.path.join(assessment_dir, '_'.join(domain_name))
-            if not os.path.isdir(out_dir):
-                os.makedirs(out_dir)
-
-        abbrevs = info.iloc[row][Abbreviation].replace(' ','').split(',')
-        
-        # subset the dataframe based on `Abbreviation`
-        df_all = pd.DataFrame()
-        for abbrev in abbrevs:
-            df_subset = df.filter(like=abbrev)
-            df_all = pd.concat([df_all, df_subset], axis=1)
-
-        # only save out datasets that aren't empty
-        if not df_subset.empty:
-            df_all = pd.concat([df['Identifiers'], df_all], axis=1).set_index("Identifiers")
-            df_all = df_all.dropna(how='all').reset_index() # drop rows where all values are missing
-            df_all.to_csv(os.path.join(out_dir, '_'.join(info.iloc[row]['measure_parsed'])) + '.csv', index=None)
-            print(f'saving to dir {out_dir}')
-        else:
-            logger = _setup_logger('first_logger', os.path.join(Defaults.PHENO_DIR, f'{assessment}-not-parsed.log'))
-            logger.info(info.iloc[row]['measure_parsed'])
-
-
 def assessment_list(assessment, save=True):
     """correct assessment list, update `domain` for each `measure`
 
@@ -336,7 +238,7 @@ def _add_demographics(dataframe):
         dataframe (pd dataframe): returns `dataframe` with additional demographic columns
     """
     # READ BASIC DEMOGRAPHICS
-    df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Demographic_Questionnaire_Measures/Demographics.csv'))
+    df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Demographic_Questionnaire_Measures/Basic_Demos.csv'))
     df_demo.columns = df_demo.columns.str.replace('Basic_Demos,','')
     df_demo['Sex'] = df_demo['Sex'].map({0: 'male', 1: 'female'})
     df_merged = df_demo[['Identifiers', 'Age', 'Sex', 'Enroll_Year']].merge(dataframe, on='Identifiers') # 'Sex_binarize',
