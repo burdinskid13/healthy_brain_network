@@ -221,11 +221,19 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
         # clean up domain folder name (remove superfluous spaces - should match directory)
         if data['domains'] is not None:
             domains_parsed = re.split(r'_|,|/| ', data['domains'])
-            while("" in domains_parsed) :
+            while("" in domains_parsed):
                 domains_parsed.remove("") 
             data['domains'] = '_'.join(domains_parsed)
         
         spec_filename = _make_filename(data)
+
+        # get datadic
+        datadic = get_datadic(abbrev=data['abbrevs'])
+
+        # only `Basic_Demos` should have `Age` and `Sex`
+        cols_to_drop = parent_spec_info['preprocessing']['cols_to_drop']
+        if data['abbrevs']=='Basic_Demos':
+            cols_to_drop = [col for col in cols_to_drop if col not in ('Age', 'Sex')]
 
         # define feature spec file
         spec_info = {
@@ -234,7 +242,9 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
                     "domains": data['domains'],
                     "measures": data['measures'],
                     "abbrevs": data['abbrevs'],
-                    "preprocessing": parent_spec_info['preprocessing'], 
+                    "datadic": datadic,
+                    "clf_info": parent_spec_info['clf_info'], 
+                    "cols_to_drop": cols_to_drop
                     }
 
         # save json to `FEATURE_DIR`
@@ -275,7 +285,7 @@ def make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
                     "target_column": data["target_column"],
                     "transform": data["transform"], 
                     "outname": data["outname"],
-                    "preprocessing": parent_spec_info['preprocessing'], 
+                    "clf_info": parent_spec_info['clf_info'], 
                     }
 
         # save json to `FEATURE_DIR`
@@ -345,6 +355,9 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                     ],
                 },
                 "preprocessing": {
+                    "cols_to_drop": ['EID', 'Comment_ID', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID', 'Age', 'Sex'],
+                },
+                "clf_info": { 
                     "numeric": [
                         [
                             "sklearn.impute",
@@ -572,6 +585,7 @@ def get_domains(assessment='Child Measures'):
 
     if 'Domain' in info.columns:
         domains = info['Domain'].unique().tolist()
+
         return {assessment: domains + ['all']}
     else:
         return {assessment: None}
@@ -611,7 +625,7 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
     return {domain: measures}
 
 
-def get_datadic(measure='Grooved Pegboard'):
+def get_abbrevs(assessment='Child Measures', measure='Grooved Pegboard'):
     """get data dictionaries (.xlsx) for each `measure`
 
     Args:
@@ -619,26 +633,86 @@ def get_datadic(measure='Grooved Pegboard'):
     Returns:
         list of dicts
     """
-    assessments = ['Child_Measures', 'Parent_Measures', 'Teacher_Measures']
     abbrev = 'Abbreviation(s) LORIS'
 
-    # loop over assessments
-    for assessment in assessments:
-        if assessment=='Teacher_Measures':
-            abbrev = 'Abbreviation'
-        fpath = os.path.join(Defaults.PHENO_DIR, f'Assessment_List_Jan2019_{assessment}.csv')
+    def _check_exceptions(assessment, measure):
+        # where there is a mismatch between the abbrev in the assessment list and the measure csv
+        exceptions = {
+            'Child_Measures': 
+            {
+            'NIH Toolbox': ['NIH_final', 'NIH_Scores'],
+            'Temporal Discounting Task': ['temp_disc_final'],
+            'Kiddie Schedule for Affective Disorders and Schizophrenia': ['KSADS_C'],
+            'Body Composition': ['bia_final'],
+            'Alcohol Use Disorders Identification Test ': ['Audit'],
+            'Food Frequency Questionnaire-Screening Form': ['FFQ_final']
+            },
+            'Parent_Measures': 
+            {
+            'Kiddie Schedule for Affective Disorders and Schizophrenia': ['KSADS_P']
+            }
+        }
+        try:
+            return exceptions[assessment][measure]
+        except:
+            return None
 
-        if not os.path.isfile(fpath):
-            make_dataset.assessment_list(assessment=assessment)
+    assessment = '_'.join(assessment.split(' '))
     
-        # read in corrected assessment list
-        info = pd.read_csv(fpath)
+    # loop over assessments
+    if assessment=='Teacher_Measures':
+        abbrev = 'Abbreviation'
+    fpath = os.path.join(Defaults.PHENO_DIR, f'Assessment_List_Jan2019_{assessment}.csv')
 
-        # loop over measures
-        match = info[info['Measure']==measure]
-        if not match.empty:
-            datadic = match[abbrev].tolist()
-            return datadic
+    if not os.path.isfile(fpath):
+        make_dataset.assessment_list(assessment=assessment)
+    
+    # read in corrected assessment list
+    info = pd.read_csv(fpath)
+
+    # loop over measures
+    match = info[info['Measure']==measure]
+    if not match.empty:
+        abbrevs = match[abbrev].tolist()
+        if measure=='Clinical Evaluation of Language Fundamentals':
+            abbrevs = ['CELF_Full_5to8', 'CELF_Full_9to21']
+        elif measure=='Treadmill Test':
+            abbrevs = ['Fitness_Aerobic', 'Fitness_Endurance']
+        elif measure=='Intake Interview':
+            abbrevs = ['PreInt_Demos_Fam', 'PreInt_Demos_Home', 'PreInt_DevHx', 'PreInt_EduHx', 'PreInt_Lang', 'PreInt_TxHx']
+        else:
+            abbrevs = abbrevs[0].split(', ')
+        # check exceptions
+        exception = _check_exceptions(assessment, measure)
+        if exception is not None:
+            abbrevs = exception
+        return abbrevs
+
+
+def get_datadic(abbrev='NIH_final'):
+    
+    # datadic file
+    fpath = os.path.join(Defaults.PHENO_DIR, 'Release9_DataDic', f'{abbrev}.xlsx')
+
+    def _check_exceptions(abbrev):
+        exceptions = {
+            'NIH_final': 'NIH_Full',
+            'temp_disc_final': 'Temp_Disc',
+            'bia_final': 'BIA',
+            'Basic_Demos': 'BasicDemos',
+            'TRF_Pre': 'TRF_P',
+            'Audit': 'AUDIT'
+            }
+        try:
+            return exceptions[abbrev]
+        except:
+            return None
+
+    # read excel
+    if not os.path.isfile(fpath):
+        abbrev = _check_exceptions(abbrev)
+
+    return abbrev
 
 
 def _get_feature_combinations(parent_spec):
@@ -679,7 +753,7 @@ def _get_feature_combinations(parent_spec):
             if measures=='all':
                 measure_names = get_measures(assess, domain)[domain]
             for measure in measure_names:
-                abbrevs = get_datadic(measure)
+                abbrevs = get_abbrevs(assess, measure)
                 for abbrev in abbrevs:
                     spec_info.append({'assessment': assess,
                             'domains': domain,

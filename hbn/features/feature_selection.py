@@ -49,7 +49,8 @@ def phenotype_features(
     if preprocess:
         features = build_features.preprocess(
                         dataframe=features,   
-                        clf_info=feature_spec['preprocessing'],
+                        cols_to_drop=feature_spec['preprocessing']['cols_to_drop'],
+                        clf_info=feature_spec['clf_info'],
                         cols_to_ignore=['Identifiers'],
                         threshold=False
                         )
