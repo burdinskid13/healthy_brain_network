@@ -42,14 +42,14 @@ def phenotype_features(
     features = build_features.get_features(
                 assessment=feature_spec['assessment'],
                 domains=[feature_spec['domains']],
-                measures=[feature_spec['measures']]
+                measures=[feature_spec['abbrevs']]
                 )
 
     # preprocess
     if preprocess:
         features = build_features.preprocess(
                         dataframe=features,   
-                        cols_to_drop=feature_spec['preprocessing']['cols_to_drop'],
+                        cols_to_drop=feature_spec['cols_to_drop'],
                         clf_info=feature_spec['clf_info'],
                         cols_to_ignore=['Identifiers'],
                         threshold=False

@@ -8,7 +8,7 @@ import itertools
 import glob
 import re
 import warnings
-from imblearn.over_sampling import SMOTE
+#from imblearn.over_sampling import SMOTE
 
 from hbn.data import make_dataset
 from hbn import io
@@ -159,18 +159,12 @@ def preprocess(
     # drop superfluous columns
     dataframe.drop(df_all.columns, axis=1, inplace=True)
 
-    keyboard
-
     if threshold:
         # drop by threshold of NaN rows and columns 
         limitPerCols = dataframe.shape[1] * .50
         limitPerRows = dataframe.shape[0] * .20
         dataframe = dataframe.dropna(thresh=limitPerCols, axis='columns')
         dataframe = dataframe.dropna(thresh=limitPerRows, axis='index')
-    else:
-        # remove NaN entries
-        dataframe = dataframe.dropna(how='any')
-    dataframe = dataframe.reset_index(drop=True)
 
     # preprocessing: column transformation
     if clf_info is not None:
