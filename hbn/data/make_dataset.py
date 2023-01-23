@@ -20,6 +20,10 @@ def make_summary(save=True):
     # do some clean up
     dx.columns = dx.columns.str.replace('Diagnosis_ClinicianConsensus,', '')
 
+    # Replace "NaN" diagnosis with 'No Diagnosis Given: No Reason Given'
+    dx.loc[dx['DX_01']==' ','DX_01'] = 'No Diagnosis Given: No Reason Given'
+    dx.loc[dx['DX_01_Cat'].isna(),'DX_01_Cat'] = 'No Diagnosis Given: No Reason Given'
+
     # new disorder category
     diagnoses = [f'DX_{f:02}' for f in np.arange(1,11)]
     dx['comorbidities'] = dx[diagnoses].count(axis=1)-1
@@ -37,10 +41,11 @@ def make_summary(save=True):
 
     # add new categories (including categories to be modeled)
     dx = define_new_categories(dataframe=dx)
-    
-    # save out new files to disk
+
     # participants
     dx = dx.loc[:, ~dx.columns.str.contains('^Unnamed')]
+    
+    # save out new files to disk
     if save:
         dx['Identifiers'].to_csv(os.path.join(Defaults.PHENO_DIR, 'participants.csv'))
         # updated clinical diagnosis

@@ -128,6 +128,9 @@ def get_targets(
     else:
         df[new_target] = df[col]
 
+    # remove -1 (corresponds to "NaN")
+    df = df[df[new_target]!=-1]
+
     df_target = df[['Identifiers', new_target]]
 
     return df_target
