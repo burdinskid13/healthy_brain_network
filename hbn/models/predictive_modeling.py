@@ -103,7 +103,7 @@ def run_pydra_ml(
     """
     # load libraries
     import os
-    import pandas as pd
+    import datetime
     import glob
     import shutil
     from hbn import io
@@ -122,13 +122,20 @@ def run_pydra_ml(
     filename = os.path.join(spec_dir, spec_info['filename'])
     spec_info['filename'] = filename # full path to csv file
     wf = gen_workflow(spec_info, cache_dir=cachedir)
+
+    # set up temporary folder and run modeling pipeline
+    ct = datetime.datetime.now()
+    ct_name = '_'.join(f'{ct}'.split(' '))
+    temp_dir = os.path.join(os.getcwd(), ct_name)
+    io.make_dirs(temp_dir)
+    os.chdir(temp_dir)
     run_workflow(wf, "cf", {"n_procs": 1})
 
     # move model output to new directory + add model spec file
-    out_models = glob.glob(os.path.join(os.getcwd(), '*out-localspec*'))
-    shutil.move(model_spec, out_models[0])
-    shutil.move(filename, out_models[0])
-    shutil.move(out_models[0], out_dir)
+    out_model = glob.glob(os.path.join(temp_dir, '*out-localspec*'))
+    shutil.move(model_spec, out_model[0])
+    shutil.move(filename, out_model[0])
+    shutil.move(out_model[0], out_dir)
 
 
 def secondlevel_summary(
@@ -205,6 +212,35 @@ def load_results(results, spec_file):
     spec_info = io.read_json(spec_file)
     
     return results, spec_info
+
+
+def check_models(filter='2023'):
+    import glob
+    import pandas as pd
+    from pathlib import Path
+    from hbn.constants import Defaults
+    from hbn.data.make_dataset import make_summary
+
+    models = glob.glob(os.path.join(Defaults.MODEL_DIR, f'*{filter}*'))
+
+    dx = make_summary(save=False)
+
+    for model_dir in models:
+        # load models
+        df = pd.read_csv(os.path.join(model_dir, 'classifier-all-phenotypic-models-performance.csv'))
+        
+        # make participants dataframe
+        participants = df['participants'].loc[0].split("-")
+        df_part = pd.DataFrame(participants, columns=['Identifiers'])
+        
+        # get target
+        target = df['target'].unique().tolist()
+        
+        # merge participants with diagnosis
+        diagnoses = dx.merge(df_part, on=['Identifiers'])['DX_01'].unique().tolist()
+        
+        model_name = Path(model_dir).name
+        print(f'{model_name}: {diagnoses}: {target}')
 
 
 def _add_model_parameters(dataframe, model_name, spec_info, results):

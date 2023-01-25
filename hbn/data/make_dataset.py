@@ -185,7 +185,7 @@ def define_new_categories(dataframe):
     ## divide neurodevelopmental disorders into other categories
     dataframe['DX_01_Cat_new'] = dataframe.apply(lambda x: new_categories(x['DX_01'], x['DX_01_Cat']), axis=1)
 
-    dx_to_model = ['Anxiety Disorders', 'Autism Spectrum Disorder', 'ADHD',
+    dx_to_model = ['Anxiety Disorders', 'Autism Spectrum Disorder', 'ADHD', 'No Diagnosis Given: No Reason Given',
                                         'No Diagnosis Given', 'No Diagnosis Given: Incomplete Eval',
                                         'Specific Learning Disorder with Impairment in Reading']
     dx_not_to_model = dataframe[~dataframe['DX_01_Cat_new'].isin(dx_to_model)].reset_index(drop=True)

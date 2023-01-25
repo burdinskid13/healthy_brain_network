@@ -31,7 +31,7 @@ username=maedbh
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 
 # preprocess
-#python3 preprocess_phenotype.py
+python3 preprocess_phenotype.py
 
 # # make features
 python3 make_phenotype_specs.py
@@ -41,7 +41,7 @@ TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}
 
 # # make model specs
-python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --target=target_DX_01_Cat_binarize-spec.json --participants="['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv']"
+python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --target=target_DX_01_Cat_new_binarize-spec.json --participants="['train_participants-ADHD.csv', 'train_participants-No_Diagnosis_Given.csv']"
 
 # run workflow
 python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/

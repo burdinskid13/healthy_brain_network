@@ -75,7 +75,7 @@ def get_features(
                 df['Identifiers'] = df['Identifiers'].str.strip('_1') # specific for Teacher Measures
                 # no min participants required
                 df_all = df_all.merge(df, on="Identifiers", how='outer')
-                print(f'reading {measure} into dataframe')
+                #print(f'reading {measure} into dataframe')
             else:
                 super_logger = _setup_logger('second_logger', 'features-nonexistent.log')
                 super_logger.info(Path(measure).name)
@@ -313,6 +313,13 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "target_column": "DX_01_Cat",
                         "transform": "binarize",
                         "outname": "DX_01_Cat_binarize"
+                        },
+                        {"assessment": "Clinical Measures",
+                        "domain": None,
+                        "measure": "Clinical Diagnosis Demographics",
+                        "target_column": "DX_01_Cat_new",
+                        "transform": "binarize",
+                        "outname": "DX_01_Cat_new_binarize"
                         },
                         {"assessment": "Clinical Measures",
                         "domain": None,

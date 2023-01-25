@@ -16,6 +16,11 @@ git clone git@github.com:maedbhk/healthy_brain_network.git`
 You can use either [**pipenv**](https://github.com/pypa/pipenv) or [**conda**](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) for virtual environment and python package management
 > see [OpenMind Setup](https://maedbhk.github.io/MIT-Projects/openmind/setup.html) for more detailed instructions on setting up virtual environments on OpenMind
 
+* Install editable package (make sure virtual env is activated)
+```
+pip install -e .
+```
+
 
 * Activate jupyter notebook kernel
 > To run jupyter notebook using modules installed in virtual env, run the following command in top-level directory of repo

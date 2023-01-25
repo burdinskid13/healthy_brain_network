@@ -17,5 +17,7 @@ dependencies:
   - imbalanced-learn
   - sentence-transformers
   - openpyxl
+  - tabulate
+  - dcor
   - pip:
     - pydra-ml
