@@ -14,7 +14,7 @@ class PythonLiteralOption(click.Option):
 
 
 @click.command()
-@click.option('--features', required=False)
+@click.option('--features', cls=PythonLiteralOption, default=[], required=False)
 @click.option("--target", required=False)
 @click.option("--pydraml_spec", required=False)
 @click.option("--out_dir", required=False)

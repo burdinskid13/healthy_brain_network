@@ -15,7 +15,7 @@
 #SBATCH --mem=15G
 #
 # Wall clock limit:
-#SBATCH --time=24:00:00 # 
+#SBATCH --time=10:00:00 # 
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -41,7 +41,7 @@ TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}
 
 # # make model specs
-python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --target=target_DX_01_Cat_new_binarize-spec.json --participants="['train_participants-Anxiety_Disorders.csv', 'train_participants-No_Diagnosis_Given.csv']"
+python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --features="['features-Parent_Measures-Demographic_Questionnaire_Measures-Child_Behavior_Checklist-CBCL-spec.json', 'features-Parent_Measures-Demographic_Questionnaire_Measures-Child_Behavior_Checklist-CBCL_Pre-spec.json', 'features-Teacher_Measures-domains-Child_Behavior_Checklist_–_Teacher_Report_Form-TRF_Pre-spec.json', 'features-Teacher_Measures-domains-Child_Behavior_Checklist_–_Teacher_Report_Form-TRF-spec.json']" --target=target_DX_01_Cat_new_binarize-spec.json --participants="['train_participants-Anxiety_Disorders.csv', 'train_participants-No_Diagnosis_Given.csv']"
 
 # run workflow
 python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
