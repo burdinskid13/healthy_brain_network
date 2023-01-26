@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=7_workflow
+#SBATCH --job-name=8_workflow
 #
 # Partition:
 #SBATCH --partition=gablab
@@ -15,7 +15,7 @@
 #SBATCH --mem=15G
 #
 # Wall clock limit:
-#SBATCH --time=20:00:00 # 
+#SBATCH --time=24:00:00 # 
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
