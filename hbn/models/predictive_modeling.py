@@ -225,22 +225,27 @@ def check_models(filter='2023'):
 
     dx = make_summary(save=False)
 
+    fname =  'classifier-all-phenotypic-models-performance.csv'
+
     for model_dir in models:
-        # load models
-        df = pd.read_csv(os.path.join(model_dir, 'classifier-all-phenotypic-models-performance.csv'))
-        
-        # make participants dataframe
-        participants = df['participants'].loc[0].split("-")
-        df_part = pd.DataFrame(participants, columns=['Identifiers'])
-        
-        # get target
-        target = df['target'].unique().tolist()
-        
-        # merge participants with diagnosis
-        diagnoses = dx.merge(df_part, on=['Identifiers'])['DX_01'].unique().tolist()
-        
-        model_name = Path(model_dir).name
-        print(f'{model_name}: {diagnoses}: {target}')
+        try:
+            # load models
+            df = pd.read_csv(os.path.join(model_dir, fname))
+            
+            # make participants dataframe
+            participants = df['participants'].loc[0].split("-")
+            df_part = pd.DataFrame(participants, columns=['Identifiers'])
+            
+            # get target
+            target = df['target'].unique().tolist()
+            
+            # merge participants with diagnosis
+            diagnoses = dx.merge(df_part, on=['Identifiers'])['DX_01'].unique().tolist()
+            
+            model_name = Path(model_dir).name
+            print(f'{model_name}: {diagnoses}: {target}')
+        except:
+            print(f'{fname} does not exist for {model_dir}, run `run_second_level.sh`')
 
 
 def _add_model_parameters(dataframe, model_name, spec_info, results):
