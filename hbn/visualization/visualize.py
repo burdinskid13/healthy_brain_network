@@ -150,5 +150,5 @@ def predictive_modeling_group(df, x='participant_group', y='roc_auc_score', titl
     fig.update_traces(meanline_visible=True, box_visible=False)
     fig.update_layout(violingap=0, violinmode='overlay', title=title)
     fig.update_xaxes(showticklabels=False)
-    fig.update_yaxes(title_text=y)
+    fig.update_yaxes(title_text='ROC AUC')
     fig.show()

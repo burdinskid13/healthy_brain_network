@@ -54,7 +54,7 @@ def get_features(
     # load in participants
     participants_fpath = os.path.join(Defaults.PHENO_DIR, 'participants.csv')
     if not os.path.isfile(participants_fpath):
-        make_dataset.get_summary()
+        make_dataset.make_summary(save=True)
     identifiers = pd.read_csv(participants_fpath)['Identifiers']
     # loop over domains
     df_all = pd.DataFrame({'Identifiers': identifiers})
@@ -72,7 +72,7 @@ def get_features(
             # only read in files that exist
             if os.path.isfile(measure):
                 df = pd.read_csv(measure)
-                df['Identifiers'] = df['Identifiers'].str.strip('_1') # specific for Teacher Measures
+                df['Identifiers'] = df['Identifiers'].str.strip('_1').str.strip('_2').str.strip('_3') # specific for Teacher Measures
                 # no min participants required
                 df_all = df_all.merge(df, on="Identifiers", how='outer')
                 #print(f'reading {measure} into dataframe')

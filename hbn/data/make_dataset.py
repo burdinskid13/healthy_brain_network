@@ -134,7 +134,21 @@ def get_disorder(column='DX_01', category='Anxiety Disorders'):
     return disorders
 
 
-def get_participants(split='train', disorders=['ADHD-Combined Type', 'ADHD-Inattentive Type'], path=Defaults.MODEL_SPEC_DIR):
+def get_participants(
+    split='train', 
+    disorders=['ADHD-Combined Type', 'ADHD-Inattentive Type'], 
+    age=None,
+    sex=None,
+    path=Defaults.MODEL_SPEC_DIR
+    ):
+    """return list of participant identifiers and filter based on `disorders`, `age`, `sex`
+
+    Args:  
+        split (str): default is 'train', other option is 'test' or 'all'
+        disorders (list of str): list of diagnoses
+        age (): 
+        sex (str or None): default is None (returns male and female. other options 'male' or 'female
+    """
     import os
     import re
     import pandas as pd
@@ -153,6 +167,14 @@ def get_participants(split='train', disorders=['ADHD-Combined Type', 'ADHD-Inatt
             if os.path.isfile(fname):
                 df = pd.read_csv(fname)
                 df_all = pd.concat([df, df_all])
+
+            # load clinical diagnosis
+            dx = make_summary(save=False)
+
+            # filter on age
+
+
+            # filter on sex
 
     return df_all
 
