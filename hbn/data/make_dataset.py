@@ -137,8 +137,8 @@ def get_disorder(column='DX_01', category='Anxiety Disorders'):
 def get_participants(
     split='train', 
     disorders=['ADHD-Combined Type', 'ADHD-Inattentive Type'], 
-    age=None,
-    sex=None,
+    age='all',
+    sex='all',
     path=Defaults.MODEL_SPEC_DIR
     ):
     """return list of participant identifiers and filter based on `disorders`, `age`, `sex`
@@ -146,37 +146,51 @@ def get_participants(
     Args:  
         split (str): default is 'train', other option is 'test' or 'all'
         disorders (list of str): list of diagnoses
-        age (): 
-        sex (str or None): default is None (returns male and female. other options 'male' or 'female
+        age (int or 'all'): (optional): default is 'all'. other options are list of numbers between 6 - 21
+        sex (str or 'all'): (optional): default is 'all'. other options 'male' or 'female
+    Returns:
+        `df_identifiers` (pd dataframe): dataframe with column `Identifiers`
     """
     import os
     import re
     import pandas as pd
-
-    df_all = pd.DataFrame()
 
     if split=='all':
         split = ['train', 'test']
     else:
         split = [split]
 
+    df_all = pd.DataFrame()
+    # loop over disorders
     for disorder in disorders:
         for sp in split:
             name = '_'.join(re.split(r'_|,|/| ', disorder))
             fname = os.path.join(path, sp, f'{sp}_participants-{name}.csv')
             if os.path.isfile(fname):
                 df = pd.read_csv(fname)
-                df_all = pd.concat([df, df_all])
 
             # load clinical diagnosis
             dx = make_summary(save=False)
-
+        
+            # integrate dataframes
+            df_dx = df.merge(dx, on=['Identifiers'])
+            
             # filter on age
-
+            if age is not 'all':
+                if not isinstance(age, list):
+                    age = [age]
+                df_dx['Age'] = df_dx['Age'].round()
+                df_dx = df_dx[df_dx['Age'].isin(age)]
 
             # filter on sex
+            if sex is not 'all':
+                df_dx = df_dx[df_dx['Sex']==sex]
+            
+            df_all = pd.concat([df_dx, df_all])
+    
+    df_identifiers = df_all.reset_index(drop=True)[['Identifiers']]
 
-    return df_all
+    return df_identifiers
 
 
 def define_new_categories(dataframe):

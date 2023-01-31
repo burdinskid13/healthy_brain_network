@@ -130,6 +130,7 @@ def predictive_modeling(df, x='features', y='roc_auc_score'):
     fig.update_yaxes(title_text=y)
     fig.show()
 
+
 def predictive_modeling_group(df, x='participant_group', y='roc_auc_score', title=None):
     import plotly.graph_objects as go
     import matplotlib.pyplot as plt
