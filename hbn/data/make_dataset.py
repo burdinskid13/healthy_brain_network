@@ -136,7 +136,7 @@ def get_disorder(column='DX_01', category='Anxiety Disorders'):
 
 def get_participants(
     split='train', 
-    disorders=['ADHD-Combined Type', 'ADHD-Inattentive Type'], 
+    disorders=['ADHD-Combined_Type', 'ADHD-Inattentive_Type'], 
     age='all',
     sex='all',
     path=Defaults.MODEL_SPEC_DIR
@@ -164,29 +164,31 @@ def get_participants(
     # loop over disorders
     for disorder in disorders:
         for sp in split:
-            name = '_'.join(re.split(r'_|,|/| ', disorder))
-            fname = os.path.join(path, sp, f'{sp}_participants-{name}.csv')
+            #name = '_'.join(re.split(r'_|,|/| ', disorder))
+            fname = os.path.join(path, sp, f'{sp}_participants-{disorder}.csv')
             if os.path.isfile(fname):
                 df = pd.read_csv(fname)
 
-            # load clinical diagnosis
-            dx = make_summary(save=False)
-        
-            # integrate dataframes
-            df_dx = df.merge(dx, on=['Identifiers'])
+                # load clinical diagnosis
+                dx = make_summary(save=False)
             
-            # filter on age
-            if age is not 'all':
-                if not isinstance(age, list):
-                    age = [age]
-                df_dx['Age'] = df_dx['Age'].round()
-                df_dx = df_dx[df_dx['Age'].isin(age)]
+                # integrate dataframes
+                df_dx = df.merge(dx, on=['Identifiers'])
+                
+                # filter on age
+                if age is not 'all':
+                    if not isinstance(age, list):
+                        age = [age]
+                    df_dx['Age'] = df_dx['Age'].round()
+                    df_dx = df_dx[df_dx['Age'].isin(age)]
 
-            # filter on sex
-            if sex is not 'all':
-                df_dx = df_dx[df_dx['Sex']==sex]
+                # filter on sex
+                if sex is not 'all':
+                    df_dx = df_dx[df_dx['Sex']==sex]
             
-            df_all = pd.concat([df_dx, df_all])
+                df_all = pd.concat([df_dx, df_all])
+            else:
+                print(f'{fname} does not exist')
     
     df_identifiers = df_all.reset_index(drop=True)[['Identifiers']]
 

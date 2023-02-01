@@ -214,14 +214,14 @@ def load_results(results, spec_file):
     return results, spec_info
 
 
-def check_models(filter='2023'):
+def check_models(filter='*2023*'):
     import glob
     import pandas as pd
     from pathlib import Path
     from hbn.constants import Defaults
     from hbn.data.make_dataset import make_summary
 
-    models = glob.glob(os.path.join(Defaults.MODEL_DIR, f'*{filter}*'))
+    models = glob.glob(os.path.join(Defaults.MODEL_DIR, f'{filter}'))
 
     dx = make_summary(save=False)
 
