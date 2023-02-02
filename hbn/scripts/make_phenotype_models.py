@@ -14,14 +14,14 @@ class PythonLiteralOption(click.Option):
 
 
 @click.command()
-@click.option('--features', cls=PythonLiteralOption, default=[], required=False)
+@click.option("--features", required=True, cls=PythonLiteralOption, default=[])
 @click.option("--target", required=False)
 @click.option("--pydraml_spec", required=False)
 @click.option("--out_dir", required=False)
-@click.option('--participants', cls=PythonLiteralOption, default=[])
+@click.option('--participants', required=True, cls=PythonLiteralOption, default=[])
 
 def run(
-    features=None,
+    features=[],
     target='target_DX_01_Cat_binarize-spec.json',
     pydraml_spec='pydraml_spec2.json',
     out_dir=Defaults.MODEL_SPEC_DIR,
@@ -41,7 +41,7 @@ def run(
     from hbn.models import predictive_modeling
 
     # get all features
-    if features is None:
+    if features:
         features = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*features*'))
 
     if not isinstance(features, list):

@@ -15,8 +15,8 @@ def run(
     """run first level modeling pipeline
 
     Args: 
-        model_spec (str): model spec filename (not full path)
         cachedir (str): full path to  cache directory for pydra-ml intermediary outputs
+        spec_dir (str): full pat to `MODEL_SPEC_DIR`
     """
     import glob
     import os
