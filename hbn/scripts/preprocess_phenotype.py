@@ -15,6 +15,10 @@ def run(parse=False):
     if parse:
         # do some minimal preprocessing on the files (ONLY NEED TO DO THIS ONCE)
         assessments = ['Child_Measures', 'Parent_Measures', 'Clinical_Measures', 'Teacher_Measures']
+
+        # parse KSADS
+
+        # loop over assessments
         for assessment in assessments:
             # save out assessments as separate csvs
             make_dataset.assessment_list(' '.join(assessment.split("_")), save=True)

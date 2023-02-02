@@ -42,7 +42,7 @@ TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}
 
 # make model specs
-python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --features="['features-Parent_Measures-Demographic_Questionnaire_Measures-Child_Behavior_Checklist-CBCL-spec.json', 'features-Parent_Measures-Demographic_Questionnaire_Measures-Child_Behavior_Checklist-CBCL_Pre-spec.json', 'features-Teacher_Measures-domains-Child_Behavior_Checklist_–_Teacher_Report_Form-TRF_Pre-spec.json', 'features-Teacher_Measures-domains-Child_Behavior_Checklist_–_Teacher_Report_Form-TRF-spec.json']" --target=target_Sex_binarize-spec.json --participants="['train_participants-ADHD.csv']"
+python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --target=target_Sex_binarize-spec.json --participants="['train_participants-Autism_Spectrum_Disorder.csv']"
 
 # run workflow on model specs created in command above
 python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
