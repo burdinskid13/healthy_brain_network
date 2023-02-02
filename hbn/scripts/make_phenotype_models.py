@@ -41,7 +41,7 @@ def run(
     from hbn.models import predictive_modeling
 
     # get all features
-    if features:
+    if not features:
         features = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*features*'))
 
     if not isinstance(features, list):
