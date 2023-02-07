@@ -5,6 +5,7 @@ warnings.filterwarnings("ignore")
 def run():
     from hbn.features import build_features
     from hbn.models import pydra_ml_specs
+    from hbn.data import participant_specs
     from hbn.constants import Defaults
 
     # make parent spec file for features
@@ -14,7 +15,8 @@ def run():
     build_features.make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
     build_features.make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
 
-    # make 
+    # make participant specs
+    participant_specs.make_specs()
 
     # make pydraml base specs
     pydra_ml_specs.make_specs(out_dir=Defaults.MODEL_SPEC_DIR)
