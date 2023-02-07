@@ -14,7 +14,7 @@ def phenotype_features(
 
     Args: 
         feature_spec (str or dict): full path to feature spec file OR dict loaded from file
-        participants (list of str or pd.DataFrame): list of fullpaths to participant files OR pd Dataframe with 'Identifiers' column indicating participants. Example ['../train_participants-ADHD.csv', '../train_participants-No_Diagnosis_Given.csv']
+        participants (list of str): list of participant identifiers (output from `make_dataset.get_participants`)
         target_spec (str or None): (optional) full path to target spec file. if None, then only features are returned.
         preprocess (bool): (optional) default is True.
         drop_identifiers (bool): (optional) default is True (returns dataframe without 'Identifiers' column)
@@ -31,12 +31,8 @@ def phenotype_features(
     if isinstance(feature_spec, str):
         feature_spec = io.read_json(feature_spec)
 
-    # make participants dataframe if list of csv files is given as input
-    if isinstance(participants, list):
-        participants_list = participants
-        participants = pd.DataFrame()
-        for participant in participants_list:
-            participants = pd.concat([participants, pd.read_csv(participant)])
+    # make participants dataframe 
+    participants_df = pd.DataFrame(participants, columns=['Identifiers'])
 
     # get features (X)
     features = build_features.get_features(
@@ -56,7 +52,7 @@ def phenotype_features(
                         )
 
     # combine features, targets, participants into one dataframe
-    features_participants = features.merge(participants, on='Identifiers')
+    features_participants = features.merge(participants_df, on='Identifiers')
     identifiers = features_participants['Identifiers'].tolist()
 
     targets = pd.DataFrame(identifiers, columns=['Identifiers'])

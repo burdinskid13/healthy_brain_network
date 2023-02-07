@@ -1,15 +1,16 @@
 import os
 from hbn.constants import Defaults
+from hbn.data import make_dataset
     
 
 def make_model(
     feature_spec,
     target_spec,
     pydraml_spec,
-    participants,
+    participant_spec,
     out_dir=Defaults.MODEL_SPEC_DIR
     ):
-    """make model spec file using the following:`feature specs`, `targets`, `participants`, `pydraml_spec`  
+    """make model spec file using the following:`feature specs`, `targets`, `participant_spec`, `pydraml_spec`  
     
     Models are only created if they satisfy the following conditions:
     more than one feature, more than one target class, more than 100 participants
@@ -18,8 +19,8 @@ def make_model(
         feature_spec (str): fullpath to feature spec
         target_spec (str): fullpath to target spec
         pydraml_spec (str): fullpath to pydraml spec
-        participants (list of str): For example: ['../train_participants-ADHD.csv', '../train_participants-No_Diagnosis_Given.csv']
-        out_dir (str): directory where model spec and feature file should be saved
+        participant_spec (str): fullpath to participant spec
+        out_dir (str): directory where model specs should be saved
     Returns:
         model_spec (str): full path to model spec
     """
@@ -34,23 +35,26 @@ def make_model(
     # load in spec files
     target_info = io.read_json(target_spec)
     feature_info = io.read_json(feature_spec)
+    participant_info = io.read_json(participant_spec)
     
     # set spec + features filenames
     random_number = round(random.random()*1000000000)
     filename = f'model_features_{random_number}.csv'
     print(f'trying to make new filename: {filename}')
 
-    # get participant identifiers
-    participants_all = pd.DataFrame()
-    for participant in participants:
-        participants_all = pd.concat([participants_all, pd.read_csv(participant)])
-    
+    # get participant identifiers from spec
+    participants_all = make_dataset.get_participants(split=participant_info['split'], 
+                                                    disorders=participant_info['diagnoses'], 
+                                                    age=participant_info['age'],
+                                                    sex=participant_info['sex']
+                                                    )
+
     model_spec = None; model_features = None
     # make multiple model specs using features, target, and participant specs 
     dataframe = feature_selection.phenotype_features(
                         feature_spec=feature_spec, 
                         target_spec=target_spec,
-                        participants=participants
+                        participants=participants_all
                         )
 
     # set certain conditionals for model spec to be run and model features to be created
@@ -58,12 +62,13 @@ def make_model(
     conditionals = all((dataframe.shape[1]>1, len(dataframe[target_info['outname']].unique())>1, dataframe.shape[0]>100))
     
     if conditionals: 
-
+        
         # chain together dictionaries
         pydraml_info = io.read_json(pydraml_spec)
         pydraml_info.update({'target_spec': target_info})
         pydraml_info.update({'feature_spec': feature_info})
-        pydraml_info.update({'participants': participants_all['Identifiers'].tolist()}) 
+        pydraml_info.update({'participant_spec': participant_info})
+        pydraml_info.update({'participants': participants_all}) 
 
         # update model spec with features filename
         io.make_dirs(out_dir) # make directory if it doesn't already exist

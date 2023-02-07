@@ -149,15 +149,14 @@ def get_participants(
         age (int or 'all'): (optional): default is 'all'. other options are list of numbers between 6 - 21
         sex (str or 'all'): (optional): default is 'all'. other options 'male' or 'female
     Returns:
-        `df_identifiers` (pd dataframe): dataframe with column `Identifiers`
+        `identifiers` (list of str): participant list
     """
     import os
-    import re
     import pandas as pd
 
     if split=='all':
         split = ['train', 'test']
-    else:
+    elif not isinstance(split, list):
         split = [split]
 
     df_all = pd.DataFrame()
@@ -176,23 +175,23 @@ def get_participants(
                 df_dx = df.merge(dx, on=['Identifiers'])
                 
                 # filter on age
-                if age is not 'all':
+                if age != 'all':
                     if not isinstance(age, list):
                         age = [age]
                     df_dx['Age'] = df_dx['Age'].round()
                     df_dx = df_dx[df_dx['Age'].isin(age)]
 
                 # filter on sex
-                if sex is not 'all':
+                if sex != 'all':
                     df_dx = df_dx[df_dx['Sex']==sex]
             
                 df_all = pd.concat([df_dx, df_all])
             else:
                 print(f'{fname} does not exist')
     
-    df_identifiers = df_all.reset_index(drop=True)[['Identifiers']]
+    identifiers = df_all.reset_index(drop=True)['Identifiers'].tolist()
 
-    return df_identifiers
+    return identifiers
 
 
 def define_new_categories(dataframe):
