@@ -28,9 +28,11 @@ source $(pipenv --venv)/bin/activate # activate virtual environment
 
 username=maedbh
 
+echo $("running continue workflow")
+
 # get timestamps
 base_dir=/om2/user/${username}/healthy_brain_network/model_specs
-TIMESTAMPS=counter=$(ls -d1 "${base_dir}/"*2023*)
+TIMESTAMPS=$(ls -d1 "${base_dir}/"*2023*)
 
 for ((m=0; m<${#TIMESTAMPS[@]}; m++)); do \
 
