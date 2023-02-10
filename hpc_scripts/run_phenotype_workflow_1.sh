@@ -15,7 +15,7 @@
 #SBATCH --mem=5G
 #
 # Wall clock limit:
-#SBATCH --time=10:00:00 # 
+#SBATCH --time=20:00:00 # 
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -37,7 +37,7 @@ cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 python3 make_phenotype_specs.py
 
 # make timestamp for this workflow
-TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
+TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S-%SS)
 spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}
 
 # # make model specs
