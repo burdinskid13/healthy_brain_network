@@ -28,17 +28,20 @@ source $(pipenv --venv)/bin/activate # activate virtual environment
 
 username=maedbh
 
-echo $("running continue workflow")
+echo $"continue running workflow"
 
 # get timestamps
-cd /om2/user/${username}/healthy_brain_network/model_specs
+base_dir=/om2/user/${username}/healthy_brain_network/model_specs
+cd ${base_dir}
 TIMESTAMPS=(*2023*/)
 
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 for ((m=0; m<${#TIMESTAMPS[@]}; m++)); do \
 
+spec_dir="${base_dir}/${TIMESTAMPS[m]}"
+
 # loop over workflows and check which ones need to be continued
-python3 run_phenotype_models.py --spec_dir=${TIMESTAMPS[m]} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/; done
+python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/; done
 
 # delete pydra-ml cache from openmind (takes up to omuch space)
 #python3 delete_cache.py --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
