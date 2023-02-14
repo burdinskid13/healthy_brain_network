@@ -108,8 +108,6 @@ def run_pydra_ml(
     """
     # load libraries
     import os
-    import datetime
-    import glob
     import shutil
     from hbn import io
     from pydra_ml.classifier import gen_workflow, run_workflow
@@ -126,21 +124,17 @@ def run_pydra_ml(
     
     filename = os.path.join(spec_dir, spec_info['filename'])
     spec_info['filename'] = filename # full path to csv file
+
+    # move filename and model_spec to model output directory
+    shutil.move(model_spec, out_dir)
+    shutil.move(filename, out_dir)
+
+    # change directory to model output directory
+    os.chdir(out_dir)
+
+    # run workflow
     wf = gen_workflow(spec_info, cache_dir=cachedir)
-
-    # set up temporary folder and run modeling pipeline
-    ct = datetime.datetime.now()
-    ct_name = '_'.join(f'{ct}'.split(' '))
-    temp_dir = os.path.join(os.getcwd(), ct_name)
-    io.make_dirs(temp_dir)
-    os.chdir(temp_dir)
     run_workflow(wf, "cf", {"n_procs": 1})
-
-    # move model output to new directory + add model spec file
-    out_model = glob.glob(os.path.join(temp_dir, '*out-localspec*'))
-    shutil.move(model_spec, out_model[0])
-    shutil.move(filename, out_model[0])
-    shutil.move(out_model[0], out_dir)
 
 
 def secondlevel_summary(
