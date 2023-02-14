@@ -28,6 +28,8 @@ source $(pipenv --venv)/bin/activate # activate virtual environment
 
 username=maedbh
 
+echo $"run workflow 11"
+
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 
 # preprocess

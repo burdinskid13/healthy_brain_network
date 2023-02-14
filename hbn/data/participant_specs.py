@@ -76,6 +76,14 @@ def make_specs(out_dir=Defaults.MODEL_SPEC_DIR):
          'sex': 'female',
          'ethnicity': 'all'
         },
+        'spec11':
+        {
+        "diagnoses": ["No_Diagnosis_Given"],
+        "split": "train",
+        "age": "all",
+        "sex": "all",
+        "ethnicity": "all"
+        }
         }
 
     # loop over classifies and save out pydra-ml specs

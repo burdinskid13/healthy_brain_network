@@ -28,6 +28,8 @@ source $(pipenv --venv)/bin/activate # activate virtual environment
 
 username=maedbh
 
+echo $"run workflow 2"
+
 # navigate to scripts directory
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 
