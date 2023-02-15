@@ -120,6 +120,11 @@ def run_pydra_ml(
     # load model spec json
     spec_info = io.read_json(model_spec)
 
+    # make new directory that is model specific
+    dirn = spec_info['filename'].split("_")[-1].split(".")[0]
+    model_dir = os.path.join(out_dir, f'model_{dirn}')
+    io.make_dirs(model_dir)
+
     print(f'running {model_spec}...\n')
     print("spec info", spec_info)
 
@@ -127,13 +132,13 @@ def run_pydra_ml(
     filename = os.path.join(spec_dir, spec_info['filename'])
 
     # move filename and model_spec to model output directory
-    shutil.move(model_spec, out_dir)
-    shutil.move(filename, out_dir)
+    shutil.move(model_spec, model_dir)
+    shutil.move(filename, model_dir)
 
-    spec_info['filename'] = os.path.join(out_dir, spec_info['filename']) # full path to csv file
+    spec_info['filename'] = os.path.join(model_dir, spec_info['filename']) # full path to csv file
 
     # change directory to model output directory
-    os.chdir(out_dir)
+    os.chdir(model_dir)
 
     # run workflow
     wf = gen_workflow(spec_info, cache_dir=cachedir)
