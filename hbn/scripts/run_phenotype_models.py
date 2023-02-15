@@ -32,7 +32,6 @@ def run(
         # get model directory (where pydra-ml outputs are stored)
         ct_name = Path(spec_dir).name # same name as model spec dir
         model_dir = os.path.join(Defaults.MODEL_DIR, ct_name)
-        print(f'creating model directory: {model_dir}')
         for model_spec in specs:
             predictive_modeling.run_pydra_ml(
                 model_spec=model_spec, 

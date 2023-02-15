@@ -40,7 +40,8 @@ def make_model(
     # set spec + features filenames
     random_number = round(random.random()*1000000000)
     filename = f'model_features_{random_number}.csv'
-    print(f'trying to make new filename: {filename}')
+    io.make_dirs(out_dir) # make directory if it doesn't already exist
+    model_features = os.path.join(out_dir, filename)
 
     # get participant identifiers from spec
     participants_all = make_dataset.get_participants(split=participant_info['split'], 
@@ -71,8 +72,6 @@ def make_model(
         pydraml_info.update({'participants': participants_all}) 
 
         # update model spec with features filename
-        io.make_dirs(out_dir) # make directory if it doesn't already exist
-        model_features = os.path.join(out_dir, filename)
         pydraml_info['filename'] = Path(model_features).name
         pydraml_info['x_indices'] =  [*range(1,len(dataframe.columns)-1)]
         pydraml_info['target_vars'] = target_info['outname']
@@ -80,10 +79,12 @@ def make_model(
         # get model spec name
         spec_name = 'classifier-' + '_'.join(re.split(r'_|,|/| ', feature_info['measures'])) + '-' + feature_info['abbrevs'] + '-' + target_info['outname'] + '-spec.json'
         model_spec = os.path.join(out_dir, spec_name)
+
+        # save out model features and spec
+        dataframe.to_csv(model_features, index=False)
         io.save_dict_as_JSON(model_spec, pydraml_info)
 
-        # save out model features
-        dataframe.to_csv(model_features, index=False)
+        print(f'created new file: {filename}')
 
     else:
         print(f'model spec not created for {filename} because one of the following conditions was not met: more than 1 feature, more than one unique target, more than 100 participants')
@@ -121,13 +122,15 @@ def run_pydra_ml(
 
     print(f'running {model_spec}...\n')
     print("spec info", spec_info)
-    
+
+    # get spec filename
     filename = os.path.join(spec_dir, spec_info['filename'])
-    spec_info['filename'] = filename # full path to csv file
 
     # move filename and model_spec to model output directory
     shutil.move(model_spec, out_dir)
     shutil.move(filename, out_dir)
+
+    spec_info['filename'] = os.path.join(out_dir, spec_info['filename']) # full path to csv file
 
     # change directory to model output directory
     os.chdir(out_dir)
