@@ -41,7 +41,6 @@ def make_model(
     random_number = round(random.random()*1000000000)
     filename = f'model_features_{random_number}.csv'
     io.make_dirs(out_dir) # make directory if it doesn't already exist
-    model_features = os.path.join(out_dir, filename)
 
     # get participant identifiers from spec
     participants_all = make_dataset.get_participants(split=participant_info['split'], 
@@ -72,6 +71,7 @@ def make_model(
         pydraml_info.update({'participants': participants_all}) 
 
         # update model spec with features filename
+        model_features = os.path.join(out_dir, filename)
         pydraml_info['filename'] = Path(model_features).name
         pydraml_info['x_indices'] =  [*range(1,len(dataframe.columns)-1)]
         pydraml_info['target_vars'] = target_info['outname']
