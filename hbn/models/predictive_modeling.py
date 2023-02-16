@@ -149,7 +149,7 @@ def secondlevel_summary(
     Saves output in `../interim/models/`
 
     Args:
-        results_dir (str): fullpath to top-level results dir. for example '../interim/models/out-localspec-<>'
+        results_dir (str): fullpath to top-level results dir. for example '../out-localspec-<>'
         out_dir (str): directory where second level modeling summary will be saved
     """
     import glob
@@ -157,7 +157,7 @@ def secondlevel_summary(
     from pathlib import Path
     from hbn import io
 
-    # make model spec if it doesn't already exist
+    # make model out_dir if it doesn't already exist
     io.make_dirs(out_dir)
 
     # get results file
@@ -165,7 +165,8 @@ def secondlevel_summary(
     results_file = os.path.join(results_dir, f'results-{model_name}.pkl')
 
     # get model spec file
-    spec_file = glob.glob(os.path.join(results_dir, '*.json'))[0]
+    model_dir = str(Path(results_dir).parent)
+    spec_file = glob.glob(os.path.join(model_dir, '*.json'))[0]
 
     # load results
     results, spec_info = load_results(results=results_file, spec_file=spec_file)
