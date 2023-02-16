@@ -2,7 +2,7 @@ import warnings
 from hbn.constants import Defaults
 warnings.filterwarnings("ignore")
 
-def run(filter='2023-01-25_22:11:05.460227'):
+def run(filter='2023-02-15'):
     """run second level modeling pipeline
     """
     import glob
@@ -11,8 +11,10 @@ def run(filter='2023-01-25_22:11:05.460227'):
 
     print('running second level')
     model_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, f'*{filter}*')) # '*2023*'
+    
     for model_dir in model_dirs:
-        results = glob.glob(os.path.join(model_dir, '*out-localspec*'))
+        
+        results = glob.glob(os.path.join(model_dir, '*model_*', '*out-localspec*'))
         # loop over results files
         for result in results:
             predictive_modeling.secondlevel_summary(

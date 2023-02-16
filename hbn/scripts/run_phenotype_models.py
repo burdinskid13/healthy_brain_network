@@ -21,6 +21,7 @@ def run(
     from pathlib import Path
     import glob
     import os
+    from hbn import io
     from hbn.models import predictive_modeling
 
     print('running first level')
@@ -31,8 +32,16 @@ def run(
     if specs:
         # get model directory (where pydra-ml outputs are stored)
         ct_name = Path(spec_dir).name # same name as model spec dir
-        model_dir = os.path.join(Defaults.MODEL_DIR, ct_name)
+        out_dir = os.path.join(Defaults.MODEL_DIR, ct_name)
+
+        # loop over models
         for model_spec in specs:
+
+            # make new directory that is model specific
+            spec_info = io.read_json(model_spec)
+            dirn = spec_info['filename'].split("_")[-1].split(".")[0]
+            model_dir = os.path.join(out_dir, f'model_{dirn}')
+
             predictive_modeling.run_pydra_ml(
                 model_spec=model_spec, 
                 spec_dir=spec_dir, 
