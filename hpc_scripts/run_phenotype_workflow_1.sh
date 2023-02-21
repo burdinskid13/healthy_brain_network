@@ -33,10 +33,10 @@ echo $"run workflow 1"
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 
 # preprocess
-#python3 preprocess_phenotype.py
+python3 preprocess_phenotype.py
 
 # # make features
-#python3 make_phenotype_specs.py
+python3 make_phenotype_specs.py
 
 # make timestamp for this workflow
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S-%SS)

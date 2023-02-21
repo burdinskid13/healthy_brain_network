@@ -323,7 +323,7 @@ def _add_race_ethnicity(dataframe):
         return ethnicity_dict[x]
 
     # READ DEMOGRAPHICS - INTAKE INTERVIEW
-    df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Interview_of_Emotional_and_Psychological_Function/Intake_Interview.csv'))
+    df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Interview_of_Emotional_and_Psychological_Function/PreInt_Demos_Fam.csv'))
     df_demo['PreInt_Demos_Fam,Child_Race_cat'] = df_demo['PreInt_Demos_Fam,Child_Race'].fillna(10).apply(lambda x: race(x))
     df_demo['PreInt_Demos_Fam,Child_Ethnicity_cat'] = df_demo['PreInt_Demos_Fam,Child_Ethnicity'].fillna(3).apply(lambda x: ethnicity(x))
     df_merged = df_demo[['Identifiers', 'PreInt_Demos_Fam,Child_Race_cat', 'PreInt_Demos_Fam,Child_Ethnicity_cat']].merge(dataframe, on='Identifiers')
@@ -340,7 +340,7 @@ def add_CGAS_Score(dataframe):
         returns `dataframe` with additional `CGAS_Score` column
     """
 
-    df_score = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures/Children\'s_Global_Assessment_Scale.csv'))
+    df_score = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'CGAS.csv'))
     df_score.columns = df_score.columns.str.replace('CGAS,','')
     df_score[df_score['CGAS_Score']>100] = np.float("NaN")
     df_merged = df_score[['Identifiers', 'CGAS_Score']].merge(dataframe, on='Identifiers')
