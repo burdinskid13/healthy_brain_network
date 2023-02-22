@@ -42,6 +42,9 @@ def make_summary(save=True):
     # add new categories (including categories to be modeled)
     dx = define_new_categories(dataframe=dx)
 
+    # add ethnicity
+    dx = _add_race_ethnicity(dataframe=dx)
+
     # participants
     dx = dx.loc[:, ~dx.columns.str.contains('^Unnamed')]
     
@@ -302,14 +305,14 @@ def _add_race_ethnicity(dataframe):
             1:"Black/African American",
             2:"Hispanic",
             3:"Asian",
-            4:"Indian",
-            5:"Native American Indian",
-            6:"American Indian/Alaskan Native",
+            4:"Asian",
+            5:"Native American",
+            6:"Native American",
             7:"Native Hawaiian/Other Pacific Islander",
             8:"Two or more races",
-            9:"Other race",
+            9:"Unknown",
             10:"Unknown",
-            11:"Choose not to specify"
+            11:"Unknown"
             }
         return race_dict[x]
         
@@ -317,16 +320,16 @@ def _add_race_ethnicity(dataframe):
         ethnicity_dict = {
             0: "White/Caucasian",
             1: "Hispanic or Latino",
-            2: "Decline to specify",
+            2: "Unknown",
             3: "Unknown",
             }
         return ethnicity_dict[x]
 
     # READ DEMOGRAPHICS - INTAKE INTERVIEW
     df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Interview_of_Emotional_and_Psychological_Function/PreInt_Demos_Fam.csv'))
-    df_demo['PreInt_Demos_Fam,Child_Race_cat'] = df_demo['PreInt_Demos_Fam,Child_Race'].fillna(10).apply(lambda x: race(x))
-    df_demo['PreInt_Demos_Fam,Child_Ethnicity_cat'] = df_demo['PreInt_Demos_Fam,Child_Ethnicity'].fillna(3).apply(lambda x: ethnicity(x))
-    df_merged = df_demo[['Identifiers', 'PreInt_Demos_Fam,Child_Race_cat', 'PreInt_Demos_Fam,Child_Ethnicity_cat']].merge(dataframe, on='Identifiers')
+    df_merged = dataframe.merge(df_demo, on='Identifiers', how='left')
+    df_merged['PreInt_Demos_Fam,Child_Race_cat'] = df_merged['PreInt_Demos_Fam,Child_Race'].fillna(10).apply(lambda x: race(x)) # fill NaN values with "Unknown"
+    df_merged['PreInt_Demos_Fam,Child_Ethnicity_cat'] = df_merged['PreInt_Demos_Fam,Child_Ethnicity'].fillna(3).apply(lambda x: ethnicity(x)) # fill NaN values with "Unknown"
 
     return df_merged
 
