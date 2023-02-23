@@ -73,9 +73,3 @@ def phenotype_features(
     
     return features_final
 
-
-def feature_selection_from_models():
-    import pandas as pd
-
-    df = pd.read_csv('classifier-feature_importance.csv')
-    df[['feature_names_sum', 'feature_sum']]
