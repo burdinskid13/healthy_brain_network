@@ -15,7 +15,7 @@
 #SBATCH --mem=4G
 #
 # Wall clock limit:
-#SBATCH --time=20:00:00 # 
+#SBATCH --time=24:00:00 # 
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -41,7 +41,8 @@ cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 
 # make timestamp for this workflow
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S-%SS)
-spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}
+RANDOM_NUMBER=$((1 + $RANDOM % 100))
+spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}-${RANDOM_NUMBER}
 
 # make model specs
 python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --features="[]" --target=target_Sex_binarize-spec.json --participant_spec=participant_spec2.json

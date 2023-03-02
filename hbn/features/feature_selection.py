@@ -25,6 +25,8 @@ def phenotype_features(
     """
     import pandas as pd
     from hbn import io
+    import os
+    from hbn.constants import Defaults
     from hbn.features import build_features
 
     # load from json file
@@ -40,6 +42,24 @@ def phenotype_features(
                 domains=[feature_spec['domains']],
                 measures=[feature_spec['abbrevs']]
                 )
+    
+    # filter based on participants
+    features = features.merge(participants_df, on='Identifiers')
+    
+    # optionally add demographics
+    if feature_spec['demos'] is not None:
+        demos_df = pd.read_csv(os.path.join(Defaults.FEATURE_DIR, feature_spec['demos']))
+        tmp = demos_df.merge(features, on=['Identifiers'])
+        cols_to_factorize = ['Sex', 'Diagnosis', 'Race', 'Ethnicity']
+        for col in cols_to_factorize:
+            tmp.loc[:, col] = tmp[col].factorize()[0]
+        features = tmp
+
+    # remove sex from `features` if we're trying to classify Sex
+    if target_spec is not None:
+        target_info = io.read_json(target_spec)
+        if 'Sex' in target_info['target_column']:
+            features = features.drop(['Sex'], axis=1)
 
     # preprocess
     if preprocess:
@@ -52,9 +72,7 @@ def phenotype_features(
                         )
 
     # combine features, targets, participants into one dataframe
-    features_participants = features.merge(participants_df, on='Identifiers')
-    identifiers = features_participants['Identifiers'].tolist()
-
+    identifiers = features['Identifiers'].tolist()
     targets = pd.DataFrame(identifiers, columns=['Identifiers'])
     if target_spec is not None:
         target_info = io.read_json(target_spec)
@@ -63,9 +81,9 @@ def phenotype_features(
                                 participants=identifiers
                                 )   
     if drop_identifiers:
-        features_final = features_participants.merge(targets, on='Identifiers').drop(['Identifiers'], axis=1)
+        features_final = features.merge(targets, on='Identifiers').drop(['Identifiers'], axis=1)
     else:
-        features_final = features_participants.merge(targets, on='Identifiers')
+        features_final = features.merge(targets, on='Identifiers')
         
     # upsample minority class using smote 
     if oversample:

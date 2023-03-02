@@ -1,7 +1,7 @@
 from hbn.constants import Defaults
 
 
-def pydraml_base(clf_info, n_splits=50, test_size=0.2):
+def pydraml_base(clf_info, n_splits=25, test_size=0.2):
     spec_info = {
     "filename" : None,
     "x_indices" : None,

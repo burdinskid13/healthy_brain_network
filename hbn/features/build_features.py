@@ -141,7 +141,7 @@ def preprocess(
         cols_to_drop=['EID', 'Comment_ID', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'],
         clf_info=None,
         cols_to_ignore=['DX_01_Cat_factorize'],
-        threshold=False
+        threshold=True
         ):
 
     """Preprocess the features (data cleaning, scaling, imputation, standarization, one-hot encoding)
@@ -178,7 +178,11 @@ def preprocess(
     return dataframe
 
 
-def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
+def make_feature_specs(
+        parent_spec, 
+        out_dir=Defaults.FEATURE_DIR,
+        features_to_ignore=['features-Clinical_Measures-domains-Clinical_Diagnosis-Diagnosis_ClinicianConsensus']
+        ):
     """make feature sets (json spec files)
 
     Args: 
@@ -232,6 +236,11 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
         if data['abbrevs']=='Basic_Demos':
             cols_to_drop = [col for col in cols_to_drop if col not in ('Age', 'Sex')]
 
+        # add demographics (from `Clinical_Diagnosis_Demographics`) if True
+        demos = None
+        if parent_spec_info['preprocessing']['add_demos']:
+            demos = make_demographics()
+
         # define feature spec file
         spec_info = {
                     # "filename": spec_filename + '.csv', 
@@ -240,15 +249,18 @@ def make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
                     "measures": data['measures'],
                     "abbrevs": data['abbrevs'],
                     "datadic": datadic,
+                    "demos": demos,
                     "clf_info": parent_spec_info['clf_info'], 
                     "cols_to_drop": cols_to_drop
                     }
+        
+        if spec_filename not in features_to_ignore:
 
-        # save json to `FEATURE_DIR`
-        spec_fpath = os.path.join(out_dir, spec_filename + '-spec.json')
-        io.save_dict_as_JSON(fpath=spec_fpath, data_dict=spec_info)
-        print(f'spec file and features saved to disk for {spec_filename}')
-        spec_files.append(spec_fpath)
+            # save json to `FEATURE_DIR`
+            spec_fpath = os.path.join(out_dir, spec_filename + '-spec.json')
+            io.save_dict_as_JSON(fpath=spec_fpath, data_dict=spec_info)
+            print(f'spec file saved to disk for {spec_filename}')
+            spec_files.append(spec_fpath)
 
     return spec_files
 
@@ -301,7 +313,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
     spec_info = {   
             "data": {
                 "features": {
-                    "assessment": ["Child Measures", "Parent Measures", "Teacher Measures"],
+                    "assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
                     "domains": "all",
                     "measures": "all",
                     "abbrevs": 'all'
@@ -359,7 +371,8 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                     ],
                 },
                 "preprocessing": {
-                    "cols_to_drop": ['EID', 'Comment_ID', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID', 'Sex'],
+                    "add_demos": True,
+                    "cols_to_drop": ['EID', 'Comment_ID', 'Unnamed', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'],
                 },
                 "clf_info": { 
                     "numeric": [
@@ -462,11 +475,14 @@ def column_transform(
                 # remainder='passthrough'
                 )
 
-    # transform the data
+    # transform all columns to float
+    for col in dataframe_final.columns:
+        dataframe_final.loc[:, col] = dataframe_final[col].astype(float)
+
     df_transformed = preprocesser.fit_transform(dataframe_final)
 
     # get transformed feature names (on fitted transformers only)
-    feature_names =  get_feature_names(column_transformer=preprocesser)
+    feature_names = preprocesser.get_feature_names_out()
 
     # make pandas dataframe from transformed data
     df_transformed = pd.DataFrame(df_transformed, columns=feature_names)
@@ -496,76 +512,23 @@ def smote(dataframe):
     return df_smote
 
 
-def get_feature_names(column_transformer):
-    """Get feature names from all transformers.
-    Returns
-    -------
-    feature_names : list of strings
-        Names of the features produced by transform.
+def make_demographics():
+    """Get fullpath to clinical diagnosis and demographics and modify to save out specific columns (as numeric values)
+    Returns:
+        filename (str): includes cols ['Age', 'Sex', 'Race', 'Ethnicity', 'Diagnosis'], also saves file 'Demographic_Features.csv' in `out_dir`
     """
-    from sklearn.pipeline import Pipeline
+    # read in clinical diagnosis and demographics
+    df = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
 
-    # Remove the internal helper function
-    # c%dheck_is_fitted(column_transformer)
-    
-    # Turn loopkup into function for better handling with pipeline later
-    def get_names(trans):
-        # >> Original get_feature_names() method
-        if trans == 'drop' or (
-                hasattr(column, '__len__') and not len(column)):
-            return []
-        if trans == 'passthrough':
-            if hasattr(column_transformer, '_df_columns'):
-                if ((not isinstance(column, slice))
-                        and all(isinstance(col, str) for col in column)):
-                    return column
-                else:
-                    return column_transformer._df_columns[column]
-            else:
-                indices = np.arange(column_transformer._n_features)
-                return ['x%d' % i for i in indices[column]]
-        if not hasattr(trans, 'get_feature_names'):
-        # >>> Change: Return input column names if no method avaiable
-            # Turn error into a warning
-            warnings.warn("Transformer %s (type %s) does not "
-                                 "provide get_feature_names. "
-                                 "Will return input column names if available"
-                                 % (str(name), type(trans).__name__))
-            # For transformers without a get_features_names method, use the input
-            # names to the column transformer
-            if column is None:
-                return []
-            else:
-                return [name + "__" + f for f in column]
+    col_dict = {'Sex': 'Sex', 'Age': 'Age', 'DX_01': 'Diagnosis', 'PreInt_Demos_Fam,Child_Race_cat': 'Race', 'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'}
+    for k,v in col_dict.items():
+        df.loc[:,v] = df[k]
+    df = pd.concat([df[['Identifiers']], df[col_dict.values()]], axis=1)
 
-        return [name + "__" + f for f in trans.get_feature_names()]
-    
-    ### Start of processing
-    feature_names = []
-    
-    # loop over pipelines
-    # Allow transformers to be pipelines. Pipeline steps are named differently, so preprocessing is needed
-    if type(column_transformer) == Pipeline: 
-        l_transformers = [(name, trans, None, None) for step, name, trans in column_transformer._iter()] 
-    else:
-        # For column transformers, follow the original method
-        l_transformers = list(column_transformer._iter(fitted=True)) 
+    # save to file
+    df.to_csv(os.path.join(Defaults.FEATURE_DIR, 'Demographic_Features.csv'))
 
-    for name, trans, column, _ in l_transformers: 
-        if type(trans) == Pipeline:
-            # Recursive call on pipeline
-            _names = get_feature_names(trans)
-            # if pipeline has no transformer that returns names
-            if len(_names)==0:
-                _names = [name + "__" + f for f in column]
-            feature_names.extend(_names)
-        else:
-            try:
-                feature_names.extend(get_names(trans))
-            except:
-                pass
-
-    return feature_names
+    return 'Demographic_Features.csv'
 
 
 def get_domains(assessment='Child Measures'):

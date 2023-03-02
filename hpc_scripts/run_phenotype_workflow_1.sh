@@ -39,8 +39,9 @@ python3 preprocess_phenotype.py
 python3 make_phenotype_specs.py
 
 # make timestamp for this workflow
-TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S-%SS)
-spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}
+TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
+RANDOM_NUMBER=$((1 + $RANDOM % 100))
+spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}-${RANDOM_NUMBER}
 
 # # make model specs
 python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --features="[]" --target=target_DX_01_Cat_new_binarize-spec.json --participant_spec=participant_spec1.json
