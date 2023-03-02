@@ -475,10 +475,6 @@ def column_transform(
                 # remainder='passthrough'
                 )
 
-    # transform all columns to float
-    for col in dataframe_final.columns:
-        dataframe_final.loc[:, col] = dataframe_final[col].astype(float)
-
     df_transformed = preprocesser.fit_transform(dataframe_final)
 
     # get transformed feature names (on fitted transformers only)

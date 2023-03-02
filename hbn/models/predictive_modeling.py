@@ -81,10 +81,11 @@ def make_model(
         model_spec = os.path.join(out_dir, spec_name)
 
         # save out model features and spec
-        dataframe.to_csv(model_features, index=False)
-        io.save_dict_as_JSON(model_spec, pydraml_info)
+        if not dataframe.empty:
+            dataframe.to_csv(model_features, index=False)
+            io.save_dict_as_JSON(model_spec, pydraml_info)
 
-        print(f'created new file: {filename}')
+            print(f'created new file: {filename} and model spec file: {spec_name} in {out_dir}')
 
     else:
         print(f'model spec not created for {filename} because one of the following conditions was not met: more than 1 feature, more than one unique target, more than 100 participants')
