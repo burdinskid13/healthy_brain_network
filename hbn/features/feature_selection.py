@@ -52,7 +52,8 @@ def phenotype_features(
         tmp = demos_df.merge(features, on=['Identifiers'])
         cols_to_factorize = ['Sex', 'Diagnosis', 'Race', 'Ethnicity']
         for col in cols_to_factorize:
-            tmp.loc[:, col] = tmp[col].factorize()[0]
+            if col in tmp.columns:
+                tmp.loc[:, col] = tmp[col].factorize()[0]
         features = tmp
 
     # remove sex from `features` if we're trying to classify Sex

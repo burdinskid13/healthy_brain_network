@@ -22,10 +22,10 @@ class PythonLiteralOption(click.Option):
 
 def run(
     features=[],
-    target='target_Sex_binarize-spec.json',
+    target='target_DX_01_Cat_new_binarize-spec.json',
     pydraml_spec='pydraml_spec2.json',
     out_dir=Defaults.MODEL_SPEC_DIR,
-    participant_spec='participant_spec7.json'
+    participant_spec='participant_spec1.json'
     ):
     """Make phenotype model(s) using the following:`feature specs`, `targets`, `participant_spec`, `pydraml_spec`  
     
@@ -36,6 +36,7 @@ def run(
         out_dir (str): where model spec files will be saved. Default is Defaults.MODEL_SPEC_DIR
         participant_spec (str): participant spec filename. should be stored in `out_dir`
     """
+    from pathlib import Path
     import glob
     import os
     from hbn.models import predictive_modeling
@@ -51,7 +52,7 @@ def run(
         out_dir = Defaults.MODEL_SPEC_DIR
 
     for feature in features:
-        if feature!='features-parent_spec.json':
+        if Path(feature).name!='features-parent_spec.json':
             predictive_modeling.make_model(
                                 feature_spec=os.path.join(Defaults.FEATURE_DIR, feature),
                                 target_spec=os.path.join(Defaults.FEATURE_DIR, target),

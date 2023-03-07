@@ -516,7 +516,7 @@ def make_demographics():
     # read in clinical diagnosis and demographics
     df = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
 
-    col_dict = {'Sex': 'Sex', 'Age': 'Age', 'DX_01': 'Diagnosis', 'PreInt_Demos_Fam,Child_Race_cat': 'Race', 'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'}
+    col_dict = {'Sex': 'Sex', 'Age': 'Age', 'PreInt_Demos_Fam,Child_Race_cat': 'Race', 'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'} # 'DX_01': 'Diagnosis', 
     for k,v in col_dict.items():
         df.loc[:,v] = df[k]
     df = pd.concat([df[['Identifiers']], df[col_dict.values()]], axis=1)
