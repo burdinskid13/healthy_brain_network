@@ -2,7 +2,7 @@ import warnings
 from hbn.constants import Defaults
 warnings.filterwarnings("ignore")
 
-def run(filter='2023-03-02'):
+def run(filter='2023-03-07'):
     """run second level modeling pipeline
     """
     import glob
