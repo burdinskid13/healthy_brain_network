@@ -51,7 +51,7 @@ def make_model(
 
     model_spec = None; model_features = None
     # make multiple model specs using features, target, and participant specs 
-    dataframe = feature_selection.phenotype_features(
+    df_features = feature_selection.phenotype_features(
                         feature_spec=feature_spec, 
                         target_spec=target_spec,
                         participants=participants_all
@@ -59,7 +59,7 @@ def make_model(
 
     # set certain conditionals for model spec to be run and model features to be created
     # there have to be more than one column, more than one unique target, more than 100 participants
-    conditionals = all((dataframe.shape[1]>1, len(dataframe[target_info['outname']].unique())>1, dataframe.shape[0]>100))
+    conditionals = all((df_features.shape[1]>1, len(df_features[target_info['outname']].unique())>1, df_features.shape[0]>100))
     
     if conditionals: 
         
@@ -73,7 +73,7 @@ def make_model(
         # update model spec with features filename
         model_features = os.path.join(out_dir, filename)
         pydraml_info['filename'] = Path(model_features).name
-        pydraml_info['x_indices'] =  [*range(1,len(dataframe.columns)-1)]
+        pydraml_info['x_indices'] =  [*range(1,len(df_features.columns)-1)]
         pydraml_info['target_vars'] = target_info['outname']
 
         # get model spec name
@@ -81,8 +81,8 @@ def make_model(
         model_spec = os.path.join(out_dir, spec_name)
 
         # save out model features and spec
-        if not dataframe.empty:
-            dataframe.to_csv(model_features, index=False)
+        if not df_features.empty:
+            df_features.to_csv(model_features, index=False)
             io.save_dict_as_JSON(model_spec, pydraml_info)
 
             print(f'created new file: {filename} and model spec file: {spec_name} in {out_dir}')
@@ -243,11 +243,12 @@ def check_models(filter='*2023*'):
             # get target
             target = df['target'].unique().tolist()
             
-            # merge participants with diagnosis
+            # merge participants with diagnosis and sex
             diagnoses = dx.merge(df_part, on=['Identifiers'])['DX_01'].unique().tolist()
-            
+            sex = dx.merge(df_part, on=['Identifiers'])['Sex'].unique().tolist()
+
             model_name = Path(model_dir).name
-            print(f'{model_name}: {diagnoses}: {target}')
+            print(f'{model_name}: {diagnoses}: {target}: {sex}')
         except:
             print(f'{fname} does not exist for {model_dir}, run `run_second_level.sh`')
 

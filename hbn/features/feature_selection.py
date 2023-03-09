@@ -46,21 +46,22 @@ def phenotype_features(
     # filter based on participants
     features = features.merge(participants_df, on='Identifiers')
     
-    # optionally add demographics
-    if feature_spec['demos'] is not None:
-        demos_df = pd.read_csv(os.path.join(Defaults.FEATURE_DIR, feature_spec['demos']))
+    # optionally add demographics as features
+    if feature_spec['add_demos'] is not None:
+        demos_df = pd.read_csv(os.path.join(Defaults.FEATURE_DIR, feature_spec['add_demos']['filename']))
         tmp = demos_df.merge(features, on=['Identifiers'])
-        cols_to_factorize = ['Sex', 'Diagnosis', 'Race', 'Ethnicity']
+        cols_to_factorize = feature_spec['add_demos']['features']
         for col in cols_to_factorize:
             if col in tmp.columns:
                 tmp.loc[:, col] = tmp[col].factorize()[0]
         features = tmp
 
-    # remove sex from `features` if we're trying to classify Sex
+    # remove `features_to_ignore` from dataframe if any are provided in `target_spec`
     if target_spec is not None:
         target_info = io.read_json(target_spec)
-        if 'Sex' in target_info['target_column']:
-            features = features.drop(['Sex'], axis=1)
+        if target_info['features_to_ignore'] is not None:
+            cols_to_keep = [col for col in features.columns if col not in target_info['features_to_ignore']]
+            features = features[cols_to_keep]
 
     # preprocess
     if preprocess:
@@ -76,7 +77,6 @@ def phenotype_features(
     identifiers = features['Identifiers'].tolist()
     targets = pd.DataFrame(identifiers, columns=['Identifiers'])
     if target_spec is not None:
-        target_info = io.read_json(target_spec)
         targets = build_features.get_targets(
                                 target_info=target_info, 
                                 participants=identifiers

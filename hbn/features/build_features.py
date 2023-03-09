@@ -231,15 +231,15 @@ def make_feature_specs(
         # get datadic
         datadic = get_datadic(abbrev=data['abbrevs'])
 
-        # only `Basic_Demos` should have `Age` and `Sex`
-        cols_to_drop = parent_spec_info['preprocessing']['cols_to_drop']
-        if data['abbrevs']=='Basic_Demos':
-            cols_to_drop = [col for col in cols_to_drop if col not in ('Age', 'Sex')]
-
-        # add demographics (from `Clinical_Diagnosis_Demographics`) if True
+        # add demographics if file is provided by `parent_spec`
         demos = None
-        if parent_spec_info['preprocessing']['add_demos']:
-            demos = make_demographics()
+        demos_fpath = parent_spec_info['preprocessing']['add_demos']
+        if demos_fpath is not None:
+            df_demos = pd.read_csv(os.path.join(Defaults.FEATURE_DIR, demos_fpath))
+            demo_features = [col for col in df_demos if 'Identifiers' not in col]
+            demos = {'filename': demos_fpath,
+                     'features': demo_features
+                     }
 
         # define feature spec file
         spec_info = {
@@ -249,9 +249,9 @@ def make_feature_specs(
                     "measures": data['measures'],
                     "abbrevs": data['abbrevs'],
                     "datadic": datadic,
-                    "demos": demos,
+                    "add_demos": demos,
                     "clf_info": parent_spec_info['clf_info'], 
-                    "cols_to_drop": cols_to_drop
+                    "cols_to_drop": parent_spec_info['preprocessing']['cols_to_drop']
                     }
         
         if spec_filename not in features_to_ignore:
@@ -292,6 +292,7 @@ def make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
                     "domain": data["domain"],
                     "measure": data["measure"],
                     "target_column": data["target_column"],
+                    "features_to_ignore": data["features_to_ignore"],
                     "transform": data["transform"], 
                     "outname": data["outname"],
                     "clf_info": parent_spec_info['clf_info'], 
@@ -323,6 +324,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat",
+                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01'],
                         "transform": "binarize",
                         "outname": "DX_01_Cat_binarize"
                         },
@@ -330,6 +332,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat_new",
+                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01'],
                         "transform": "binarize",
                         "outname": "DX_01_Cat_new_binarize"
                         },
@@ -337,6 +340,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat",
+                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01'],
                         "transform": "factorize",
                         "outname": "DX_01_Cat_factorize"
                         },
@@ -344,6 +348,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01",
+                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01'],
                         "transform": "binarize",
                         "outname": "DX_01_binarize"
                         },
@@ -351,6 +356,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                          "domain": None,
                          "measure": "Clinical Diagnosis Demographics",
                          "target_column": "DX_01",
+                         "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01'],
                          "transform": "factorize",
                          "outname": "DX_01_factorize"
                         },
@@ -358,6 +364,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "Sex",
+                        "features_to_ignore": ['Sex'],
                         "transform": "binarize",
                         "outname": "Sex_binarize"
                         }
@@ -371,7 +378,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                     ],
                 },
                 "preprocessing": {
-                    "add_demos": True,
+                    "add_demos": 'Demographic_Features.csv',# or None
                     "cols_to_drop": ['EID', 'Comment_ID', 'Unnamed', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'],
                 },
                 "clf_info": { 
@@ -506,25 +513,6 @@ def smote(dataframe):
     new_y = pd.DataFrame(y_train_oversampled, columns=dataframe.columns[-1:])
     df_smote = pd.concat([new_x, new_y], axis=1)
     return df_smote
-
-
-def make_demographics():
-    """Get fullpath to clinical diagnosis and demographics and modify to save out specific columns (as numeric values)
-    Returns:
-        filename (str): includes cols ['Age', 'Sex', 'Race', 'Ethnicity', 'Diagnosis'], also saves file 'Demographic_Features.csv' in `out_dir`
-    """
-    # read in clinical diagnosis and demographics
-    df = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
-
-    col_dict = {'Sex': 'Sex', 'Age': 'Age', 'PreInt_Demos_Fam,Child_Race_cat': 'Race', 'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'} # 'DX_01': 'Diagnosis', 
-    for k,v in col_dict.items():
-        df.loc[:,v] = df[k]
-    df = pd.concat([df[['Identifiers']], df[col_dict.values()]], axis=1)
-
-    # save to file
-    df.to_csv(os.path.join(Defaults.FEATURE_DIR, 'Demographic_Features.csv'))
-
-    return 'Demographic_Features.csv'
 
 
 def get_domains(assessment='Child Measures'):
