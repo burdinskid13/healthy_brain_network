@@ -13,12 +13,12 @@ class PythonLiteralOption(click.Option):
             raise click.BadParameter(value)
 
 
-@click.command()
-@click.option("--features", required=True, cls=PythonLiteralOption, default=[])
-@click.option("--target", required=False)
-@click.option("--pydraml_spec", required=False)
-@click.option("--out_dir", required=False)
-@click.option('--participant_spec', required=False)
+# @click.command()
+# @click.option("--features", required=True, cls=PythonLiteralOption, default=[])
+# @click.option("--target", required=False)
+# @click.option("--pydraml_spec", required=False)
+# @click.option("--out_dir", required=False)
+# @click.option('--participant_spec', required=False)
 
 def run(
     features=[],
@@ -58,6 +58,7 @@ def run(
                                 target_spec=os.path.join(Defaults.FEATURE_DIR, target),
                                 pydraml_spec=os.path.join(Defaults.MODEL_SPEC_DIR, pydraml_spec),
                                 participant_spec=os.path.join(Defaults.MODEL_SPEC_DIR, participant_spec),
+                                drop_identifiers=True,
                                 out_dir=out_dir
                                 )
 

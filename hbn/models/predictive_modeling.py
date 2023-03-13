@@ -8,6 +8,7 @@ def make_model(
     target_spec,
     pydraml_spec,
     participant_spec,
+    drop_identifiers=True,
     out_dir=Defaults.MODEL_SPEC_DIR
     ):
     """make model spec file using the following:`feature specs`, `targets`, `participant_spec`, `pydraml_spec`  
@@ -54,7 +55,8 @@ def make_model(
     df_features = feature_selection.phenotype_features(
                         feature_spec=feature_spec, 
                         target_spec=target_spec,
-                        participants=participants_all
+                        participants=participants_all,
+                        drop_identifiers=drop_identifiers,
                         )
 
     # set certain conditionals for model spec to be run and model features to be created

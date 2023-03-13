@@ -8,7 +8,7 @@ import itertools
 import glob
 import re
 import warnings
-#from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTE
 
 from hbn.data import make_dataset
 from hbn import io
@@ -72,7 +72,8 @@ def get_features(
             # only read in files that exist
             if os.path.isfile(measure):
                 df = pd.read_csv(measure)
-                df['Identifiers'] = df['Identifiers'].str.strip('_1').str.strip('_2').str.strip('_3') # specific for Teacher Measures
+                if assessment=='Teacher Measures':
+                    df = preprocess_teacher(dataframe=df) 
                 # no min participants required
                 df_all = df_all.merge(df, on="Identifiers", how='outer')
                 #print(f'reading {measure} into dataframe')
@@ -140,8 +141,8 @@ def preprocess(
         dataframe,
         cols_to_drop=['EID', 'Comment_ID', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'],
         clf_info=None,
-        cols_to_ignore=['DX_01_Cat_factorize'],
-        threshold=True
+        cols_to_ignore=None,
+        threshold=False
         ):
 
     """Preprocess the features (data cleaning, scaling, imputation, standarization, one-hot encoding)
@@ -149,8 +150,8 @@ def preprocess(
     Args:
         dataframe (pd dataframe): pandas dataframe to preprocess, should include X features and y target var, output from `get_features`
         cols_to_drop (list of str): (optional) list of columns to drop from dataframe
-        clf_info (dict of lists of scikit-learn classifiers or None): (optional) see `hbn/features/features-example.json` for example of structure
-        cols_to_ignore (list of str or None): (optional) columns to ignore in preprocessing
+        clf_info (dict of lists of scikit-learn classifiers or None): (optional) see `hbn/features/*.json` for example of structure. default is None
+        cols_to_ignore (list of str or None): (optional) columns to ignore in preprocessing. Default is None.
         threshold (bool): threshold dataframe based on some fixed criterion. We are using 50% for columns and 20% for rows. If threshold is False, then only NaN entries are removed (no thresholding applied)
     """
     # do some scrubbing (e.g., remove superfluous columns)
@@ -232,26 +233,28 @@ def make_feature_specs(
         datadic = get_datadic(abbrev=data['abbrevs'])
 
         # add demographics if file is provided by `parent_spec`
-        demos = None
-        demos_fpath = parent_spec_info['preprocessing']['add_demos']
-        if demos_fpath is not None:
-            df_demos = pd.read_csv(os.path.join(Defaults.FEATURE_DIR, demos_fpath))
-            demo_features = [col for col in df_demos if 'Identifiers' not in col]
-            demos = {'filename': demos_fpath,
-                     'features': demo_features
-                     }
+        add_features = None
+        if parent_spec_info['data']['add_features'] is not None:
+            df_demos = pd.read_csv(os.path.join(Defaults.FEATURE_DIR, parent_spec_info['data']['add_features']))
+            cols_to_include = [col for col in df_demos if 'Identifiers' not in col]
+            add_features = {'filename': parent_spec_info['data']['add_features'],
+                            'cols_to_include': cols_to_include
+                            }
+        
+        # figure out whether preprocessing will be done (set in parent_spec)
+        preprocessing = None
+        if parent_spec_info['preprocessing']['preprocess']:
+            preprocessing = parent_spec_info['preprocessing']
 
         # define feature spec file
         spec_info = {
-                    # "filename": spec_filename + '.csv', 
                     "assessment": data['assessment'],
                     "domains": data['domains'],
                     "measures": data['measures'],
                     "abbrevs": data['abbrevs'],
                     "datadic": datadic,
-                    "add_demos": demos,
-                    "clf_info": parent_spec_info['clf_info'], 
-                    "cols_to_drop": parent_spec_info['preprocessing']['cols_to_drop']
+                    "add_features": add_features,
+                    "preprocessing": preprocessing
                     }
         
         if spec_filename not in features_to_ignore:
@@ -287,7 +290,6 @@ def make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
 
         # define target spec file
         spec_info = {
-                    # "filename":  spec_filename +'.csv',
                     "assessment": data["assessment"],
                     "domain": data["domain"],
                     "measure": data["measure"],
@@ -295,7 +297,7 @@ def make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR):
                     "features_to_ignore": data["features_to_ignore"],
                     "transform": data["transform"], 
                     "outname": data["outname"],
-                    "clf_info": parent_spec_info['clf_info'], 
+                    "clf_info": parent_spec_info['preprocessing']['clf_info'], 
                     }
 
         # save json to `FEATURE_DIR`
@@ -319,6 +321,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                     "measures": "all",
                     "abbrevs": 'all'
                     },
+                "add_features": 'Demographic_Features.csv', # add additional features. (str or None)
                 "target": [
                         {"assessment": "Clinical Measures",
                         "domain": None,
@@ -378,24 +381,27 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                     ],
                 },
                 "preprocessing": {
-                    "add_demos": 'Demographic_Features.csv',# or None
-                    "cols_to_drop": ['EID', 'Comment_ID', 'Unnamed', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'],
-                },
-                "clf_info": { 
-                    "numeric": [
-                        [
-                            "sklearn.impute",
-                            "SimpleImputer",
-                            {
-                                "strategy": "mean"
-                            }
-                        ],
-                        [
-                            "sklearn.preprocessing",
-                            "StandardScaler",
-                            {}
+                    "preprocess": True,
+                    "cols_to_drop": ['EID', 'Comment_ID', 'Unnamed', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'], # cols to drop while preprocessing
+                    "cols_to_ignore": ['Identifiers'], # cols to ignore in the preprocessing routine (column transformation)
+                    "upsample": True, # upsample minority class using sMOTE
+                    "threshold": False, #threshold dataframe based on some fixed criterion
+                    "clf_info": {
+                        "numeric": [
+                            [
+                                "sklearn.impute",
+                                "SimpleImputer",
+                                {
+                                    "strategy": "mean"
+                                }
+                            ],
+                            [
+                                "sklearn.preprocessing",
+                                "StandardScaler",
+                                {}
+                            ]
                         ]
-                    ],
+                        }
                 # "category": [
                 #     [
                 #         "sklearn.impute", 
@@ -409,7 +415,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                 #         {"handle_unknown": "ignore", "sparse": False}
                 #     ]
                 # ]
-            },
+            }
             }
     outpath = os.path.join(out_dir, 'features-parent_spec.json')
     io.save_dict_as_JSON(outpath, spec_info)
@@ -428,6 +434,8 @@ def column_transform(
         dataframe (pd dataframe): pandas dataframe, `cols_to_ignore` should be in `dataframe`. output from `get_features`
         clf_info (dict of classifier): example is {"numeric": [["sklearn.impute", "SimpleImputer", {"strategy": "mean"}], ["sklearn.preprocessing", "StandardScaler", {}]]}
         cols_to_ignore (list of str or None): default is None.
+    Returns:
+        `df_transformed` (pd dataframe): first columns are `cols_to_ignore` if they are not None.
     """
     from sklearn.pipeline import Pipeline
     from sklearn.compose import ColumnTransformer
@@ -497,20 +505,35 @@ def column_transform(
     return df_transformed
 
 
-def smote(dataframe):
-    """oversamples `dataframe` for minority samples
+def preprocess_teacher(dataframe):
+    """the teacher measures have duplicate rows (multiple Identifiers). We take the mean across the duplicate Identifiers (for numeric columns)
+    and take the first row (for object columns)
+    Args:
+        dataframe (pd dataframe):
+    Returns: 
+        df (pd dataframe): preprocessed dataframe (remove duplicates)
+    """
+    dataframe['Identifiers'] = dataframe['Identifiers'].str.strip('_1').str.strip('_2').str.strip('_3') # specific for Teacher Measures
+    tmp = dataframe.groupby('Identifiers').mean(numeric_only=True).reset_index()
+    tmp2 = dataframe.select_dtypes(include='object').groupby('Identifiers').first().reset_index()
+    df = tmp.merge(tmp2, on='Identifiers')
+
+    return df
+
+
+def smote(y_train, X_train):
+    """oversamples `y_train` and `X_train` for minority samples
 
     Args: 
-        dataframe (pd dataframe):
+        y_train (pd dataframe):
+        X_train (pd dataframe):
     Returns:
         df_smote (pd dataframe)
     """
-    y_train = dataframe[dataframe.columns[-1:]].to_numpy() 
-    X_train = dataframe[dataframe.columns[1:-1]].to_numpy() 
-    sm = SMOTE(random_state = 42, sampling_strategy=0.5)
-    X_train_oversampled, y_train_oversampled = sm.fit_resample(X_train, y_train)
-    new_x = pd.DataFrame(X_train_oversampled, columns=dataframe.columns[1:-1])
-    new_y = pd.DataFrame(y_train_oversampled, columns=dataframe.columns[-1:])
+    sm = SMOTE(random_state=42, sampling_strategy=0.5)
+    X_train_oversampled, y_train_oversampled = sm.fit_resample(np.array(X_train), np.array(y_train))
+    new_x = pd.DataFrame(X_train_oversampled, columns=X_train.columns)
+    new_y = pd.DataFrame(y_train_oversampled, columns=y_train.columns)
     df_smote = pd.concat([new_x, new_y], axis=1)
     return df_smote
 
@@ -564,7 +587,7 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
 
     # return measures if both domain and measures are present
     if sum(info.columns.isin(['Domain', 'Measure']))==2:
-        if domain is not 'all':
+        if domain != 'all':
             measures = info[info['Domain']==domain]['Measure'].tolist()
         else:
             measures = []
