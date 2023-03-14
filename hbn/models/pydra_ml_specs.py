@@ -1,7 +1,7 @@
 from hbn.constants import Defaults
 
 
-def pydraml_base(clf_info, n_splits=25, test_size=0.2):
+def pydraml_base(clf_info, n_splits=10, test_size=0.2):
     spec_info = {
     "filename" : None,
     "x_indices" : None,
@@ -26,7 +26,7 @@ def pydraml_base(clf_info, n_splits=25, test_size=0.2):
     return spec_info
 
 
-def make_specs(out_dir=Defaults.MODEL_SPEC_DIR):
+def make_specs(out_dir=Defaults.MODEL_SPEC_DIR, n_splits=10, test_size=0.2):
     import os
     from hbn import io
 
@@ -53,7 +53,7 @@ def make_specs(out_dir=Defaults.MODEL_SPEC_DIR):
     for name,clf in clf_info.items():
 
         # create spec parameters
-        spec_info = pydraml_base(clf_info=clf, n_splits=50, test_size=0.2)
+        spec_info = pydraml_base(clf_info=clf, n_splits=n_splits, test_size=test_size)
 
         # write out pydra-ml specs
         fpath = os.path.join(out_dir, f'pydraml_{name}.json')

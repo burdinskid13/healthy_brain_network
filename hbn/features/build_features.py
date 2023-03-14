@@ -61,8 +61,10 @@ def get_features(
     for domain in domain_dir:
 
         # get measures
-        if 'all' in measures:
+        if 'all' in measures and assessment in ['Parent_Measures', 'Child_Measures']:
             measure_dir = glob.glob(os.path.join(domain, '*'))
+        elif 'all' in measures and assessment in ['Teacher_Measures', 'Clinical_Measures']:
+            measure_dir = domain_dir # these are the same for both Teacher and Clincial
         else:
             measure_dir = [os.path.join(domain, '_'.join(re.split(r'_|,|/| ', m)) + '.csv') for m in measures] # join with '_'
 
@@ -72,7 +74,7 @@ def get_features(
             # only read in files that exist
             if os.path.isfile(measure):
                 df = pd.read_csv(measure)
-                if assessment=='Teacher Measures':
+                if 'Teacher' in assessment:
                     df = preprocess_teacher(dataframe=df) 
                 # no min participants required
                 df_all = df_all.merge(df, on="Identifiers", how='outer')
@@ -182,7 +184,7 @@ def preprocess(
 def make_feature_specs(
         parent_spec, 
         out_dir=Defaults.FEATURE_DIR,
-        features_to_ignore=['features-Clinical_Measures-domains-Clinical_Diagnosis-Diagnosis_ClinicianConsensus']
+        features_to_ignore=['features-Clinical_Measures-domains-Clinical_Diagnosis-Diagnosis_ClinicianConsensus', 'features-Clinical_Measures-all-all-all']
         ):
     """make feature sets (json spec files)
 
@@ -384,7 +386,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                     "preprocess": True,
                     "cols_to_drop": ['EID', 'Comment_ID', 'Unnamed', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'], # cols to drop while preprocessing
                     "cols_to_ignore": ['Identifiers'], # cols to ignore in the preprocessing routine (column transformation)
-                    "upsample": True, # upsample minority class using sMOTE
+                    "upsample": True, # upsample minority class using SMOTE
                     "threshold": False, #threshold dataframe based on some fixed criterion
                     "clf_info": {
                         "numeric": [
@@ -513,7 +515,7 @@ def preprocess_teacher(dataframe):
     Returns: 
         df (pd dataframe): preprocessed dataframe (remove duplicates)
     """
-    dataframe['Identifiers'] = dataframe['Identifiers'].str.strip('_1').str.strip('_2').str.strip('_3') # specific for Teacher Measures
+    dataframe['Identifiers'] = dataframe['Identifiers'].str.split('_').str.get(0)
     tmp = dataframe.groupby('Identifiers').mean(numeric_only=True).reset_index()
     tmp2 = dataframe.select_dtypes(include='object').groupby('Identifiers').first().reset_index()
     df = tmp.merge(tmp2, on='Identifiers')
@@ -715,6 +717,7 @@ def _get_feature_combinations(parent_spec):
         measures = [measures]
 
     ## clumsy - should be a cleaner way to write this
+    # write out all possible features as models
     spec_info = []
     for assess in assessments:
         if domains=='all':
@@ -734,6 +737,14 @@ def _get_feature_combinations(parent_spec):
                             'measures': measure,
                             'abbrevs': abbrev
                             })
+
+        # write out all-feature models
+        spec_info.append(
+            {'assessment': assess,
+            'domains': 'all',
+            'measures': 'all',
+            'abbrevs': 'all'
+            })
 
     return spec_info
 
