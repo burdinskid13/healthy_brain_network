@@ -36,6 +36,9 @@ def run(parse=False):
     df = make_dataset.make_summary()
     print('created new clinical diagnosis file')
 
+    # make demographic features (saved in FEATURE_DIR)
+    make_dataset.make_demographics()
+
     # makes test/train splits
     make_dataset.make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR)
 

@@ -5,9 +5,7 @@ def phenotype_features(
             feature_spec,
             participants,
             target_spec=None,
-            preprocess=True,
-            drop_identifiers=True,
-            oversample=False
+            drop_identifiers=True
             ):
     """make model features using whichever features are specified in "feature_spec" and whichever target specified in "target_spec"
     Features for selected "participants" are returned
@@ -15,16 +13,16 @@ def phenotype_features(
     Args: 
         feature_spec (str or dict): full path to feature spec file OR dict loaded from file
         participants (list of str): list of participant identifiers (output from `make_dataset.get_participants`)
-        target_spec (str or None): (optional) full path to target spec file. if None, then only features are returned.
-        preprocess (bool): (optional) default is True.
+        target_spec (str or None): (optional) full path to target spec file. if None, then only features (X) are returned, else features (X) + target variable (y) are returned.
         drop_identifiers (bool): (optional) default is True (returns dataframe without 'Identifiers' column)
-        oversample (bool): (optional) oversample minority class of dataframe
 
     Returns: 
         features_final (pd dataframe): features to be input to modeling routine
     """
     import pandas as pd
     from hbn import io
+    import os
+    from hbn.constants import Defaults
     from hbn.features import build_features
 
     # load from json file
@@ -40,42 +38,59 @@ def phenotype_features(
                 domains=[feature_spec['domains']],
                 measures=[feature_spec['abbrevs']]
                 )
+    
+    # filter based on participants
+    features = features.merge(participants_df, on='Identifiers')
+    
+    # optionally add demographics as features (if there is a filename)
+    add_features = feature_spec['add_features']
+    if add_features['filename'] is not None:
+        features_df = pd.read_csv(os.path.join(Defaults.FEATURE_DIR, add_features['filename']))
+        tmp = features_df.merge(features, on=['Identifiers'])
+        cols_to_factorize = add_features['cols_to_include']
+        for col in cols_to_factorize:
+            if col in tmp.columns and tmp[col].dtype=='object':
+                tmp.loc[:, col] = tmp[col].factorize()[0]
+        features = tmp
+
+    # remove `features_to_ignore` from dataframe if any are provided in `target_spec`
+    if target_spec is not None:
+        target_info = io.read_json(target_spec)
+        if target_info['features_to_ignore'] is not None:
+            cols_to_keep = [col for col in features.columns if col not in target_info['features_to_ignore']]
+            features = features[cols_to_keep]
 
     # preprocess
-    if preprocess:
+    preprocessing = feature_spec['preprocessing']
+    if preprocessing['preprocess']:
         features = build_features.preprocess(
-                        dataframe=features,   
-                        cols_to_drop=feature_spec['cols_to_drop'],
-                        clf_info=feature_spec['clf_info'],
-                        cols_to_ignore=['Identifiers'],
-                        threshold=False
+                        dataframe=features,  
+                        cols_to_drop=preprocessing['cols_to_drop'],
+                        clf_info=preprocessing['clf_info'],
+                        cols_to_ignore=preprocessing['cols_to_ignore'],
+                        threshold=preprocessing['threshold']
                         )
 
     # combine features, targets, participants into one dataframe
-    features_participants = features.merge(participants_df, on='Identifiers')
-    identifiers = features_participants['Identifiers'].tolist()
-
+    identifiers = features['Identifiers'].tolist()
     targets = pd.DataFrame(identifiers, columns=['Identifiers'])
     if target_spec is not None:
-        target_info = io.read_json(target_spec)
         targets = build_features.get_targets(
                                 target_info=target_info, 
                                 participants=identifiers
                                 )   
+    # drop identifiers from final feature matrix
     if drop_identifiers:
-        features_final = features_participants.merge(targets, on='Identifiers').drop(['Identifiers'], axis=1)
+        features_final = features.merge(targets, on='Identifiers').drop(['Identifiers'], axis=1)
     else:
-        features_final = features_participants.merge(targets, on='Identifiers')
+        features_final = features.merge(targets, on='Identifiers')
         
     # upsample minority class using smote 
-    if oversample:
-        features_final = build_features.smote(features_final)
+    if target_spec is not None and preprocessing['preprocess'] and preprocessing['upsample']:
+        if features_final.isnull().values.any(): # impute if there are NaN values
+            features_final = build_features.column_transform(features_final, clf_info=preprocessing['clf_info'], cols_to_ignore=[target_info['outname']])
+        x_cols = [col for col in features_final.columns if target_info['outname'] not in col]
+        features_final = build_features.smote(y_train=features_final[[target_info['outname']]], X_train=features_final[x_cols])
     
     return features_final
 
-
-def feature_selection_from_models():
-    import pandas as pd
-
-    df = pd.read_csv('classifier-feature_importance.csv')
-    df[['feature_names_sum', 'feature_sum']]

@@ -55,7 +55,7 @@ def run(
         for result in results:
             predictive_modeling.secondlevel_summary(
                 results_dir=result,
-                out_dir=model_dir
+                out_dir=out_dir
                 )
 
 

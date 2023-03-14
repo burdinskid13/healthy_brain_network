@@ -57,6 +57,32 @@ def make_summary(save=True):
     return dx
 
 
+def make_demographics():
+    """Get fullpath to clinical diagnosis and demographics and modify to save out specific columns (as numeric values)
+    Returns:
+        filename (str): includes cols ['Age', 'Sex', 'Race', 'Ethnicity', 'Diagnosis'], also saves file 'Demographic_Features.csv' in `out_dir`
+    """
+    # read in clinical diagnosis and demographics
+    df = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
+
+    col_dict = {'Sex': 'Sex', 
+                'Age': 'Age', 
+                'DX_01': 'Diagnosis', 
+                'comorbidities': 'comorbidities', 
+                'PreInt_Demos_Fam,Child_Race_cat': 'Race', 
+                'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'
+                } 
+    for k,v in col_dict.items():
+        df.loc[:,v] = df[k]
+    df = pd.concat([df[['Identifiers']], df[col_dict.values()]], axis=1)
+
+    # save to file
+    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+    df.to_csv(os.path.join(Defaults.FEATURE_DIR, 'Demographic_Features.csv'), index=False)
+
+    return 'Demographic_Features.csv'
+
+
 def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
     """get train/validate and test identifiers (from dataframe output by `make_summary`), save them to file
 
