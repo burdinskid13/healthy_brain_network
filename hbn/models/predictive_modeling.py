@@ -391,7 +391,6 @@ def get_permutation_importance(model_name, results, spec_info):
     return df_features
 
 
-
 def _rank_order_features_across_splits(dataframe):
     """ rank orders features by how commonly they occur within a split, keeping each entry unique (as far as possible)
 
