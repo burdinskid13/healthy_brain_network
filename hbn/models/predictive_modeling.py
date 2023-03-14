@@ -327,8 +327,10 @@ def get_feature_importance(model_name, results, spec_info):
     feature_splits = np.array(results[1].output.feature_importance)
     feature_names = np.array(results[1].output.feature_names)
 
+    if len(feature_splits.shape) == 3:
+        feature_splits = np.reshape(feature_splits, (feature_splits.shape[0], feature_splits.shape[2]))
     n_splits, n_feats = feature_splits.shape
-
+    
     if n_feats==len(feature_names):
 
         feature_names_mat = np.tile(np.reshape(feature_names, (n_feats,1)), n_splits).T
@@ -356,7 +358,38 @@ def get_permutation_importance(model_name, results, spec_info):
     Args:
         results (list of dict): 
     """
-    pass
+    import numpy as np
+    import pandas as pd
+
+    df_features = pd.DataFrame()
+
+    # extract permutation importance
+    feature_splits = np.array(results[1].output.permutation_importance)
+    feature_names = np.array(results[1].output.feature_names)
+    if len(feature_splits.shape) == 3:
+        feature_splits = np.reshape(feature_splits, (feature_splits.shape[0], feature_splits.shape[2]))
+    n_splits, n_feats = feature_splits.shape
+
+    if n_feats==len(feature_names):
+
+        feature_names_mat = np.tile(np.reshape(feature_names, (n_feats,1)), n_splits).T
+        feature_splits_sort_idx = np.argsort(feature_splits)
+
+        features_sorted = np.take_along_axis(feature_names_mat, feature_splits_sort_idx, axis=1)
+        features_sorted = features_sorted[:,::-1] # reverse order
+  
+        # get features across splits
+        df_rank = _rank_order_features_across_splits(dataframe=pd.DataFrame(features_sorted))
+        df_common = _most_commonly_occuring_features(dataframe=pd.DataFrame(features_sorted))
+        df_sum = _sum_feature_weights(feature_splits, feature_names)
+
+        df_features = pd.concat([df_rank, df_common, df_sum], axis=1)
+
+        # add model parameters
+        df_features = _add_model_parameters(df_features, model_name, spec_info=spec_info, results=results[0])
+    
+    return df_features
+
 
 
 def _rank_order_features_across_splits(dataframe):
