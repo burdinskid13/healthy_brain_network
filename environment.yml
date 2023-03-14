@@ -4,7 +4,6 @@ channels:
   - defaults
 dependencies:
   - pip
-  - click
   - ipykernel
   - scikit-learn
   - pandas
