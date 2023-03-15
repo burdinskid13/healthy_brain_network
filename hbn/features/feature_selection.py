@@ -84,7 +84,7 @@ def phenotype_features(
         features_final = features.merge(targets, on='Identifiers').drop(['Identifiers'], axis=1)
     else:
         features_final = features.merge(targets, on='Identifiers')
-        
+
     # upsample minority class using smote 
     if target_spec is not None and preprocessing['preprocess'] and preprocessing['upsample']:
         if features_final.isnull().values.any(): # impute if there are NaN values

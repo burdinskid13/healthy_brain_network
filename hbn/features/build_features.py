@@ -87,6 +87,8 @@ def get_features(
     df_all = df_all.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
     df_all = df_all.dropna(how='all', axis=0)
 
+    keyboard
+
     if incl_data_type is not None:
         df_all = df_all.select_dtypes(include=incl_data_type)
 
