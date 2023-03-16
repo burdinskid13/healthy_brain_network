@@ -27,7 +27,7 @@ username=maedbh
 module load openmind/anaconda/3-2022.05 # load python module
 source ~/.bash_profile # set paths
 #source $(pipenv --venv)/bin/activate # activate virtual environment
-source /om2/user/{username}/miniconda/bin/activate healthy-brain-network
+source /om2/user/${username}/bin/miniconda3/bin/activate healthy-brain-network 
 
 echo $"run workflow 2"
 
