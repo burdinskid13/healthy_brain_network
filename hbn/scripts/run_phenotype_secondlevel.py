@@ -5,7 +5,7 @@ warnings.filterwarnings("ignore")
 
 @click.option('--filter', required=False)
 
-def run(filter='2023-03-07'):
+def run(filter='*2023-03-07*'):
     """run second level modeling pipeline
     """
     import glob
@@ -17,7 +17,7 @@ def run(filter='2023-03-07'):
     if filter is not None:
         model_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, '*'))
     else:
-        model_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, f'*{filter}*'))
+        model_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, 'all_demos_combordities', f'*{filter}*'))
     
     # loop over models
     for model_dir in model_dirs:
