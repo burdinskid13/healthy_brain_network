@@ -42,8 +42,6 @@ def run(
     import os
     from hbn.models import predictive_modeling
 
-    features = ['features-Teacher_Measures-all-all-all-spec.json']
-
     # get all features
     if not features:
         features = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*features*'))

@@ -56,16 +56,21 @@ def get_features(
     if not os.path.isfile(participants_fpath):
         make_dataset.make_summary(save=True)
     identifiers = pd.read_csv(participants_fpath)['Identifiers']
+
+    # `domain_dir` and `measure_dir` are the same for Teacher and Clinical measures
+    if 'all' in measures and assessment in ['Teacher_Measures', 'Clinical_Measures']:
+        measure_dir = domain_dir # these are the same for both Teacher and Clincial
+        domain_dir = [1]
+
     # loop over domains
     df_all = pd.DataFrame({'Identifiers': identifiers})
+    df_participants = pd.DataFrame({'Identifiers': identifiers})
     for domain in domain_dir:
 
         # get measures
         if 'all' in measures and assessment in ['Parent_Measures', 'Child_Measures']:
             measure_dir = glob.glob(os.path.join(domain, '*'))
-        elif 'all' in measures and assessment in ['Teacher_Measures', 'Clinical_Measures']:
-            measure_dir = domain_dir # these are the same for both Teacher and Clincial
-        else:
+        elif 'all' not in measures:
             measure_dir = [os.path.join(domain, '_'.join(re.split(r'_|,|/| ', m)) + '.csv') for m in measures] # join with '_'
 
         # loop over measures
@@ -83,11 +88,16 @@ def get_features(
                 super_logger = _setup_logger('second_logger', 'features-nonexistent.log')
                 super_logger.info(Path(measure).name)
 
+    # make sure only Identifiers from `df_participants` are going into dataframe
+    for idx in df_all.index:
+        row = df_all.loc[idx, 'Identifiers']
+        if row in df_participants['Identifiers'].tolist():
+            df_all.loc[idx, 'present'] = True
+    df_all = df_all[df_all['present']==True]
+
     # drop NaN
     df_all = df_all.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
     df_all = df_all.dropna(how='all', axis=0)
-
-    keyboard
 
     if incl_data_type is not None:
         df_all = df_all.select_dtypes(include=incl_data_type)
@@ -517,9 +527,13 @@ def preprocess_teacher(dataframe):
     Returns: 
         df (pd dataframe): preprocessed dataframe (remove duplicates)
     """
+    # remove trailing numbers (e.g., '_1', '_2')
     dataframe['Identifiers'] = dataframe['Identifiers'].str.split('_').str.get(0)
+    # group by unique identifiers and take the mean value for the numeric items
     tmp = dataframe.groupby('Identifiers').mean(numeric_only=True).reset_index()
+    # group by unique identifiers and take the first row of the object items
     tmp2 = dataframe.select_dtypes(include='object').groupby('Identifiers').first().reset_index()
+    # merge both the numeric and object dataframes together
     df = tmp.merge(tmp2, on='Identifiers')
 
     return df
