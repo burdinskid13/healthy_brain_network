@@ -49,14 +49,14 @@ def run(
                 cachedir=cachedir
                 )
 
-        print('running second level')
-        results = glob.glob(os.path.join(model_dir, '*out-localspec*'))
-        # loop over results files
-        for result in results:
-            predictive_modeling.secondlevel_summary(
-                results_dir=result,
-                out_dir=out_dir
-                )
+            print('running second level')
+            results = glob.glob(os.path.join(model_dir, '*out-localspec*'))
+            # loop over results files
+            for result in results:
+                predictive_modeling.secondlevel_summary(
+                    results_dir=result,
+                    out_dir=out_dir
+                    )
 
 
 if __name__ == "__main__":

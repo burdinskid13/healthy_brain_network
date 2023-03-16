@@ -1,6 +1,9 @@
 import warnings
+import click
 from hbn.constants import Defaults
 warnings.filterwarnings("ignore")
+
+@click.option('--filter', required=False)
 
 def run(filter='2023-03-07'):
     """run second level modeling pipeline
@@ -10,7 +13,11 @@ def run(filter='2023-03-07'):
     from hbn.models import predictive_modeling
 
     print('running second level')
-    model_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, f'*{filter}*')) # '*2023*'
+
+    if filter is not None:
+        model_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, '*'))
+    else:
+        model_dirs = glob.glob(os.path.join(Defaults.MODEL_DIR, f'*{filter}*'))
     
     # loop over models
     for model_dir in model_dirs:

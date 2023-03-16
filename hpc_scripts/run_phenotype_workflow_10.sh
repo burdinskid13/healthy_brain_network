@@ -15,7 +15,7 @@
 #SBATCH --mem=4G
 #
 # Wall clock limit:
-#SBATCH --time=24:00:00 # 
+#SBATCH --time=10:00:00 # 
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -44,9 +44,12 @@ TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S-%SS)
 RANDOM_NUMBER=$((1 + $RANDOM % 100))
 spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}-${RANDOM_NUMBER}
 
-# # make model specs
-python3 make_phenotype_models.py --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json --features="[]" --target=target_DX_01_Cat_new_binarize-spec.json --participant_spec=participant_spec8.json
-
+# make model specs
+python3 make_phenotype_models.py \
+--out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json \
+--features="['features-Teacher_Measures-all-all-all-spec.json', 'features-Child_Measures-all-all-all-spec.json', 'features-Parent_Measures-all-all-all-spec.json', 'features-Parent_Measures-Demographic_Questionnaire_Measures-Demographics-Basic_Demos-spec.json']" \
+--target=target_DX_01_Cat_new_binarize-spec.json \
+--participant_spec=participant_spec8.json
 # run workflow
 python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
 
