@@ -341,7 +341,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat",
-                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01'],
+                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
                         "transform": "binarize",
                         "outname": "DX_01_Cat_binarize"
                         },
@@ -349,7 +349,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat_new",
-                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01'],
+                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
                         "transform": "binarize",
                         "outname": "DX_01_Cat_new_binarize"
                         },
@@ -357,7 +357,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat",
-                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01'],
+                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
                         "transform": "factorize",
                         "outname": "DX_01_Cat_factorize"
                         },
@@ -365,7 +365,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01",
-                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01'],
+                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
                         "transform": "binarize",
                         "outname": "DX_01_binarize"
                         },
@@ -373,7 +373,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                          "domain": None,
                          "measure": "Clinical Diagnosis Demographics",
                          "target_column": "DX_01",
-                         "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01'],
+                         "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
                          "transform": "factorize",
                          "outname": "DX_01_factorize"
                         },
@@ -396,7 +396,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                 },
                 "preprocessing": {
                     "preprocess": True,
-                    "cols_to_drop": ['EID', 'Comment_ID', 'Unnamed', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'], # cols to drop while preprocessing
+                    "cols_to_drop": ['EID', 'Comment_ID', 'Unnamed', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID', 'Release_Number'], # cols to drop while preprocessing
                     "cols_to_ignore": ['Identifiers'], # cols to ignore in the preprocessing routine (column transformation)
                     "upsample": True, # upsample minority class using SMOTE
                     "threshold": False, #threshold dataframe based on some fixed criterion
