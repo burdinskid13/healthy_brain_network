@@ -12,10 +12,10 @@
 #SBATCH -c 16 # 16 hyperthreaded cores 
 #
 # Memory:
-#SBATCH --mem=5G
+#SBATCH --mem=4G
 #
 # Wall clock limit:
-#SBATCH --time=10:00:00 # 
+#SBATCH --time=4:00:00 # 
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -37,7 +37,7 @@ cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 #python3 preprocess_phenotype.py
 
 # # make features
-#python3 make_phenotype_specs.py
+python3 make_phenotype_specs.py
 
 # make timestamp for this workflow
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
