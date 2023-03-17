@@ -15,7 +15,7 @@
 #SBATCH --mem=2G
 #
 # Wall clock limit:
-#SBATCH --time=04:00:00 # 
+#SBATCH --time=02:00:00 # 
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -33,5 +33,5 @@ source /om2/user/${username}/bin/miniconda3/bin/activate healthy-brain-network
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 
 # run workflow on model specs created in command above
-python3 run_phenotype_secondlevel.py --filter=2023-03-09
+python3 run_phenotype_secondlevel.py --filter=all_demos_combordities/'*2023-03-09*'
 
