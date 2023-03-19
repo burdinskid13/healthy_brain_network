@@ -548,7 +548,7 @@ def smote(y_train, X_train):
     Returns:
         df_smote (pd dataframe)
     """
-    sm = SMOTE(random_state=42, sampling_strategy=0.5)
+    sm = SMOTE(random_state=42, sampling_strategy='auto') # was .5
     X_train_oversampled, y_train_oversampled = sm.fit_resample(np.array(X_train), np.array(y_train))
     new_x = pd.DataFrame(X_train_oversampled, columns=X_train.columns)
     new_y = pd.DataFrame(y_train_oversampled, columns=y_train.columns)
