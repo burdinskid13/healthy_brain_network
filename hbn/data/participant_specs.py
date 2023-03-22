@@ -83,7 +83,71 @@ def make_specs(out_dir=Defaults.MODEL_SPEC_DIR):
         "age": "all",
         "sex": "all",
         "ethnicity": "all"
-        }
+        },
+        'spec12':
+        {
+        "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+        "split": "train",
+        "age": "all",
+        "sex": "male",
+        "ethnicity": "all"
+        },
+        'spec13':
+        {
+        "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+        "split": "train",
+        "age": "all",
+        "sex": "female",
+        "ethnicity": "all"
+        },
+        'spec14':
+        {
+        "diagnoses": ['Anxiety_Disorders', 'No_Diagnosis_Given'],
+        "split": "train",
+        "age": "all",
+        "sex": "female",
+        "ethnicity": "all"
+        },
+        'spec15':
+        {
+        "diagnoses": ['Anxiety_Disorders', 'No_Diagnosis_Given'],
+        "split": "train",
+        "age": "all",
+        "sex": "male",
+        "ethnicity": "all"
+        },
+        'spec16':
+        {
+        "diagnoses": ['Depressive_Disorders', 'No_Diagnosis_Given'],
+        "split": "train",
+        "age": "all",
+        "sex": "female",
+        "ethnicity": "all"
+        },
+        'spec17':
+        {
+        "diagnoses": ['Depressive_Disorders', 'No_Diagnosis_Given'],
+        "split": "train",
+        "age": "all",
+        "sex": "male",
+        "ethnicity": "all"
+        },
+        'spec18':
+        {
+        "diagnoses": ["No_Diagnosis_Given"],
+        "split": "train",
+        "age": "all",
+        "sex": "female",
+        "ethnicity": "all"
+        },
+        'spec19':
+        {
+        "diagnoses": ["No_Diagnosis_Given"],
+        "split": "train",
+        "age": "all",
+        "sex": "male",
+        "ethnicity": "all"
+        },
         }
 
     # loop over classifies and save out pydra-ml specs

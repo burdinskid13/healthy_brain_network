@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=11_workflow
+#SBATCH --job-name=19_workflow
 #
 # Partition:
 #SBATCH --partition=gablab
@@ -29,7 +29,7 @@ source ~/.bash_profile # set paths
 #source $(pipenv --venv)/bin/activate # activate virtual environment
 source /om2/user/${username}/bin/miniconda3/bin/activate healthy-brain-network 
 
-echo $"run workflow 11"
+echo $"run workflow 12"
 
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 
@@ -49,7 +49,7 @@ python3 make_phenotype_models.py \
 --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json \
 --features="['features-Teacher_Measures-all-all-all-spec.json', 'features-Child_Measures-all-all-all-spec.json', 'features-Parent_Measures-all-all-all-spec.json', 'features-Parent_Measures-Demographic_Questionnaire_Measures-Demographics-Basic_Demos-spec.json']" \
 --target=target_DX_01_Cat_new_binarize-spec.json \
---participant_spec=participant_spec9.json
+--participant_spec=participant_spec18.json
 # run workflow
 python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
 
