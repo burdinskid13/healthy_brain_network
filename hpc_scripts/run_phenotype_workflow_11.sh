@@ -15,7 +15,7 @@
 #SBATCH --mem=4G
 #
 # Wall clock limit:
-#SBATCH --time=04:00:00 
+#SBATCH --time=20:00:00 
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
