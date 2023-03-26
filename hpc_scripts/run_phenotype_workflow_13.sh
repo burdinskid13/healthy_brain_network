@@ -47,7 +47,6 @@ spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}-${
 # # make model specs
 python3 make_phenotype_models.py \
 --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json \
-#--features="['features-Teacher_Measures-all-all-all-spec.json', 'features-Child_Measures-all-all-all-spec.json', 'features-Parent_Measures-all-all-all-spec.json', 'features-Parent_Measures-Demographic_Questionnaire_Measures-Demographics-Basic_Demos-spec.json']" \
 --features="[]" \
 --target=target_DX_01_Cat_new_binarize-spec.json \
 --participant_spec=participant_spec12.json
