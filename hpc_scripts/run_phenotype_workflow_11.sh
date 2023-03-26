@@ -15,7 +15,7 @@
 #SBATCH --mem=3G
 #
 # Wall clock limit:
-#SBATCH --time=03:00:00 
+#SBATCH --time=15:00:00 
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -47,8 +47,9 @@ spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}-${
 # make model specs
 python3 make_phenotype_models.py \
 --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json \
---features="['features-Teacher_Measures-all-all-all-spec.json', 'features-Child_Measures-all-all-all-spec.json', 'features-Parent_Measures-all-all-all-spec.json', 'features-Parent_Measures-Demographic_Questionnaire_Measures-Demographics-Basic_Demos-spec.json']" \
+#--features="['features-Teacher_Measures-all-all-all-spec.json', 'features-Child_Measures-all-all-all-spec.json', 'features-Parent_Measures-all-all-all-spec.json', 'features-Parent_Measures-Demographic_Questionnaire_Measures-Demographics-Basic_Demos-spec.json']" \
 --target=target_DX_01_Cat_new_binarize-spec.json \
+--features="[]" \
 --participant_spec=participant_spec9.json
 # run workflow
 python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
