@@ -3,7 +3,7 @@ warnings.filterwarnings("ignore")
 
 def phenotype_features(
             feature_spec,
-            participants,
+            participants=None,
             target_spec=None,
             drop_identifiers=True
             ):
@@ -12,7 +12,7 @@ def phenotype_features(
 
     Args: 
         feature_spec (str or dict): full path to feature spec file OR dict loaded from file
-        participants (list of str): list of participant identifiers (output from `make_dataset.get_participants`)
+        participants (list of str or None): (optional) list of participant identifiers (output from `make_dataset.get_participants`)
         target_spec (str or None): (optional) full path to target spec file. if None, then only features (X) are returned, else features (X) + target variable (y) are returned.
         drop_identifiers (bool): (optional) default is True (returns dataframe without 'Identifiers' column)
 
@@ -29,16 +29,29 @@ def phenotype_features(
     if isinstance(feature_spec, str):
         feature_spec = io.read_json(feature_spec)
 
-    # make participants dataframe 
-    participants_df = pd.DataFrame(participants, columns=['Identifiers'])
+    # make `participants` is None is given
+    if participants is None:
+        participants_df = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'participants.csv'))
+    else:
+        participants_df = pd.DataFrame(participants, columns=['Identifiers'])
+
+    # get assessment
+    assessments = feature_spec['assessment']
+    if feature_spec['assessment']=='all':
+        assessments = ['Child Measures', 'Parent Measures', 'Teacher Measures']
+    elif isinstance(feature_spec['assessment'], str):
+        assessments = [feature_spec['assessment']]
 
     # get features (X)
-    features = build_features.get_features(
-                assessment=feature_spec['assessment'],
-                domains=[feature_spec['domains']],
-                measures=[feature_spec['abbrevs']]
-                )
-    
+    features = pd.DataFrame()
+    for assess in assessments:
+        feat = build_features.get_features(
+                    assessment=assess,
+                    domains=[feature_spec['domains']],
+                    measures=[feature_spec['abbrevs']]
+                    )
+        features = pd.concat([features, feat])
+
     # filter based on participants
     features = features.merge(participants_df, on='Identifiers')
     
@@ -57,8 +70,8 @@ def phenotype_features(
     if target_spec is not None:
         target_info = io.read_json(target_spec)
         if target_info['features_to_ignore'] is not None:
-            cols_to_keep = [col for col in features.columns if col not in target_info['features_to_ignore']]
-            features = features[cols_to_keep]
+            idx = features.columns.str.contains(('|'.join(target_info['features_to_ignore'])))
+            features = features[features.columns[~idx]]
 
     # preprocess
     preprocessing = feature_spec['preprocessing']

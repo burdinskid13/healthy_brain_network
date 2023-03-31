@@ -25,7 +25,7 @@ def get_features(
     `assessment` (e.g., Child Measures, Parent Measures), `domains` (e.g., Cognitive Testing), `measures` (e.g., Kaufman Brief Intelligence Test-II)
 
     Args: 
-        assessment (str): options: 'Child Measures', 'Parent Measures', 'Teacher Measures', 'Clinical Measures'. Default is 'Child Measures'
+        assessment (str): options: 'Child Measures', 'Parent Measures', 'Teacher Measures'. Default is 'Child Measures'
         domains (list of str or 'all'): exhaustive list, find options here: `data/raw/phenotype/Assessment_List_Jan2019.xlsx`. Default is 'all'. If `domains` is 'all', all domains are loaded
         measures (list of str or 'all'): exhaustive list, find options here: `data/raw/phenotype/Assessment_List_Jan2019.xlsx`. Default is 'all'. If `measures` is 'all', all measures are loaded for `domains`
         incl_data_type (list of pd.DataFrame.dtypes or None): if None, all categories are returned. default is None. pd.DataFrame.dtypes options: 'number', 'float', 'int', 'datetime', 'object'
@@ -341,7 +341,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat",
-                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
+                        "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
                         "transform": "binarize",
                         "outname": "DX_01_Cat_binarize"
                         },
@@ -349,7 +349,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat_new",
-                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
+                        "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
                         "transform": "binarize",
                         "outname": "DX_01_Cat_new_binarize"
                         },
@@ -357,7 +357,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat",
-                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
+                        "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
                         "transform": "factorize",
                         "outname": "DX_01_Cat_factorize"
                         },
@@ -365,7 +365,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01",
-                        "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
+                        "features_to_ignore": ['KSADS','Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
                         "transform": "binarize",
                         "outname": "DX_01_binarize"
                         },
@@ -373,7 +373,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                          "domain": None,
                          "measure": "Clinical Diagnosis Demographics",
                          "target_column": "DX_01",
-                         "features_to_ignore": ['Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
+                         "features_to_ignore": ['KSADS','Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
                          "transform": "factorize",
                          "outname": "DX_01_factorize"
                         },
@@ -381,7 +381,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "Sex",
-                        "features_to_ignore": ['Sex'],
+                        "features_to_ignore": ['KSADS','Sex'],
                         "transform": "binarize",
                         "outname": "Sex_binarize"
                         }
@@ -754,13 +754,21 @@ def _get_feature_combinations(parent_spec):
                             'abbrevs': abbrev
                             })
 
-        # write out all-feature models
+        # write out assessment-feature models
         spec_info.append(
             {'assessment': assess,
             'domains': 'all',
             'measures': 'all',
             'abbrevs': 'all'
             })
+
+        # write out all-feature models
+        spec_info.append(
+            {'assessment': 'all',
+             'domains': 'all',
+             'measures': 'all',
+             'abbrevs': 'all'
+             })
 
     return spec_info
 
