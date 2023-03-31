@@ -50,9 +50,10 @@ def phenotype_features(
                     domains=[feature_spec['domains']],
                     measures=[feature_spec['abbrevs']]
                     )
-        features = pd.concat([features, feat])
+        features = pd.concat([features, feat], axis=1)
 
     # filter based on participants
+    features = build_features.drop_duplicates(dataframe=features)
     features = features.merge(participants_df, on='Identifiers')
     
     # optionally add demographics as features (if there is a filename)
@@ -92,11 +93,11 @@ def phenotype_features(
                                 target_info=target_info, 
                                 participants=identifiers
                                 )   
-    # drop identifiers from final feature matrix
+    # drop identifiers (and duplicates) from final feature matrix
     if drop_identifiers:
-        features_final = features.merge(targets, on='Identifiers').drop(['Identifiers'], axis=1)
+        features_final = features.merge(targets, on='Identifiers').drop(['Identifiers'], axis=1).drop_duplicates()
     else:
-        features_final = features.merge(targets, on='Identifiers')
+        features_final = features.merge(targets, on='Identifiers').drop_duplicates()
 
     # upsample minority class using smote 
     if target_spec is not None and preprocessing['preprocess'] and preprocessing['upsample']:

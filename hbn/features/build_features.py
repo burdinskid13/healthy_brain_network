@@ -79,8 +79,7 @@ def get_features(
             # only read in files that exist
             if os.path.isfile(measure):
                 df = pd.read_csv(measure)
-                if 'Teacher' in assessment:
-                    df = preprocess_teacher(dataframe=df) 
+                df = drop_duplicates(dataframe=df) # drop columns and rows
                 # no min participants required
                 df_all = df_all.merge(df, on="Identifiers", how='outer')
                 #print(f'reading {measure} into dataframe')
@@ -519,14 +518,16 @@ def column_transform(
     return df_transformed
 
 
-def preprocess_teacher(dataframe):
-    """the teacher measures have duplicate rows (multiple Identifiers). We take the mean across the duplicate Identifiers (for numeric columns)
+def drop_duplicates(dataframe):
+    """some measures (i.e. Teacher) have duplicate rows (multiple Identifiers). We take the mean across the duplicate Identifiers (for numeric columns)
     and take the first row (for object columns)
     Args:
         dataframe (pd dataframe):
     Returns: 
         df (pd dataframe): preprocessed dataframe (remove duplicates)
     """
+    # remove duplicate columns
+    dataframe = dataframe.loc[:,~dataframe.columns.duplicated()].copy()
     # remove trailing numbers (e.g., '_1', '_2')
     dataframe['Identifiers'] = dataframe['Identifiers'].str.split('_').str.get(0)
     # group by unique identifiers and take the mean value for the numeric items
