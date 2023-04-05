@@ -148,6 +148,69 @@ def make_specs(out_dir=Defaults.MODEL_SPEC_DIR):
         "sex": "male",
         "ethnicity": "all"
         },
+        'spec20':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [5,6],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec21':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [7],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec22':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [8],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec23':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [9],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec24':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [10],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec25':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [11],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec26':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [12],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec27':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [13,14],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec28':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [15,16,17,18,19,20,21,22],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
         }
 
     # loop over classifies and save out pydra-ml specs

@@ -1,147 +1,36 @@
 
-def compare_answers(feature_specs, age='all', sex='all', diagnoses=None, split='all'):
-    """compare answers across all combinations of `feature_specs`
-    
-    Args:
-        feature_specs (list of str): fullpaths to feature specs 
-        age (list of int or str): (optional): default is 'all'. other options are any numbers between 6 - 21
-        sex (str): (optinal): default is 'all'. other options: 'female', 'male' 
-        diagnoses (list of str): (optional) list of diagnoses from `model_specs`. for example `diagnoses = ['ADHD-Combined Type']`
-        split (str): (optional). default is 'all'. other options: 'train', 'test'
-    Returns:
-        `df` (pandas dataframe): 
-    """
-    import itertools
-    import dcor
+def load_data(assessment='Child', data_type='preprocessed'):
     import pandas as pd
-    from pathlib import Path
-
-    corr_all = []; measures_all = []; features_all = []
-    for combo in itertools.combinations(feature_specs, 2):
-
-        # get features
-        features = [Path(c).name for c in combo]
-
-        # get answers
-        df_A = get_answers(
-            feature_specs=list(combo), 
-            age=age,
-            sex=sex,
-            diagnoses=diagnoses, 
-            split=split
-            )
-
-        x = df_A[0]; y = df_A[1]
-
-        # get measure
-        measures = []
-        for comb in combo:
-            measure = Path(comb).stem.split("-")[-2]
-            measures.append(measure)
-        measures = '/'.join(measures)
-
-        # calculate distance correlation
-        corr_A = dcor.distance_correlation(x, y)
-        corr_all.append(corr_A)
-        measures_all.append(measures)
-        features_all.append(features)
-
-    df = pd.DataFrame({
-            'features': features_all,
-            'measures': measures_all,
-            'distances': corr_all
-            })
-    
-    return df
-
-
-def get_answers(feature_specs, age='all', sex='all', diagnoses=None, split='all'):
-    """get answers from `feature_specs` returned as a list of dataframes
-    
-    Args:
-        feature_specs (list of str): fullpaths to feature specs
-        age (list of int or str): (optional): default is 'all'. other options are any numbers between 6 - 21
-        sex (str): (optional): default is 'all'. other options: 'female', 'male' 
-        diagnoses (list of str): (optional) list of diagnoses from `model_specs`. for example `diagnoses = ['ADHD-Combined Type']`
-    Returns:
-        df_list (list of pd dataframes): list of dataframes
-    """
     import os
-    from hbn import io
-    from functools import reduce
-    from hbn.data import make_dataset
-    from hbn.features import feature_selection
+    """load data for answers for `assessment` and `data_type`
+    Args:   
+        data_dir (str): full path to directory where data (csv files) are saved
+        assessment (str): Default is 'Child'. other options: 'Parent', 'Teacher'
+        data_type (str): Default is 'preprocessed'. Other option is 'raw'
+    Returns:
+        df_data (pd dataframe), df_dict (pd dataframe): containing questionnaire answers and dictionary keys respectively
+    """
     from hbn.constants import Defaults
-    
-    if diagnoses is None:
-        diagnoses = ['No_Diagnosis_Given']
-        
-    participants = make_dataset.get_participants(
-                                split=split, 
-                                disorders=diagnoses,
-                                age=age,
-                                sex=sex
-                                )
-    # loop over feature specs 
-    df_list = []; same_part = []
-    for feature_spec in feature_specs:
 
-        # load feature spec
-        spec_info = io.read_json(os.path.join(Defaults.FEATURE_DIR, feature_spec))
-        spec_info['preprocessing'] = None # not doing preprocessing as defined in the feature spec file
+    # load csv
+    df_data = pd.read_csv(os.path.join(Defaults.SUBTYPE_DIR, f'{assessment}-features-{data_type}.csv'))
+    df_data.columns = df_data.columns.str.replace('numeric__', '')
 
-        # get data
-        df = feature_selection.phenotype_features(target_spec=None,
-                                feature_spec=spec_info,
-                                participants=participants,
-                                preprocess=True,
-                                drop_identifiers=False,
-                                oversample=False
-                                ).reset_index(drop=True)
-        df = df.drop_duplicates(subset=['Identifiers'])
-        df_list.append(df)
-        same_part.append(df['Identifiers'])
+    # return dictionary
+    df_dict = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'item-names-cleaned.csv'))
+    df_dict = df_dict[df_dict['assessment']==f'{assessment} Measures']
 
-    part_intersect = list(reduce(set.intersection, map(set, same_part)))
+    # return clinical diagnosis + demographics
+    df_diagnosis = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
+    df_diagnosis = df_diagnosis.rename(columns={'DX_01': 'Diagnosis', 
+                              'DX_01_Cat': 'Diagnosis_Category', 
+                              'PreInt_Demos_Fam,Child_Race_cat': 'Race',
+                              'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'
+                              })
 
-    # index dataframes for `part_intersect`
-    df_out = []
-    for df in df_list:
-        df_part = df[df['Identifiers'].isin(part_intersect)]
-        df_part = df_part.drop(columns=['Identifiers'])
-        df_out.append(df_part)
-    
-    return df_out
-
-
-def get_questions(feature_specs):
-    """get questions for `feature_specs`, reads `datadic` key and loads dictionary
-    
-    Args:
-        feature_specs (list of str): fullpaths to feature specs
-    Returns:
-        `df_list` (list of pandas dataframes)
-    """
-    import os
-    from hbn import io
-    import pandas as pd
-    
-    # loop over features
-    df_list = []
-    for feature_spec in feature_specs:
-        spec_info = io.read_json(os.path.join(Defaults.FEATURE_DIR, feature_spec))
-        
-        # get abbreviations
-        abbrev = spec_info['datadic']
-        
-        # load in excel file of data dictionary
-        df_Q = pd.read_excel(os.path.join(Defaults.PHENO_DIR, 'Release9_DataDic',  f'{abbrev}.xlsx'), header=1)
-        df_Q.columns = [col.strip(' ') for col in df_Q]
-        df_list.append(df_Q)
+    return df_data, df_dict, df_diagnosis
             
-    return df_list
             
-
 def sentence_similarity(sentences):
     """calculate sentence similarity across all sentence combinations
     
@@ -451,4 +340,3 @@ def monte_carlo_test(x,y, n_tests=100, n_obs_list=[25, 30, 35, 50, 70, 100], sig
         table[dist_name] = dist_results
 
     table
-
