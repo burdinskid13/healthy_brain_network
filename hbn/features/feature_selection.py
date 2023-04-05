@@ -12,7 +12,7 @@ def phenotype_features(
 
     Args: 
         feature_spec (str or dict): full path to feature spec file OR dict loaded from file
-        participants (list of str or None): (optional) list of participant identifiers (output from `make_dataset.get_participants`)
+        participants (list of str or None): (optional) list of participant identifiers. If None, features for all participants are read in via `build_features.get_features`. default is None.
         target_spec (str or None): (optional) full path to target spec file. if None, then only features (X) are returned, else features (X) + target variable (y) are returned.
         drop_identifiers (bool): (optional) default is True (returns dataframe without 'Identifiers' column)
 
@@ -29,32 +29,17 @@ def phenotype_features(
     if isinstance(feature_spec, str):
         feature_spec = io.read_json(feature_spec)
 
-    # make `participants` is None is given
-    if participants is None:
-        participants_df = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'participants.csv'))
-    else:
-        participants_df = pd.DataFrame(participants, columns=['Identifiers'])
-
-    # get assessment
-    assessments = feature_spec['assessment']
-    if feature_spec['assessment']=='all':
-        assessments = ['Child Measures', 'Parent Measures', 'Teacher Measures']
-    elif isinstance(feature_spec['assessment'], str):
-        assessments = [feature_spec['assessment']]
-
     # get features (X)
-    features = pd.DataFrame()
-    for assess in assessments:
-        feat = build_features.get_features(
-                    assessment=assess,
-                    domains=[feature_spec['domains']],
-                    measures=[feature_spec['abbrevs']]
-                    )
-        features = pd.concat([features, feat], axis=1)
-
+    features = build_features.get_features(
+                assessment=feature_spec['assessment'],
+                domains=[feature_spec['domains']],
+                measures=[feature_spec['abbrevs']]
+                )
+    
     # filter based on participants
-    features = build_features.drop_duplicates(dataframe=features)
-    features = features.merge(participants_df, on='Identifiers')
+    if participants is not None:
+        participants_df = pd.DataFrame(participants, columns=['Identifiers'])
+        features = features.merge(participants_df, on='Identifiers')
     
     # optionally add demographics as features (if there is a filename)
     add_features = feature_spec['add_features']
@@ -71,8 +56,8 @@ def phenotype_features(
     if target_spec is not None:
         target_info = io.read_json(target_spec)
         if target_info['features_to_ignore'] is not None:
-            idx = features.columns.str.contains(('|'.join(target_info['features_to_ignore'])))
-            features = features[features.columns[~idx]]
+            cols_to_keep = [col for col in features.columns if col not in target_info['features_to_ignore']]
+            features = features[cols_to_keep]
 
     # preprocess
     preprocessing = feature_spec['preprocessing']
@@ -93,18 +78,20 @@ def phenotype_features(
                                 target_info=target_info, 
                                 participants=identifiers
                                 )   
-    # drop identifiers (and duplicates) from final feature matrix
+    # drop identifiers from final feature matrix
     if drop_identifiers:
-        features_final = features.merge(targets, on='Identifiers').drop(['Identifiers'], axis=1).drop_duplicates()
+        features_final = features.merge(targets, on='Identifiers').drop(['Identifiers'], axis=1)
     else:
-        features_final = features.merge(targets, on='Identifiers').drop_duplicates()
+        features_final = features.merge(targets, on='Identifiers')
 
     # upsample minority class using smote 
     if target_spec is not None and preprocessing['preprocess'] and preprocessing['upsample']:
         if features_final.isnull().values.any(): # impute if there are NaN values
-            features_final = build_features.column_transform(features_final, clf_info=preprocessing['clf_info'], cols_to_ignore=[target_info['outname']])
+            if target_spec is not None:
+                features_final = build_features.column_transform(features_final, clf_info=preprocessing['clf_info'], cols_to_ignore=[target_info['outname']])
         x_cols = [col for col in features_final.columns if target_info['outname'] not in col]
         features_final = build_features.smote(y_train=features_final[[target_info['outname']]], X_train=features_final[x_cols])
     
     return features_final
 
+    
