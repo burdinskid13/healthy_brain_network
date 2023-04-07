@@ -1,5 +1,5 @@
 
-def load_data(assessment='Child', data_type='preprocessed'):
+def load_data(assessments=['Child', 'Parent'], data_type='preprocessed'):
     import pandas as pd
     import os
     """load data for answers for `assessment` and `data_type`
@@ -12,23 +12,31 @@ def load_data(assessment='Child', data_type='preprocessed'):
     """
     from hbn.constants import Defaults
 
-    # load csv
-    df_data = pd.read_csv(os.path.join(Defaults.SUBTYPE_DIR, f'{assessment}-features-{data_type}.csv'))
-    df_data.columns = df_data.columns.str.replace('numeric__', '')
+    df_diagnosis_all = pd.DataFrame()
+    df_dict_all = pd.DataFrame()
+    df_data_all = pd.DataFrame()
+    for assessment in assessments:
+        # load csv
+        df_data = pd.read_csv(os.path.join(Defaults.SUBTYPE_DIR, f'{assessment}-features-{data_type}.csv'))
+        df_data.columns = df_data.columns.str.replace('numeric__', '')
 
-    # return dictionary
-    df_dict = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'item-names-cleaned.csv'))
-    df_dict = df_dict[df_dict['assessment']==f'{assessment} Measures']
+        # return dictionary
+        df_dict = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'item-names-cleaned.csv'))
+        df_dict = df_dict[df_dict['assessment']==f'{assessment} Measures']
 
-    # return clinical diagnosis + demographics
-    df_diagnosis = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
-    df_diagnosis = df_diagnosis.rename(columns={'DX_01': 'Diagnosis', 
-                              'DX_01_Cat': 'Diagnosis_Category', 
-                              'PreInt_Demos_Fam,Child_Race_cat': 'Race',
-                              'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'
-                              })
+        # return clinical diagnosis + demographics
+        df_diagnosis = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
+        df_diagnosis = df_diagnosis.rename(columns={'DX_01': 'Diagnosis', 
+                                'DX_01_Cat_new': 'Category', 
+                                'PreInt_Demos_Fam,Child_Race_cat': 'Race',
+                                'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'
+                                })
 
-    return df_data, df_dict, df_diagnosis
+        df_diagnosis_all = pd.concat([df_diagnosis_all, df_diagnosis])
+        df_data_all = pd.concat([df_data_all, df_data])
+        df_dict_all = pd.concat([df_dict_all, df_dict])
+
+    return df_data_all, df_dict_all, df_diagnosis_all
             
             
 def sentence_similarity(sentences):

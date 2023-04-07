@@ -68,6 +68,7 @@ def make_demographics():
     col_dict = {'Sex': 'Sex', 
                 'Age': 'Age', 
                 'DX_01': 'Diagnosis', 
+                'DX_01_Cat_new': 'Category',
                 'comorbidities': 'comorbidities', 
                 'PreInt_Demos_Fam,Child_Race_cat': 'Race', 
                 'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'
