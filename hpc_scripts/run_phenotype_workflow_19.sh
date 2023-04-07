@@ -15,7 +15,7 @@
 #SBATCH --mem=5G
 #
 # Wall clock limit:
-#SBATCH --time=10:00:00
+#SBATCH --time=05:00:00
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -29,7 +29,7 @@ source ~/.bash_profile # set paths
 #source $(pipenv --venv)/bin/activate # activate virtual environment
 source /om2/user/${username}/bin/miniconda3/bin/activate healthy-brain-network 
 
-echo $"run workflow 10"
+echo $"run workflow 19"
 
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 

@@ -79,8 +79,11 @@ def make_model(
         pydraml_info['target_vars'] = target_info['outname']
 
         # get model spec name
-        spec_name = 'classifier-' + '_'.join(re.split(r'_|,|/| ', feature_info['assessment'])) + '-' + '_'.join(re.split(r'_|,|/| ', feature_info['measures'])) + '-' + feature_info['abbrevs'] + '-' + target_info['outname'] + '-spec.json'
-        model_spec = os.path.join(out_dir, spec_name)
+        spec_name = 'classifier-' + '_'.join(re.split(r'_|,|/| ', feature_info['assessment'])) + '-' + '_'.join(re.split(r'_|,|/| ', feature_info['measures'])) + '-' + feature_info['abbrevs'] + '-' + target_info['outname']
+        model_spec = os.path.join(out_dir, spec_name + '-spec.json')
+        if os.path.isfile(model_spec):
+            spec_name =  spec_name + str(round(random.random()*1000000000)) + '-spec.json'
+            model_spec = os.path.join(out_dir, spec_name)
 
         # save out model features and spec
         if not df_features.empty:
