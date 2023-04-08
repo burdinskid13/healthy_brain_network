@@ -24,6 +24,7 @@ def run(
 
 
     # calculate similarity
+    sentences = df_dict['questions']
     cosine_scores, pairs = item_analysis.sentence_similarity(sentences, transformer=transformer)
 
     # cosine scores
