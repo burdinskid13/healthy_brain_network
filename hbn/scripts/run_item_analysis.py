@@ -14,7 +14,7 @@ def run(
     from hbn import io
 
     # make data files
-    make_files.make_data_files()
+    #make_files.make_data_files()
 
     # load data
     df_data, df_dict, df_diagnosis = item_analysis.load_data(
