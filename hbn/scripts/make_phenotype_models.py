@@ -53,16 +53,16 @@ def run(
         out_dir = Defaults.MODEL_SPEC_DIR
 
     for feature in features:
-        for participant in participant_specs:
-            if Path(feature).name!='features-parent_spec.json':
-                predictive_modeling.make_model(
-                                    feature_spec=os.path.join(Defaults.FEATURE_DIR, feature),
-                                    target_spec=os.path.join(Defaults.FEATURE_DIR, target),
-                                    pydraml_spec=os.path.join(Defaults.MODEL_SPEC_DIR, pydraml_spec),
-                                    participant_spec=os.path.join(Defaults.MODEL_SPEC_DIR, participant),
-                                    drop_identifiers=True,
-                                    out_dir=out_dir
-                                    )
+        if Path(feature).name!='features-parent_spec.json':
+            for participant in participant_specs:
+                    predictive_modeling.make_model(
+                                        feature_spec=os.path.join(Defaults.FEATURE_DIR, feature),
+                                        target_spec=os.path.join(Defaults.FEATURE_DIR, target),
+                                        pydraml_spec=os.path.join(Defaults.MODEL_SPEC_DIR, pydraml_spec),
+                                        participant_spec=os.path.join(Defaults.MODEL_SPEC_DIR, participant),
+                                        drop_identifiers=True,
+                                        out_dir=out_dir
+                                        )
 
 if __name__ == "__main__":
     run()
