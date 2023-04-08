@@ -211,6 +211,132 @@ def make_specs(out_dir=Defaults.MODEL_SPEC_DIR):
          'sex': 'all',
          'ethnicity': 'all'
         },
+        'spec29':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [5,6],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec30':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [7],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec31':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [8],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec32':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [9],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec33':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [10],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec34':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [11],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec35':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [12],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec36':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [13,14],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec37':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [15,16,17,18,19,20,21,22],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec38':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [5,6],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec39':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [7],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec40':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [8],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec41':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [9],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec42':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [10],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec43':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [11],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec44':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [12],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec45':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [13,14],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec46':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [15,16,17,18,19,20,21,22],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
         }
 
     # loop over classifies and save out pydra-ml specs
