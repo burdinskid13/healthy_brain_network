@@ -1,69 +1,50 @@
 import click
-import ast
 import warnings
 warnings.filterwarnings("ignore")
 
-class PythonLiteralOption(click.Option):
-
-    def type_cast_value(self, ctx, value):
-        try:
-            return ast.literal_eval(value)
-        except:
-            raise click.BadParameter(value)
-
-@click.command()
-@click.option('--split_age', required=False)
-@click.option("--split_sex", required=False)
-@click.option('--diagnoses', cls=PythonLiteralOption, default=[], required=False)
-
-def run(diagnoses=['ADHD'],
-        split_age=True,
-        split_sex=True
-        ):
-    import glob
+def run(
+    assessments=['Child', 'Parent'], 
+    data_type='raw', 
+    transformer='distilbert-base-nli-mean-tokens'
+    ):
     import os
-    import itertools
-    import datetime
-    import pandas as pd
     from hbn.constants import Defaults
     from hbn.models import item_analysis
-    
-    # get feature specs
-    feature_specs = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*Child_Behavior_Checklist*'))
-    feature_specs.extend(glob.glob(os.path.join(Defaults.FEATURE_DIR, '*Youth_Self_Report*')))
+    from hbn import io
 
-    sexes = ['male', 'female']
-    ages = range(6,11)
+    # make data files
+    make_files.make_data_files()
 
-    # 
-    combos = list(itertools.product(diagnoses, ['all'], ['all']))
+    # load data
+    df_data, df_dict, df_diagnosis = item_analysis.load_data(
+                                            assessments=assessments, # Teacher, Child
+                                            data_type=data_type
+                                            )
 
-    if split_age:
-        combos = list(itertools.product(diagnoses, ['all'], ages))
-    
-    if split_sex:
-        combos = list(itertools.product(diagnoses, sexes, ['all']))
 
-    if split_age and split_sex:
-        combos = list(itertools.product(diagnoses, sexes, ages))
+    # calculate similarity
+    cosine_scores, pairs = item_analysis.sentence_similarity(sentences, transformer=transformer)
 
-    df_all = pd.DataFrame()
-    for combo in combos:
-        diagnosis=combo[0]; sex=combo[1]; age=combo[2]
-        df = item_analysis.compare_answers(feature_specs, sex=sex, age=age, diagnoses=[diagnosis], split='all')
-        df['diagnosis'] = diagnosis
-        df['age'] = age
-        df['sex'] = sex
-        df_all = pd.concat([df_all, df])
-        print(f"adding {diagnosis} for age {age} to dataframe")
+    # cosine scores
+    df1 = pd.DataFrame(np.array(cosine_scores))
 
-    # save dataframe to disk
-    fpath = os.path.join(Defaults.INTERIM_DIR, 'questionnaires')
-    os.makedirs(fpath)
-    ct = datetime.datetime.now()
-    ct_name = '_'.join(f'{ct}'.split(' '))
-    fname = f'distances_{ct_name}.csv'
-    df_all.to_csv(os.path.join(fpath, fname), index=False)
+    # score pairs
+    df2 = pd.DataFrame()
+    for idx, pair in enumerate(pairs):
+        df2.loc[idx, 'idx1'] = pairs[idx]['index'][0]
+        df2.loc[idx, 'idx2'] = pairs[idx]['index'][1]
+        df2.loc[idx, 'score'] = pairs[idx]['score'].tolist()
+
+    data_dict = {'questions': df_dict,
+                'diagnosis': df_diagnosis,
+                'cosine_scores': df1,
+                'pairs': df2,
+                'transformer': transformer
+                }
+
+    # save as hdf5
+    fname = 'sentence-similarity' + '_' + '_'.join(assessments) + '_' + data_type + '.h5'
+    io.save_dict_as_hdf5(fpath=os.path.join(Defaults.SUBTYPE_DIR, fname), data_dict=data_dict)
 
 if __name__ == "__main__":
     run()

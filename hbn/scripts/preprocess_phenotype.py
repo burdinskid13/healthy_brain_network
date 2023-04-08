@@ -11,6 +11,7 @@ def run(parse=False):
     import pandas as pd
     from hbn.constants import Defaults
     from hbn.data import make_dataset
+    from hbn.scripts import make_files
 
     if parse:
         # do some minimal preprocessing on the files (ONLY NEED TO DO THIS ONCE)
@@ -38,6 +39,9 @@ def run(parse=False):
 
     # make demographic features (saved in FEATURE_DIR)
     make_dataset.make_demographics()
+
+    # make data files
+    make_files.make_data_files()
 
     # makes test/train splits
     make_dataset.make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR)

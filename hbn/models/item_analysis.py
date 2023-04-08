@@ -12,7 +12,6 @@ def load_data(assessments=['Child', 'Parent'], data_type='preprocessed'):
     """
     from hbn.constants import Defaults
 
-    df_diagnosis_all = pd.DataFrame()
     df_dict_all = pd.DataFrame()
     df_data_all = pd.DataFrame()
     for assessment in assessments:
@@ -23,23 +22,25 @@ def load_data(assessments=['Child', 'Parent'], data_type='preprocessed'):
         # return dictionary
         df_dict = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'item-names-cleaned.csv'))
         df_dict = df_dict[df_dict['assessment']==f'{assessment} Measures']
-
-        # return clinical diagnosis + demographics
-        df_diagnosis = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
-        df_diagnosis = df_diagnosis.rename(columns={'DX_01': 'Diagnosis', 
-                                'DX_01_Cat_new': 'Category', 
-                                'PreInt_Demos_Fam,Child_Race_cat': 'Race',
-                                'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'
-                                })
-
-        df_diagnosis_all = pd.concat([df_diagnosis_all, df_diagnosis])
-        df_data_all = pd.concat([df_data_all, df_data])
+        
+        df_data_all = pd.concat([df_data_all, df_data], axis=1)
         df_dict_all = pd.concat([df_dict_all, df_dict])
 
-    return df_data_all, df_dict_all, df_diagnosis_all
+    # return clinical diagnosis + demographics
+    df_diagnosis = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'))
+    df_diagnosis = df_diagnosis.rename(columns={'DX_01': 'Diagnosis', 
+                            'DX_01_Cat_new': 'Category', 
+                            'PreInt_Demos_Fam,Child_Race_cat': 'Race',
+                            'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'
+                            })
+    
+    # clean dataframes
+    df_dict_all = df_dict_all.dropna(how='any').reset_index(drop=True)
+
+    return df_data_all.reset_index(), df_dict_all, df_diagnosis
             
             
-def sentence_similarity(sentences):
+def sentence_similarity(sentences, transformer='distilbert-base-nli-mean-tokens'):
     """calculate sentence similarity across all sentence combinations
     
     Args:
@@ -48,7 +49,7 @@ def sentence_similarity(sentences):
     from sentence_transformers import SentenceTransformer, util
     
     # get model
-    model = SentenceTransformer('distilbert-base-nli-mean-tokens')
+    model = SentenceTransformer(transformer)
 
     # calculate sentence embeddings
     sentence_embeddings = model.encode(sentences)
