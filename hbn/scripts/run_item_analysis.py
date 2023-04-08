@@ -10,6 +10,7 @@ def run(
     import os
     from hbn.constants import Defaults
     from hbn.models import item_analysis
+    from hbn.scripts import make_files
     from hbn import io
 
     # make data files
