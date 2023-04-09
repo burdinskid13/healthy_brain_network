@@ -12,7 +12,7 @@
 #SBATCH -c 16 # 16 hyperthreaded cores 
 #
 # Memory:
-#SBATCH --mem=7G
+#SBATCH --mem=10G
 #
 # Wall clock limit:
 #SBATCH --time=02:00:00 # 
