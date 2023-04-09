@@ -8,6 +8,8 @@ def run(
     transformer='distilbert-base-nli-mean-tokens'
     ):
     import os
+    import pandas as pd
+    import numpy as np
     from hbn.constants import Defaults
     from hbn.models import item_analysis
     from hbn.scripts import make_files
@@ -18,7 +20,7 @@ def run(
 
     # load data
     df_data, df_dict, df_diagnosis = item_analysis.load_data(
-                                            assessments=assessments, # Teacher, Child
+                                            assessments=assessments, 
                                             data_type=data_type
                                             )
 
