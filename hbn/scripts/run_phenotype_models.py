@@ -4,9 +4,9 @@ from hbn.constants import Defaults
 warnings.filterwarnings("ignore")
 
 
-@click.command()
-@click.option("--cachedir")
-@click.option("--spec_dir", required=False)
+# @click.command()
+# @click.option("--cachedir")
+# @click.option("--spec_dir", required=False)
 
 def run(
     cachedir='/om2/user/maedbh/.cache/pydra-ml/cache-wf/',
