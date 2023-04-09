@@ -63,6 +63,7 @@ def run(
                                         drop_identifiers=True,
                                         out_dir=out_dir
                                         )
+    print('finished making model specs')
 
 if __name__ == "__main__":
     run()
