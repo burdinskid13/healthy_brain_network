@@ -53,8 +53,8 @@ python3 make_phenotype_models.py \
 --participant_specs="['participant_spec8.json']" \
 
 # run workflow
-echo $"running model"
-python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
+#echo $"running model"
+python3 #.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
 
 # delete pydra-ml cache from openmind (takes up to omuch space)
 #echo $"deleting pydraml cache"
