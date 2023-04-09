@@ -56,4 +56,5 @@ spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/2023-04-09_12-4
 #python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
 
 # delete pydra-ml cache from openmind (takes up to omuch space)
+echo $"deleting pydraml cache"
 #python3 delete_cache.py --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
