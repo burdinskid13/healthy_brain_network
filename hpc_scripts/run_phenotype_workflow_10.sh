@@ -12,7 +12,7 @@
 #SBATCH -c 16 # 16 hyperthreaded cores 
 #
 # Memory:
-#SBATCH --mem=5G
+#SBATCH --mem=1G
 #
 # Wall clock limit:
 #SBATCH --time=20:00:00 
@@ -45,7 +45,7 @@ RANDOM_NUMBER=$((1 + $RANDOM % 100))
 #spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}-${RANDOM_NUMBER}
 spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/2023-04-09_12-41-46-46S-93
 
-# make model specs
+#make model specs
 # python3 make_phenotype_models.py \
 # --out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json \
 # --features="['features-all-all-all-all-spec.json']" \
@@ -53,7 +53,7 @@ spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/2023-04-09_12-4
 # --participant_specs="['participant_spec8.json']"
 
 # run workflow
-python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
+#python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
 
 # delete pydra-ml cache from openmind (takes up to omuch space)
 #python3 delete_cache.py --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/

@@ -35,6 +35,7 @@ def run(
         out_dir = os.path.join(Defaults.MODEL_DIR, ct_name)
 
         # loop over models
+        print('looping over models')
         for model_spec in specs:
 
             # make new directory that is model specific
