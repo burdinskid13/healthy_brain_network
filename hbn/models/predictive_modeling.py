@@ -255,7 +255,7 @@ def calculate_R(y, y_pred):
 
     return R
 
-def calculate_R2(Y, Y_pred):
+def calculate_R2(y, y_pred):
     """Calculates squared correlation between Y and Y_pred without subtracting the mean.
     Args:
         Y (nd-array):
