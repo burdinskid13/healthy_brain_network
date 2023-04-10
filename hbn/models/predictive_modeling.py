@@ -150,6 +150,7 @@ def evaluation(results_dir, test_spec):
     import os
     import glob
     import pickle as pk
+    import pandas as pd
     from pathlib import Path
     from sklearn.metrics import mean_squared_error
     from hbn import io
