@@ -160,7 +160,7 @@ def evaluation(results_dir, test_spec):
     """
 
     print("calculating evaluation")
-    
+
     # get results file
     model_name = Path(results_dir).name.split('-')[2]
     fitted_model = os.path.join(results_dir, f'results-{model_name}.pkl')
@@ -170,35 +170,35 @@ def evaluation(results_dir, test_spec):
         results = pk.load(fp)
 
     # loop over results and get model + feature names (only if data are not permuted)
+    df = pd.DataFrame()
     for res in results:
         if not res[0]['ml_wf.permute']:
             feature_names = res[1].output.feature_names
             fitted_model = res[1].output.model
 
-    # get model spec info for fitted model
-    fpath = glob.glob(os.path.join(Path(results_dir).parent, '*-spec.json*'))[0]
-    feature_spec = io.read_json(fpath)['feature_spec']
-    target_spec = io.read_json(fpath)['target_spec']
-    test_spec = io.read_json(os.path.join(Defaults.MODEL_SPEC_DIR, test_spec))
+        # get model spec info for fitted model
+        fpath = glob.glob(os.path.join(Path(results_dir).parent, '*-spec.json*'))[0]
+        feature_spec = io.read_json(fpath)['feature_spec']
+        target_spec = io.read_json(fpath)['target_spec']
+        test_spec = io.read_json(os.path.join(Defaults.MODEL_SPEC_DIR, test_spec))
 
-    # get test data
-    X, y = get_test(feature_spec=feature_spec, target_spec=target_spec, test_spec=test_spec)
+        # get test data
+        X, y = get_test(feature_spec=feature_spec, target_spec=target_spec, test_spec=test_spec)
 
-    # get predictions 
-    y_pred = fitted_model.predict(X)
+        # get predictions 
+        y_pred = fitted_model.predict(X)
 
-    # get rmse
-    rmse = mean_squared_error(y, y_pred, squared=False)
-    R = calculate_R(y, y_pred)
-    R2 = calculate_R2(y, y_pred)
+        # get rmse
+        rmse = mean_squared_error(y, y_pred, squared=False)
+        R = calculate_R(y, y_pred)
+        R2 = calculate_R2(y, y_pred)
 
-    # make dataframe
-    df = pd.DataFrame()
-    df['y'] = y
-    df['y_pred'] = y_pred
-    df['train'] = io.read_json(fpath)['participant_spec']['diagnoses'][0]
-    df['predict'] = test_spec['diagnoses'][0]
-    df['split'] = test_spec['split']
+        # make dataframe
+        df['y'] = y
+        df['y_pred'] = y_pred
+        df['train'] = io.read_json(fpath)['participant_spec']['diagnoses'][0]
+        df['predict'] = test_spec['diagnoses'][0]
+        df['split'] = test_spec['split']
 
     return df
 
