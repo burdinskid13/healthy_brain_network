@@ -29,8 +29,6 @@ def run(
     # get model specs
     specs = glob.glob(os.path.join(spec_dir, '*.json*'))
 
-    keyboard
-
     if specs:
         # get model directory (where pydra-ml outputs are stored)
         ct_name = Path(spec_dir).name # same name as model spec dir
