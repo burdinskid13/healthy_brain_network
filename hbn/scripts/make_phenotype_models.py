@@ -23,10 +23,10 @@ class PythonLiteralOption(click.Option):
 
 def run(
     features=[],
+    participant_specs=[]
     target='target_DX_01_Cat_new_binarize-spec.json',
     pydraml_spec='pydraml_spec2.json',
     out_dir=Defaults.MODEL_SPEC_DIR,
-    participant_specs=[]
     ):
     """Make phenotype model(s) using the following:`feature specs`, `targets`, `participant_spec`, `pydraml_spec`  
     

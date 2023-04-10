@@ -1,5 +1,5 @@
 
-def load_data(assessments=['Child', 'Parent'], data_type='preprocessed'):
+def load_data(assessments=['Child', 'Parent', 'Teacher'], data_type='preprocessed'):
     import pandas as pd
     import os
     """load data for answers for `assessment` and `data_type`

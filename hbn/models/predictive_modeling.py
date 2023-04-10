@@ -146,6 +146,132 @@ def run_pydra_ml(
     run_workflow(wf, "cf", {"n_procs": 1})
 
 
+def evaluation(results_dir, test_spec):
+    import os
+    import glob
+    import pickle as pk
+    from pathlib import Path
+    from sklearn.metrics import mean_squared_error
+    from hbn import io
+    from hbn.constants import Defaults
+
+    """Args:
+        results_dir (str): fullpath to top-level results dir. for example '../out-localspec-<>'
+    """
+
+    print("calculating evaluation")
+    
+    # get results file
+    model_name = Path(results_dir).name.split('-')[2]
+    fitted_model = os.path.join(results_dir, f'results-{model_name}.pkl')
+
+    # get fitted model
+    with open(fitted_model, "rb") as fp:
+        results = pk.load(fp)
+
+    # loop over results and get model + feature names (only if data are not permuted)
+    for res in results:
+        if not res[0]['ml_wf.permute']:
+            feature_names = res[1].output.feature_names
+            fitted_model = res[1].output.model
+
+    # get model spec info for fitted model
+    fpath = glob.glob(os.path.join(Path(results_dir).parent, '*-spec.json*'))[0]
+    feature_spec = io.read_json(fpath)['feature_spec']
+    target_spec = io.read_json(fpath)['target_spec']
+    test_spec = io.read_json(os.path.join(Defaults.MODEL_SPEC_DIR, test_spec))
+
+    # get test data
+    X, y = get_test(feature_spec=feature_spec, target_spec=target_spec, test_spec=test_spec)
+
+    # get predictions 
+    y_pred = fitted_model.predict(X)
+
+    # get rmse
+    rmse = mean_squared_error(y, y_pred, squared=False)
+    R = calculate_R(y, y_pred)
+    R2 = calculate_R2(y, y_pred)
+
+    # make dataframe
+    df = pd.DataFrame()
+    df['y'] = y
+    df['y_pred'] = y_pred
+    df['train'] = io.read_json(fpath)['participant_spec']['diagnoses'][0]
+    df['predict'] = test_spec['diagnoses'][0]
+    df['split'] = test_spec['split']
+
+    return df
+
+def get_test(feature_spec, target_spec, test_spec):
+    import os
+    import pandas as pd
+    from hbn import io
+    from hbn.constants import Defaults
+    from hbn.data.make_dataset import get_participants
+    from hbn.features.feature_selection import phenotype_features   
+
+    # get participant identifiers (test)
+    participants = get_participants(split='train', 
+                                    disorders=test_spec['diagnoses'], 
+                                    age=test_spec['age'],
+                                    sex=test_spec['sex']
+                                    )
+
+    # get test data using feature spec from fitted model + participant_spec
+    features = phenotype_features(feature_spec=feature_spec,
+                                participants=participants,
+                                target_spec=target_spec,
+                                drop_identifiers=True
+                                )
+
+    # make new dataframe (with same columns as feature names)
+    X = pd.DataFrame(columns=feature_names)
+    for col in X:
+        if col in features.columns:
+            X[col] = features[col]
+        else:
+            X[col] = 0
+    
+    y = features[target_spec['outname']]
+
+    return X, y
+
+def calculate_R(y, y_pred):
+    """Calculates correlation between Y and Y_pred without subtracting the mean.
+    Args:
+        Y (nd-array):
+        Y_pred (nd-array):
+    Returns:
+        R (scalar): Correlation between Y and Y_pred
+    """
+    SYP = np.nansum(Y * Y_pred, axis=0)
+    SPP = np.nansum(Y_pred * Y_pred, axis=0)
+    SST = np.sum(Y ** 2, axis=0)  # use np.nanmean(Y) here?
+
+    R = np.nansum(SYP) / np.sqrt(np.nansum(SST) * np.nansum(SPP))
+
+    return R
+
+def calculate_R2(Y, Y_pred):
+    """Calculates squared correlation between Y and Y_pred without subtracting the mean.
+    Args:
+        Y (nd-array):
+        Y_pred (nd-array):
+    Returns:
+        R2 (scalar): Squared Correlation between Y and Y_pred
+    """
+    res = Y - Y_pred
+
+    SSR = np.nansum(
+        res ** 2, axis=0
+    )  # remember: without setting the axis, it just "flats" out the whole array and sum over all
+    SST = np.sum(Y ** 2, axis=0)  # use np.nanmean(Y) here??
+
+    R2 = 1 - (np.nansum(SSR) / np.nansum(SST))
+
+    return R2
+
+
 def secondlevel_summary(
     results_dir,
     out_dir=Defaults.MODEL_DIR

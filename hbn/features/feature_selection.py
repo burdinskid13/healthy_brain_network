@@ -12,7 +12,7 @@ def phenotype_features(
     Args: 
         feature_spec (str or dict): full path to feature spec file OR dict loaded from file
         participants (list of str or None): (optional) list of participant identifiers (output from `make_dataset.get_participants`)
-        target_spec (str or None): (optional) full path to target spec file. if None, then only features (X) are returned, else features (X) + target variable (y) are returned.
+        target_spec (str or dict or None): (optional) full path to target spec file. if None, then only features (X) are returned, else features (X) + target variable (y) are returned.
         drop_identifiers (bool): (optional) default is True (returns dataframe without 'Identifiers' column)
     Returns: 
         features_final (pd dataframe): features to be input to modeling routine
@@ -23,9 +23,12 @@ def phenotype_features(
     from hbn.constants import Defaults
     from hbn.features import build_features
 
-    # load from json file
+    # load feature spec from json file
     if isinstance(feature_spec, str):
         feature_spec = io.read_json(feature_spec)
+
+    if isinstance(target_spec, str):
+        target_spec = io.read_json(target_spec)
 
     # make `participants` is None is given
     if participants is None:
@@ -67,9 +70,8 @@ def phenotype_features(
 
     # remove `features_to_ignore` from dataframe if any are provided in `target_spec`
     if target_spec is not None:
-        target_info = io.read_json(target_spec)
-        if target_info['features_to_ignore'] is not None:
-            idx = features.columns.str.contains(('|'.join(target_info['features_to_ignore'])))
+        if target_spec['features_to_ignore'] is not None:
+            idx = features.columns.str.contains(('|'.join(target_spec['features_to_ignore'])))
             features = features[features.columns[~idx]]
 
     # preprocess
@@ -88,7 +90,7 @@ def phenotype_features(
     targets = pd.DataFrame(identifiers, columns=['Identifiers'])
     if target_spec is not None:
         targets = build_features.get_targets(
-                                target_info=target_info, 
+                                target_info=target_spec, 
                                 participants=identifiers
                                 )   
     # drop identifiers (and duplicates) from final feature matrix
@@ -100,8 +102,8 @@ def phenotype_features(
     # upsample minority class using smote 
     if target_spec is not None and preprocessing['preprocess'] and preprocessing['upsample']:
         if features_final.isnull().values.any(): # impute if there are NaN values
-            features_final = build_features.column_transform(features_final, clf_info=preprocessing['clf_info'], cols_to_ignore=[target_info['outname']])
-        x_cols = [col for col in features_final.columns if target_info['outname'] not in col]
-        features_final = build_features.smote(y_train=features_final[[target_info['outname']]], X_train=features_final[x_cols])
+            features_final = build_features.column_transform(features_final, clf_info=preprocessing['clf_info'], cols_to_ignore=[target_spec['outname']])
+        x_cols = [col for col in features_final.columns if target_spec['outname'] not in col]
+        features_final = build_features.smote(y_train=features_final[[target_spec['outname']]], X_train=features_final[x_cols])
     
     return features_final
