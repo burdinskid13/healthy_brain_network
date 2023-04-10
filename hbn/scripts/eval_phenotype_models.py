@@ -13,7 +13,7 @@ class PythonLiteralOption(click.Option):
 
 @click.command()
 @click.option("--results_dir", required=True)
-@click.option("--participant_specs", required=False, cls=PythonLiteralOption, default=[])
+#@click.option("--participant_specs", required=False, cls=PythonLiteralOption, default=[])
 
 def run(
     results_dir,

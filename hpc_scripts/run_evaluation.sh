@@ -34,4 +34,4 @@ echo $"run workflow evaluation"
 cd /om2/user/${username}/healthy_brain_network/hbn/scripts
 
 model_dir=/om2/user/${username}/hbn_data/interim/models/all_feature_models/2023-04-01_18-18-41-72/model_395065402/out-localspec-20230402T014245.167362
-python3 eval_phenotype_models.py --results_dir=${model_dir} --participant_specs="['participant_spec2.json', 'participant_spec3.json', 'participant_spec4.json', 'participant_spec5.json', 'participant_spec6.json']"
+python3 eval_phenotype_models.py --results_dir=${model_dir}
