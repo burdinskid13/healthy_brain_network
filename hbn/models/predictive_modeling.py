@@ -247,9 +247,9 @@ def calculate_R(y, y_pred):
     """
     import numpy as np
 
-    SYP = np.nansum(Y * Y_pred, axis=0)
-    SPP = np.nansum(Y_pred * Y_pred, axis=0)
-    SST = np.sum(Y ** 2, axis=0)  # use np.nanmean(Y) here?
+    SYP = np.nansum(y * y_pred, axis=0)
+    SPP = np.nansum(y_pred * y_pred, axis=0)
+    SST = np.sum(y ** 2, axis=0)  # use np.nanmean(Y) here?
 
     R = np.nansum(SYP) / np.sqrt(np.nansum(SST) * np.nansum(SPP))
 
@@ -265,12 +265,12 @@ def calculate_R2(Y, Y_pred):
     """
     import numpy as np
 
-    res = Y - Y_pred
+    res = y - y_pred
 
     SSR = np.nansum(
         res ** 2, axis=0
     )  # remember: without setting the axis, it just "flats" out the whole array and sum over all
-    SST = np.sum(Y ** 2, axis=0)  # use np.nanmean(Y) here??
+    SST = np.sum(y ** 2, axis=0)  # use np.nanmean(Y) here??
 
     R2 = 1 - (np.nansum(SSR) / np.nansum(SST))
 
