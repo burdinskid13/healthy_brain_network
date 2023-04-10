@@ -28,6 +28,7 @@ def run(
     from pathlib import Path
     import glob
     import os
+    import pandas as pd
     from hbn import io
     from hbn.models import predictive_modeling
     from hbn.constants import Defaults
