@@ -245,6 +245,8 @@ def calculate_R(y, y_pred):
     Returns:
         R (scalar): Correlation between Y and Y_pred
     """
+    import numpy as np
+
     SYP = np.nansum(Y * Y_pred, axis=0)
     SPP = np.nansum(Y_pred * Y_pred, axis=0)
     SST = np.sum(Y ** 2, axis=0)  # use np.nanmean(Y) here?
@@ -261,6 +263,8 @@ def calculate_R2(Y, Y_pred):
     Returns:
         R2 (scalar): Squared Correlation between Y and Y_pred
     """
+    import numpy as np
+
     res = Y - Y_pred
 
     SSR = np.nansum(
