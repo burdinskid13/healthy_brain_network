@@ -1,7 +1,7 @@
 import click
 import warnings
 from hbn.constants import Defaults
-#warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore")
 
 class PythonLiteralOption(click.Option):
 
@@ -13,11 +13,11 @@ class PythonLiteralOption(click.Option):
 
 @click.command()
 @click.option("--results_dir", required=True)
-#@click.option("--participant_specs", required=False, cls=PythonLiteralOption, default=[])
+@click.option("--participant_specs", required=False, cls=PythonLiteralOption, default=[])
 
 def run(
     results_dir,
-    participant_specs=['participant_spec2.json', 'participant_spec3.json', 'participant_spec4.json', 'participant_spec5.json', 'participant_spec6.json']):
+    participant_specs=['participant_spec2.json', 'participant_spec4.json', 'participant_spec5.json', 'participant_spec6.json']):
 
     """evaluate models
 
@@ -38,13 +38,14 @@ def run(
     # loop over participant specs
     df_all = pd.DataFrame()
     for spec in participant_specs:
+        print(f'evaluating {results_dir} on {spec}')
         df = predictive_modeling.evaluation(results_dir=results_dir, test_spec=spec)  
-        df_all = pd.concat([df_all, df], axis=1)
+        df_all = pd.concat([df_all, df])
 
     fpath = os.path.join(Path(results_dir).parent, f'evaluation_all.csv')
     if os.path.isfile(fpath):
         df = pd.read_csv(fpath)
-        df_all = pd.concat([df_all, df], axis=1)
+        df_all = pd.concat([df_all, df])
     print(f'writing out evaluation results: {fpath} to disk')
     df_all.to_csv(fpath, index=False)
 

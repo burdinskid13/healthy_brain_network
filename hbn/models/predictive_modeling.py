@@ -160,7 +160,7 @@ def evaluation(results_dir, test_spec):
         results_dir (str): fullpath to top-level results dir. for example '../out-localspec-<>'
     """
 
-    print("calculating evaluation")
+    print(f"calculating evaluation for {results_dir}")
 
     # get results file
     model_name = Path(results_dir).name.split('-')[2]
@@ -200,6 +200,9 @@ def evaluation(results_dir, test_spec):
             df['train'] = io.read_json(fpath)['participant_spec']['diagnoses'][0]
             df['predict'] = test_spec['diagnoses'][0]
             df['split'] = test_spec['split']
+            df['R2'] = R2
+            df['R'] = R
+            df['rmse'] = rmse
 
     return df
 

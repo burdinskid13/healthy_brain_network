@@ -13,14 +13,13 @@ class Defaults:
 
     # set data base directories
     #DATA_DIR = PosixPath("/om2/user/shreyark/hbn_data") ## SET YOUR OWN PATH HERE
-    DATA_DIR = PosixPath("/om2/user/maedbh/hbn_data")
-    #DATA_DIR = BASE_DIR / 'data'
+    #DATA_DIR = PosixPath("/om2/user/maedbh/hbn_data")
+    DATA_DIR = BASE_DIR / 'data'
     RAW_DIR = DATA_DIR / "raw"
     INTERIM_DIR = DATA_DIR / "interim"
     PROCESSED_DIR = DATA_DIR / "processed"
     PHENO_DIR = RAW_DIR / "phenotype"
     MODEL_DIR = INTERIM_DIR / "models"
-    #EVAL_DIR = MODEL_DIR / "evaluation"
     SUBTYPE_DIR = INTERIM_DIR / "subtypes"
 
     dirs = [RAW_DIR, INTERIM_DIR, PROCESSED_DIR, FIG_DIR, MODEL_DIR, FEATURE_DIR, MODEL_SPEC_DIR, SUBTYPE_DIR]
