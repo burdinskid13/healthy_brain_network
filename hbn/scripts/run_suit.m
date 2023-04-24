@@ -1,35 +1,27 @@
 function varargout=run_suit(what,varargin)
 
-%% set directories
-BASE_DIR = '/om2/user/maedbh/hbn_data/interim/derivatives/'
-spm_dir = '/om2/user/maedbh/bin/spm12'
-
-%%space_label = 'ses-1_T1w';
-space_label = 'ses-HBNsiteCBIC_acq-VNavNorm_desc-preproc_T1w.nii'
-
-SUIT_DIR = fullfile(BASE_DIR, 'suit');
-GLM_DIR = fullfile(BASE_DIR, 'glm_firstlevel');
-REG_DIR = fullfile(BASE_DIR, 'regions')
-
 %% functions
 switch(what)
     
-    case 'SUIT:run_normalization'                      % STEP 9.1-8.5
-        subj=varargin{1};
-        suit_dir=varargin{2};
+    case 'SUIT:run_normalization'  
+        T1=varargin{1}; % fullpath to T1 file
+        T2=varargin{2}; % fullpath to T2 file
+        spm_dir=varargin{3}; % fullpath to spm toolbox: '/om2/user/maedbh/bin/spm12'
         
         addpath(genpath(spm_dir))
         spm('defaults', 'FMRI');
                 
-        %%run_suit('ANAT:centre_AC', char(subj), space_label)
-        run_suit('SUIT:isolate_segment',char(subj), space_label)
-        run_suit('SUIT:correct_cereb_mask',char(subj), space_label);
-        run_suit('SUIT:normalise_dartel',char(subj), space_label);
+        run_suit('SUIT:isolate_segment', char(T1), char(T2))
+        run_suit('SUIT:correct_cereb_mask');
+        run_suit('SUIT:normalise_dartel');
         
     case 'ANAT:reslice_LPI'                  % STEP 1.2: Reslice anatomical image within LPI coordinate systems
         subj  = varargin{1}; % subjNum
         space_label = varargin{2}; 
-        suit_dir = varargin{3};
+        base_dir = varargin{3};
+
+        % set suit dir
+        SUIT_DIR = fullfile(base_dir, 'suit');
 
         SUIT_SUBJ_DIR = fullfile(SUIT_DIR, subj); dircheck(SUIT_SUBJ_DIR)
  
@@ -50,6 +42,10 @@ switch(what)
         % coordinates in section (4)).
         subj=varargin{1};
         space_label=varargin{2};
+        base_dir = varargin{3};
+
+        % set suit dir
+        SUIT_DIR = fullfile(base_dir, 'suit');
         
         subj_idx = sscanf(subj, 'sub-%2d');
 
@@ -63,52 +59,39 @@ switch(what)
         fprintf('AC centering done for %s', subj)
 
     case 'SUIT:isolate_segment'              % STEP 9.2:Segment cerebellum into grey and white matter
-        subj=varargin{1}; % example 'sub-08'
-        space_label=varargin{2};
-
-        SUIT_SUBJ_DIR = fullfile(SUIT_DIR, subj); dircheck(SUIT_SUBJ_DIR)
+        T1=varargin{1};
+        T2=varargin{2};
 
         % run isolation and segmentation routine
-        fprintf('starting the isolation and segmentation for %s', subj)
-        suit_isolate_seg({fullfile(SUIT_SUBJ_DIR, sprintf('%s_%s.nii', subj, space_label))}, 'keeptempfiles',1); % was 'keeptempfiles',1
+        fprintf('starting the isolation and segmentation for %s', T1)
+
+        % run isolate and segment routine on T1 and T2 (if T2 is available)
+        if isempty(T2)
+            suit_isolate_seg({T1}, 'keeptempfiles',0); % was 'keeptempfiles',1
+        else
+            suit_isolate_seg({T1, T2}, 'keeptempfiles',0); % was 'keeptempfiles',1
 
     case 'SUIT:correct_cereb_mask'           % STEP 9.4:
-        subj=varargin{1}; 
-        space_label=varargin{2};
 
-        SUIT_SUBJ_DIR = fullfile(SUIT_DIR, subj); dircheck(SUIT_SUBJ_DIR)
-
-        cortexGrey= fullfile(SUIT_SUBJ_DIR, sprintf('c7%s_%s.nii',subj,space_label)); % cortex grey matter mask 
-        cerebGrey = fullfile(SUIT_SUBJ_DIR, sprintf('c1%s_%s.nii',subj,space_label)); % cerebellum grey matter mask
-        bufferVox = fullfile(SUIT_SUBJ_DIR, 'buffer_voxels.nii');
-
-        % isolate overlapping voxels
-        spm_imcalc({cortexGrey,cerebGrey},bufferVox,'(i1.*i2)')
+        % isolate overlapping voxels using cortex grey matter mask and cerebellum grey matter mask
+        spm_imcalc({sprintf('c7*.nii'), sprintf('c1*.nii')}, 'buffer_voxels.nii','(i1.*i2)')
 
         % mask buffer
-        spm_imcalc({bufferVox},bufferVox,'i1>0')
-
-        cerebGrey2 = fullfile(SUIT_SUBJ_DIR, 'cereb_prob_corr_grey.nii');
-        cortexGrey2= fullfile(SUIT_SUBJ_DIR, 'cortical_mask_grey_corr.nii');
+        spm_imcalc({'buffer_voxels.nii'},'buffer_voxels.nii','i1>0')
 
         % remove buffer from cerebellum
-        spm_imcalc({cerebGrey,bufferVox},cerebGrey2,'i1-i2')
+        spm_imcalc({sprintf('c1*.nii'),'buffer_voxels.nii'},'cereb_prob_corr_grey.nii','i1-i2')
 
         % remove buffer from cortex
-        spm_imcalc({cortexGrey,bufferVox},cortexGrey2,'i1-i2')  
+        spm_imcalc({sprintf('c7*.nii'),'buffer_voxels.nii'},'cortical_mask_grey_corr.nii','i1-i2')  
 
     case 'SUIT:normalise_dartel'             % STEP 9.5: Normalise the cerebellum into the SUIT template.
         % Normalise an individual cerebellum into the SUIT atlas template
         % Dartel normalises the tissue segmentation maps produced by suit_isolate
         % to the SUIT template
         % !! Make sure the mask has been corrected !! (see 'SUIT:correct_cereb_mask')
-        subj=varargin{1};
-        space_label=varargin{2};
-       
-        SUIT_SUBJ_DIR = fullfile(SUIT_DIR, subj); dircheck(SUIT_SUBJ_DIR)
-        cd(SUIT_SUBJ_DIR)
-        job.subjND.gray      = {sprintf('%s_%s_seg1.nii', subj,space_label)}; % was c_
-        job.subjND.white     = {sprintf('%s_%s_seg2.nii', subj,space_label)}; % was c_
+        job.subjND.gray      = {sprintf('*_seg1.nii')}; % was c_
+        job.subjND.white     = {sprintf('*_seg2.nii')}; % was c_
         job.subjND.isolation= {'cereb_prob_corr_grey.nii'}; % cereb_prob_corr_grey
         suit_normalize_dartel(job);
        
@@ -119,6 +102,11 @@ switch(what)
         % make sure that you reslice into 2mm^3 resolution
         subj=varargin{1};
         glm=varargin{2};
+        base_dir = varargin{3};
+
+        % set suit dir
+        SUIT_DIR = fullfile(base_dir, 'suit');
+        GLM_DIR = fullfile(base_dir, 'glm_firstlevel');
         
         subj = char(subj);
         glm = char(glm);
@@ -150,6 +138,11 @@ switch(what)
         subj=varargin{1};
         glm=varargin{2};
         data_type=varargin{3}; % 'betas' or 'residuals' or 'r_square'
+        base_dir = varargin{4};
+
+        % set suit dir
+        SUIT_DIR = fullfile(base_dir, 'suit');
+        GLM_DIR = fullfile(base_dir, 'glm_firstlevel');
         
         subj = char(subj);
         glm = char(glm);
@@ -212,6 +205,10 @@ switch(what)
 
     case 'SUIT:vol2surf'                     % STEP 9.9: Make gifti files
         glm=varargin{1};
+        base_dir = varargin{2};
+
+        % set suit dir
+        SUIT_DIR = fullfile(base_dir, 'suit');
 
         glm = char(glm);
         
