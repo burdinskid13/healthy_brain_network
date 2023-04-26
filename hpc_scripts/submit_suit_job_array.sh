@@ -2,7 +2,7 @@
 subjs=($@)
 
 #base=/nese/mit/group/sig/projects/hbn/hbn_bids # PUT YOUR BIDS DIRECTORY HERE
-base=/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/fmriprep_23.0.0 # PUT YOUR FMRIPREP DIRECTORY HERE
+base=/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives # PUT YOUR BASE DIRECTORY HERE
 code=/om2/user/maedbh/healthy_brain_network/hpc_scripts # WHERE CODE IS SAVED
 
 # Get subject names from the directory
