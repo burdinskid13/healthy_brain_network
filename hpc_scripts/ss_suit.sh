@@ -33,22 +33,22 @@ export SUITENV_SUBJECTS_DIR=$scratch
 # Copy anatomicals to scratch directory
 pushd $fmriprepdir/$subject
 session=$(ls -d ses-*)
-t1_file=$(ls -d ses-*/*anat/*VNavNorm_desc-preproc_T1w.nii.gz)
-t2_file=$(ls -d ses-*/*anat/*VNavNorm_desc-preproc_T2w.nii.gz)
-fname="${subject}_${session}_acq-VNavNorm_space-SUIT_desc-preproc"
-cp -nL $fmriprepdir/$subject/$t1_file $scratch/"${fname}_T1w.nii.gz"
+pushd $session/anat
+T1=$(ls -d *desc-preproc_T1w.nii.gz | egrep -v MNI)
+T2=$(ls -d *desc-preproc_T2w.nii.gz | egrep -v MNI)
+cp -nL $fmriprepdir/$subject/$session/anat/$T1 $scratch/$T1
 
 # Account for presence of T2
-if [ -e $fmriprepdir/$subject/$t2_file ]; then
-cp -nL $fmriprepdir/$subject/$t2_file $scratch/"${fname}_T2w.nii.gz"
-t2_cmd_text="$scratch/${fname}_T2w.nii.gz"
+if [ -e $fmriprepdir/$subject/$session/anat/$T2 ]; then
+cp -nL $fmriprepdir/$subject/$session/anat/$T2 $scratch/$T2
+t2_cmd_text="$scratch/$T2"
 else t2_cmd_text=''
 fi
 popd
 
 # Define the command
 pushd $scratch
-cmd="matlab -nodisplay -r "$code_dir/run_suit(\"SUIT:run_normalization\", \"$scratch/${fname}_T1w.nii.gz\", \"$t2_cmd_text\", \"/om2/user/maedbh/bin/spm12\"); quit;"""
+cmd="matlab -nodisplay -r "$code_dir/run_suit(\"SUIT:run_normalization\", \"$scratch/$T1\", \"$t2_cmd_text\", \"/om2/user/maedbh/bin/spm12\"); quit;"""
 
 # Run the command
 echo "Submitted job for: ${subject}"
