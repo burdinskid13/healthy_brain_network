@@ -19,7 +19,7 @@ def run(
     #make_files.make_data_files()
 
     # load data
-    print("loading data and data dictionary")
+    print("loading data and data dictionary",  flush=True)
     _, df_dict, df_diagnosis = item_analysis.load_data(
                                             assessments=assessments, 
                                             data_type=data_type
