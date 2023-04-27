@@ -3,7 +3,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def run(
-    assessments=['Child', 'Parent'], 
+    assessments=['Child', 'Parent', 'Teacher'], 
     data_type='raw', 
     transformer='distilbert-base-nli-mean-tokens'
     ):
@@ -19,7 +19,8 @@ def run(
     #make_files.make_data_files()
 
     # load data
-    df_data, df_dict, df_diagnosis = item_analysis.load_data(
+    print("loading data and data dictionary")
+    _, df_dict, df_diagnosis = item_analysis.load_data(
                                             assessments=assessments, 
                                             data_type=data_type
                                             )
@@ -27,6 +28,7 @@ def run(
 
     # calculate similarity
     sentences = df_dict['questions']
+    print(f'calculating item analysis on {transformer}')
     cosine_scores, pairs = item_analysis.sentence_similarity(sentences, transformer=transformer)
 
     # cosine scores
@@ -39,7 +41,7 @@ def run(
         df2.loc[idx, 'idx2'] = pairs[idx]['index'][1]
         df2.loc[idx, 'score'] = pairs[idx]['score'].tolist()
 
-    data_dict = {'questions': df_dict,
+    data_dict = {'dict': df_dict,
                 'diagnosis': df_diagnosis,
                 'cosine_scores': df1,
                 'pairs': df2,

@@ -39,7 +39,7 @@ T2=$(ls -d *desc-preproc_T2w.nii.gz | egrep -v MNI)
 cp -nL $fmriprepdir/$subject/$session/anat/$T1 $scratch/$T1
 
 # Account for presence of T2
-if [ -e $fmriprepdir/$subject/$session/anat/$T2 ]; then
+if [ -e $(ls -d $fmriprepdir/$subject/$session/anat/*desc-preproc_T2w.nii.gz | egrep -v MNI) ]; then
 cp -nL $fmriprepdir/$subject/$session/anat/$T2 $scratch/$T2
 t2_cmd_text="$scratch/$T2"
 else t2_cmd_text=''
