@@ -31,7 +31,5 @@ source /om2/user/${whoami}/bin/miniconda3/bin/activate healthy-brain-network
 
 echo $"run workflow item analysis"
 
-cd /om2/user/${whoami}/healthy_brain_network/hbn/scripts
-
 # run workflow on model specs created in command above
-python3 -u run_item_analysis.py
+python3 -u /om2/user/${whoami}/healthy_brain_network/hbn/scripts/run_item_analysis.py
