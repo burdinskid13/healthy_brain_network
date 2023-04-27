@@ -19,7 +19,7 @@ def run(
     #make_files.make_data_files()
 
     # load data
-    print("loading data and data dictionary",  flush=True)
+    print("loading data and data dictionary", flush=True)
     _, df_dict, df_diagnosis = item_analysis.load_data(
                                             assessments=assessments, 
                                             data_type=data_type
@@ -27,12 +27,12 @@ def run(
 
 
     # calculate similarity
-    sentences = df_dict['questions'][:100]
-    print(f'calculating item analysis on {transformer}')
+    sentences = df_dict['questions']
+    print(f'calculating item analysis on {transformer}...', flush=True)
     cosine_scores, pairs = item_analysis.sentence_similarity(sentences, transformer=transformer)
 
     # cosine scores
-    df1 = pd.DataFrame(np.array(cosine_scores))
+    df1 = pd.DataFrame(np.array(cosine_scores), columns=sentences)
 
     # score pairs
     df2 = pd.DataFrame()
