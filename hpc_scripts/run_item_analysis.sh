@@ -3,7 +3,7 @@
 #SBATCH --job-name=item_analysis
 #
 # Partition:
-#SBATCH --partition=gablab
+#SBATCH --partition=normal
 #
 # Nodes:
 #SBATCH -N 1 # one node
