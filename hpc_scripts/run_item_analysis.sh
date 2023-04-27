@@ -33,4 +33,5 @@ echo $"run workflow item analysis"
 cd /om2/user/${whoami}/healthy_brain_network/hbn/scripts
 
 # run workflow on model specs created in command above
-python3 -u run_item_analysis.py
+export PYTHONUNBUFFERED=true
+python3 run_item_analysis.py
