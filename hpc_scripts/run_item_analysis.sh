@@ -24,7 +24,7 @@
 ## Command(s) to run:
 whoami=maedbh
 
-module load openmind/anaconda/3-2022.05 # load python module
+#module load openmind/anaconda/3-2022.05 # load python module
 source ~/.bash_profile # set paths
 source /om2/user/${whoami}/bin/miniconda3/bin/activate healthy-brain-network 
 
