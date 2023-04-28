@@ -66,7 +66,7 @@ def sentence_similarity(sentences, transformer='distilbert-base-nli-mean-tokens'
     #Sort scores in decreasing order
     pairs = sorted(pairs, key=lambda x: x['score'], reverse=True)
     
-    return cosine_scores, pairs
+    return cosine_scores, pairs, sentence_embeddings
 
 
 def answer_similarity(dataframe, pairs):

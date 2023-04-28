@@ -5,7 +5,7 @@ warnings.filterwarnings("ignore")
 def run(
     assessments=['Child', 'Parent', 'Teacher'], 
     data_type='raw', 
-    transformer='distilbert-base-nli-mean-tokens'
+    transformer='all-mpnet-base-v2'
     ):
     import os
     import pandas as pd
@@ -27,9 +27,9 @@ def run(
 
 
     # calculate similarity
-    sentences = df_dict['questions']
+    sentences = df_dict['questions'][:20]
     print(f'calculating item analysis on {transformer}...', flush=True)
-    cosine_scores, pairs = item_analysis.sentence_similarity(sentences, transformer=transformer)
+    cosine_scores, pairs, embeddings = item_analysis.sentence_similarity(sentences, transformer=transformer)
 
     # cosine scores
     df1 = pd.DataFrame(np.array(cosine_scores), columns=sentences)
@@ -45,11 +45,12 @@ def run(
                 'diagnosis': df_diagnosis,
                 'cosine_scores': df1,
                 'pairs': df2,
+                'embeddings': embeddings,
                 'transformer': transformer
                 }
 
     # save as hdf5
-    fname = 'sentence-similarity' + '_' + '_'.join(assessments) + '_' + data_type + '.h5'
+    fname = 'sentence-similarity' + '_' + '_'.join(assessments) + '_' + transformer + '.h5'
     io.save_dict_as_hdf5(fpath=os.path.join(Defaults.SUBTYPE_DIR, fname), data_dict=data_dict)
 
 if __name__ == "__main__":
