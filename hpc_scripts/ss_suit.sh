@@ -49,7 +49,8 @@ popd
 # Define the command
 pushd $scratch
 cmd="matlab -nodisplay -r "$code_dir/run_suit(\"SUIT:run_normalization\", \"$scratch/$T1\", \"$t2_cmd_text\", \"/om2/user/maedbh/bin/spm12\"); quit;"""
-
+#matlab -nodisplay -r "run_suit(\"SUIT:run_normalization\", \"${suit_arr[i]}\", \"${space_label}\", \"${base_dir}\", \"${spm_dir}\"); quit;"
+ 
 # Run the command
 echo "Submitted job for: ${subject}"
 echo "$'Command :\n'${cmd}"

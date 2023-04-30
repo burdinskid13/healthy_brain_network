@@ -46,7 +46,8 @@ spec_dir=/om2/user/${username}/healthy_brain_network/model_specs/${TIMESTAMP}-${
 
 # make model specs
 python3 make_phenotype_models.py \
---out_dir=${spec_dir} --pydraml_spec=pydraml_spec2.json \
+--out_dir=${spec_dir} \
+--pydraml_spec=pydraml_spec2.json \
 --features="['features-all-all-all-all-spec.json']" \
 --target=target_DX_01_Cat_new_binarize-spec.json \
 --participant_specs="['participant_spec14.json']"
@@ -54,5 +55,3 @@ python3 make_phenotype_models.py \
 # run workflow
 python3 run_phenotype_models.py --spec_dir=${spec_dir} --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
 
-# delete pydra-ml cache from openmind (takes up to omuch space)
-#python3 delete_cache.py --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
