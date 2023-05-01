@@ -10,10 +10,10 @@ base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
 out_dir=/om2/user/$(whoami)/hbn_data/interim/models/$model_name-models # MODELS WILL BE SAVED HERE
 bash_scripts=$base/hpc_scripts/ # BASH SCRIPTS ARE HERE
 
-# Get spec names from the directory
+# Get spec names (binary only) from the directory
 if [[ $# -eq 0 ]]; then
     pushd $base/model_specs/participant_specs
-    specs=($(ls spec-$model_name*.json))
+    specs=($(ls spec-$model_name*.json | egrep -v multilabel))
     popd
 fi
 
@@ -23,4 +23,4 @@ len=$(expr ${#specs[@]} - 1)
 
 echo Spawning ${#specs[@]} spec-jobs.
 
-sbatch --array=0-$len $bash_scripts/run_phenotypic_models.sh $base ${specs[@]} $outdir $target
+sbatch --array=0-$len $bash_scripts/run_phenotypic_models.sh $base ${specs[@]} $out_dir $target

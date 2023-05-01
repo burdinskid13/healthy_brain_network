@@ -23,4 +23,4 @@ len=$(expr ${#specs[@]} - 1)
 
 echo Spawning ${#specs[@]} spec-jobs.
 
-sbatch --array=0-$len $bash_scripts/run_phenotypic_models.sh $base ${specs[@]} $outdir $target
+sbatch --array=0-$len $bash_scripts/run_phenotypic_models.sh $base ${specs[@]} $out_dir $target

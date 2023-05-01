@@ -21,6 +21,7 @@ def run(
     from pathlib import Path
     import glob
     import os
+    import shutil
     from hbn import io
     from hbn.models import predictive_modeling
 
@@ -46,13 +47,19 @@ def run(
                 )
 
             print('running second level', flush=True)
-            results = glob.glob(os.path.join(spec_dir, f'model_{dirn}', '*out-localspec*'))
-            # loop over results files
-            for result in results:
+            results_list = glob.glob(os.path.join(spec_dir, f'model_{dirn}', '*out-localspec*', '*results*.pkl'))
+            
+            # loop over results files (should just be one outspec folder per model directory)
+            for result in results_list:
                 predictive_modeling.secondlevel_summary(
-                    results_dir=result,
+                    results=result,
+                    spec=model_spec,
                     out_dir=spec_dir
                     )
+            
+            # move specs and features into model dir
+            shutil.move(model_spec, os.path.join(spec_dir, f'model_{dirn}'))
+            shutil.move(os.path.join(spec_dir, spec_info['filename']), os.path.join(spec_dir, f'model_{dirn}'))
 
 
 if __name__ == "__main__":

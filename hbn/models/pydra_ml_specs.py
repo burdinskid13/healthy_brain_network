@@ -1,7 +1,7 @@
 from hbn.constants import Defaults
 
 
-def pydraml_base(clf_info, n_splits=10, test_size=0.2):
+def pydraml_base(clf_info, n_splits=5, test_size=0.2):
     spec_info = {
     "filename" : None,
     "x_indices" : None,
@@ -13,7 +13,7 @@ def pydraml_base(clf_info, n_splits=10, test_size=0.2):
     "test_size" : test_size,
     "permute" : [True, False],
     "gen_feature_importance" : True,
-    "gen_permutation_importance" : False,
+    "gen_permutation_importance" : True,
     "permutation_importance_n_repeats" : 5,
     "permutation_importance_scoring" : "accuracy",
     "gen_shap" : False,
@@ -26,7 +26,7 @@ def pydraml_base(clf_info, n_splits=10, test_size=0.2):
     return spec_info
 
 
-def make_specs(out_dir=Defaults.MODEL_SPEC_DIR, n_splits=10, test_size=0.2):
+def make_specs(out_dir=Defaults.MODEL_SPEC_DIR, n_splits=5, test_size=0.2):
     import os
     from hbn import io
 

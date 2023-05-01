@@ -12,10 +12,10 @@
 #SBATCH -c 16 # 16 hyperthreaded cores 
 #
 # Memory:
-#SBATCH --mem=7G
+#SBATCH --mem=1G
 #
 # Wall clock limit:
-#SBATCH --time=2-00:00:00 
+#SBATCH --time=00:10:00
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -71,4 +71,3 @@ ${cmd}
 # copy files back
 mkdir -p $out_dir
 cp -nr $spec_dir/ $out_dir
-popd

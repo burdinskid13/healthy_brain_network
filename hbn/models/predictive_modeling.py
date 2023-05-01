@@ -140,6 +140,7 @@ def run_pydra_ml(
     wf = gen_workflow(spec_info, cache_dir=cachedir)
     run_workflow(wf, "cf", {"n_procs": 1})
 
+
 def evaluation(results_dir, test_spec):
     import os
     import glob
@@ -200,6 +201,7 @@ def evaluation(results_dir, test_spec):
 
     return df
 
+
 def get_test(feature_spec, target_spec, test_spec, feature_names):
     import os
     import pandas as pd
@@ -234,6 +236,7 @@ def get_test(feature_spec, target_spec, test_spec, feature_names):
 
     return X, y
 
+
 def calculate_R(y, y_pred):
     """Calculates correlation between Y and Y_pred without subtracting the mean.
     Args:
@@ -251,6 +254,7 @@ def calculate_R(y, y_pred):
     R = np.nansum(SYP) / np.sqrt(np.nansum(SST) * np.nansum(SPP))
 
     return R
+
 
 def calculate_R2(y, y_pred):
     """Calculates squared correlation between Y and Y_pred without subtracting the mean.
@@ -275,16 +279,20 @@ def calculate_R2(y, y_pred):
 
 
 def secondlevel_summary(
-    results_dir,
-    out_dir=Defaults.MODEL_DIR
+    results,
+    spec,
+    out_dir=Defaults.MODEL_DIR,
+    methods=['feature'] # 'permuation'
     ):
     """Makes model and feature summary files from results output from `run_model_pipeline_firstlevel`
 
     Saves output in `../interim/models/`
 
     Args:
-        results_dir (str): fullpath to top-level results dir. for example '../out-localspec-<>'
+        results (str): fullpath to results file (.pkl)
+        spec (str): fullpath to spec file (.json)
         out_dir (str): directory where second level modeling summary will be saved
+        methods (list of str): feature interpretability based on feature or permuation importances. default is ['feature']
     """
     import glob
     import os
@@ -294,40 +302,40 @@ def secondlevel_summary(
     # make model out_dir if it doesn't already exist
     io.make_dirs(out_dir)
 
-    # get results file
-    model_name = Path(results_dir).name.split('-')[2]
-    results_file = os.path.join(results_dir, f'results-{model_name}.pkl')
-
-    # get model spec file
-    model_dir = str(Path(results_dir).parent)
-    spec_file = glob.glob(os.path.join(model_dir, '*.json'))[0]
-
     # load results
-    results, spec_info = load_results(results=results_file, spec_file=spec_file)
-    clf = Path(spec_file).name.split('-')[0] # 'classifier' or 'regression'
+    data, spec_info = load_results(results=results, spec_file=spec)
+    clf_name = Path(spec).name.split('-')[0] # 'classifier' or 'regression'
+    model_name = Path(results).stem.split('-')[1]
 
     # loop over results and get feature and permuation importances
-    for res in results:
+    for res in data:
+        # only if data are not permuted
         if not res[0]['ml_wf.permute']:
-            # only if data are not permuted
-            # get feature importances
-            df_features = get_feature_importance(model_name, results=res, spec_info=spec_info)
-            feature_fname = f'{clf}-feature_importance.csv'
-            _save_to_existing_file(dataframe=df_features, fpath=os.path.join(out_dir, feature_fname))
-
-            # get permuation importances
-            df_permutation = get_permutation_importance(model_name, results=res, spec_info=spec_info)
-            permutation_fname = f'{clf}-permutation_importance.csv'
-            _save_to_existing_file(dataframe=df_permutation, fpath=os.path.join(out_dir, permutation_fname))
+            for method in methods:
+                df = feature_interpretability(results=res[1], spec_info=spec_info, method=method)
+                df['model'] = model_name
+                _save_to_existing_file(dataframe=df, fpath=os.path.join(out_dir, f'{clf_name}-{method}_importance.csv'))
 
     # get model summary (and save to disk)
-    model_dataframe = make_model_summary(
-                    model_name,
-                    results=results, 
-                    spec_info=spec_info, 
-                    )
-    model_fname = f'{clf}-all-phenotypic-models-performance.csv'
+    model_dataframe = make_model_summary(results=data, spec_info=spec_info)
+    model_dataframe['model'] = model_name
+    model_fname = f'{clf_name}-all-phenotypic-models-performance.csv'
     _save_to_existing_file(dataframe=model_dataframe, fpath=os.path.join(out_dir, model_fname))
+
+
+def feature_interpretability(results, spec_info, method='feature'):
+    import pandas as pd
+
+    df1 = order_across_splits(results=results, method=method)
+    df2 = model_based_importance(results=results)
+
+    # concat into features dataframe
+    df_features = pd.concat([df1, df2], axis=1)
+
+    # add model parameters
+    df_features = _add_model_parameters(df_features, spec_info=spec_info)
+
+    return df_features
 
 
 def load_results(results, spec_file):
@@ -386,15 +394,13 @@ def check_models(filter='*2023*'):
             print(f'{fname} does not exist for {model_dir}, run `run_second_level.sh`')
 
 
-def _add_model_parameters(dataframe, model_name, spec_info, results):
-    """add model parameters to dataframe
+def _add_model_parameters(dataframe, spec_info):
+    """add model parameters from spec_info to dataframe
     """
     # add spec info 
     features = spec_info['feature_spec']['assessment'] + '-' + spec_info['feature_spec']['abbrevs']
 
     dataframe['participants'] = '-'.join(spec_info['participants'])
-    dataframe['model'] = model_name
-    dataframe['clf'] = results['ml_wf.clf_info'][1]
     try:
         dataframe['target'] = spec_info['target_vars']
     except:
@@ -408,11 +414,10 @@ def _add_model_parameters(dataframe, model_name, spec_info, results):
     return dataframe
 
 
-def make_model_summary(model_name, results, spec_info):
+def make_model_summary(results, spec_info):
     """get model summary for `results`. code has only been tested on results which have one classifier.
 
     Args: 
-        model_name (str): model name
         results (list of dict): results output from `load_results`
         spec_file (str): full path to *.json spec file for each model. stored in `out-localspec-<modelname>`
     Returns:
@@ -436,14 +441,15 @@ def make_model_summary(model_name, results, spec_info):
         df = pd.DataFrame(np.array(res[1].output.score), columns=spec_info['metrics'])
         df['data'] = data
         df['splits'] = df.index
-        df = _add_model_parameters(df, model_name, spec_info=spec_info, results=res[0])
+        df['clf'] = res[0]['ml_wf.clf_info'][1]
+        df = _add_model_parameters(df, spec_info=spec_info)
 
         df_all = pd.concat([df_all, df])
     
     return df_all
 
 
-def get_feature_importance(model_name, results, spec_info):
+def order_across_splits(results, method='feature'):
     """get feature importances across splits
 
     Args:
@@ -454,9 +460,12 @@ def get_feature_importance(model_name, results, spec_info):
 
     df_features = pd.DataFrame()
 
-    # extract feature importance
-    feature_splits = np.array(results[1].output.feature_importance)
-    feature_names = np.array(results[1].output.feature_names)
+    # extract importances (feature or permuation)
+    if method=='feature':
+        feature_splits = np.array(results.output.feature_importance)
+    elif method=='permutation':
+        feature_splits = np.array(results.output.permuation_importance)
+    feature_names = np.array(results.output.feature_names)
 
     if len(feature_splits.shape) == 3:
         feature_splits = np.reshape(feature_splits, (feature_splits.shape[0], feature_splits.shape[2]))
@@ -477,49 +486,35 @@ def get_feature_importance(model_name, results, spec_info):
 
         df_features = pd.concat([df_rank, df_common, df_sum], axis=1)
 
-        # add model parameters
-        df_features = _add_model_parameters(df_features, model_name, spec_info=spec_info, results=results[0])
-
     return df_features
 
 
-def get_permutation_importance(model_name, results, spec_info):
-    """get feature permuation across splits
-
-    Args:
-        results (list of dict): 
-    """
-    import numpy as np
+def model_based_importance(results):
+    from sklearn.feature_selection import SelectFromModel
     import pandas as pd
 
-    df_features = pd.DataFrame()
+    # get estimator steps and loop
+    df_all = pd.DataFrame()
+    estimator_steps = results.output.model.named_steps
 
-    # extract permutation importance
-    feature_splits = np.array(results[1].output.permutation_importance)
-    feature_names = np.array(results[1].output.feature_names)
-    if len(feature_splits.shape) == 3:
-        feature_splits = np.reshape(feature_splits, (feature_splits.shape[0], feature_splits.shape[2]))
-    n_splits, n_feats = feature_splits.shape
+    for name,estimator in estimator_steps.items():
 
-    if n_feats==len(feature_names):
+        try:
+            # get feature names
+            feature_names = results.output.feature_names
+            
+            # get selector on prefit estimator
+            selector = SelectFromModel(estimator=estimator, prefit=True)
 
-        feature_names_mat = np.tile(np.reshape(feature_names, (n_feats,1)), n_splits).T
-        feature_splits_sort_idx = np.argsort(feature_splits)
-
-        features_sorted = np.take_along_axis(feature_names_mat, feature_splits_sort_idx, axis=1)
-        features_sorted = features_sorted[:,::-1] # reverse order
-  
-        # get features across splits
-        df_rank = _rank_order_features_across_splits(dataframe=pd.DataFrame(features_sorted))
-        df_common = _most_commonly_occuring_features(dataframe=pd.DataFrame(features_sorted))
-        df_sum = _sum_feature_weights(feature_splits, feature_names)
-
-        df_features = pd.concat([df_rank, df_common, df_sum], axis=1)
-
-        # add model parameters
-        df_features = _add_model_parameters(df_features, model_name, spec_info=spec_info, results=results[0])
+            # get top features
+            df = pd.DataFrame(data=selector.get_support(), columns=['top_features'])
+            df['clf'] = name
+            df['feature_names'] = feature_names
+            df_all = pd.concat([df_all, df])
+        except:
+            continue
     
-    return df_features
+    return df_all
 
 
 def _rank_order_features_across_splits(dataframe):
