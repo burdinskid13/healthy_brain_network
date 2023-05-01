@@ -71,3 +71,5 @@ ${cmd}
 # copy files back
 mkdir -p $out_dir
 cp -nr $spec_dir/ $out_dir
+
+echo "$'Copied data to'${out_dir}"
