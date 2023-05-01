@@ -80,6 +80,8 @@ target/
 data/
 features/
 model_specs/
+hpc_scripts/log_files
+messages/
 
 # Mac OS-specific storage files
 .DS_Store

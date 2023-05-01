@@ -1,0 +1,3 @@
+openmind(3):ERROR:105: Unable to locate a modulefile for 'openmind/matlab'
+/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/fmriprep_23.0.0/sub-NDARAA075AMK /om2/user/maedbh/healthy_brain_network/hpc_scripts/log_files
+ls: cannot access ses-*/*anat/*VNavNorm_desc-preproc_T1w.nii.gz: No such file or directory

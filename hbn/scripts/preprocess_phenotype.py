@@ -13,6 +13,7 @@ def run(parse=False):
     from hbn.data import make_dataset
     from hbn.scripts import make_files
 
+    print('preprocessing phenotype data', flush=True)
     if parse:
         # do some minimal preprocessing on the files (ONLY NEED TO DO THIS ONCE)
         assessments = ['Child_Measures', 'Parent_Measures', 'Clinical_Measures', 'Teacher_Measures']
@@ -33,7 +34,7 @@ def run(parse=False):
 
     # creates new clinical diagnosis file
     df = make_dataset.make_summary()
-    print('created new clinical diagnosis file')
+    print('created new clinical diagnosis file', flush=True)
 
     # make demographic features (saved in FEATURE_DIR)
     make_dataset.make_demographics()

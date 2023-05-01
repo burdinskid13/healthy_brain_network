@@ -8,6 +8,8 @@ def run():
     from hbn.data import participant_specs
     from hbn.constants import Defaults
 
+    print('making phenotypic specs...', flush=True)
+
     # make parent spec file for features
     parent_spec = build_features.make_parent_spec(out_dir=Defaults.FEATURE_DIR)
     

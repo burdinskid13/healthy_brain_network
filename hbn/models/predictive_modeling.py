@@ -100,14 +100,12 @@ def make_model(
 
 def run_pydra_ml(
     model_spec, 
-    spec_dir,
     cachedir='/home/maedbh/.cache/pydra-ml/cache-wf/',
     out_dir=Defaults.MODEL_DIR):
     """ run predictive models using pydra-ml. must provide `model_spec` json and `filename` in `model_spec` must be a csv of features saved in ../features/
 
     Args:
         model_spec (str): full path to model spec file
-        spec_dir (str): model spec directory (where `filename` in model_spec is temporarily stored)
         cachedir (str): default is '/Users/maedbhking/pydra-ml/cache-wf/'
         out_dir (str): full path to model output directory
     Returns: 
@@ -115,8 +113,8 @@ def run_pydra_ml(
     """
     # load libraries
     import os
-    import shutil
     from hbn import io
+    from pathlib import Path
     from pydra_ml.classifier import gen_workflow, run_workflow
 
     # create cachedir if it hasn't already been created
@@ -126,25 +124,21 @@ def run_pydra_ml(
     # load model spec json
     spec_info = io.read_json(model_spec)
 
-    print(f'running {model_spec}...\n')
-    print("spec info", spec_info)
+    # get directory where `model_spec` is stored
+    spec_dir = Path(model_spec).parent
 
-    # get spec filename
-    filename = os.path.join(spec_dir, spec_info['filename'])
+    print(f'running {model_spec}...\n', flush=True)
+    print("spec info", spec_info, flush=True)
 
-    # move filename and model_spec to model output directory
-    shutil.move(model_spec, out_dir)
-    shutil.move(filename, out_dir)
+    spec_info['filename'] = os.path.join(spec_dir, spec_info['filename']) # full path to csv file
 
-    spec_info['filename'] = os.path.join(out_dir, spec_info['filename']) # full path to csv file
-
-    # change directory to model output directory
+    # change directory to output directory
     os.chdir(out_dir)
+    print(f'changing directory to {out_dir}')
 
     # run workflow
     wf = gen_workflow(spec_info, cache_dir=cachedir)
     run_workflow(wf, "cf", {"n_procs": 1})
-
 
 def evaluation(results_dir, test_spec):
     import os
