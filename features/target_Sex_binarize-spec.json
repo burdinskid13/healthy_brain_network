@@ -1,0 +1,28 @@
+{
+    "assessment": "Clinical Measures",
+    "domain": null,
+    "measure": "Clinical Diagnosis Demographics",
+    "target_column": "Sex",
+    "features_to_ignore": [
+        "KSADS",
+        "Sex"
+    ],
+    "transform": "binarize",
+    "outname": "Sex_binarize",
+    "clf_info": {
+        "numeric": [
+            [
+                "sklearn.impute",
+                "SimpleImputer",
+                {
+                    "strategy": "mean"
+                }
+            ],
+            [
+                "sklearn.preprocessing",
+                "StandardScaler",
+                {}
+            ]
+        ]
+    }
+}

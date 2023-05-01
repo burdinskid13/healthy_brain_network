@@ -1,0 +1,58 @@
+{
+    "assessment": "Parent Measures",
+    "domains": "Demographic_Questionnaire_Measures",
+    "measures": "Child Mind Institute Symptom Checker",
+    "abbrevs": "SympChck",
+    "datadic": "SympChck",
+    "add_features": {
+        "filename": "Demographic_Features.csv",
+        "cols_to_include": [
+            "Sex",
+            "Age",
+            "Diagnosis",
+            "comorbidities",
+            "Race",
+            "Ethnicity"
+        ]
+    },
+    "preprocessing": {
+        "preprocess": true,
+        "cols_to_drop": [
+            "EID",
+            "Comment_ID",
+            "Unnamed",
+            "Administration",
+            "Days_Baseline",
+            "Data_entry",
+            "START_DATE",
+            "Year",
+            "Site",
+            "Season",
+            "Visit_label",
+            "Study",
+            "PSCID",
+            "Release_Number"
+        ],
+        "cols_to_ignore": [
+            "Identifiers"
+        ],
+        "upsample": true,
+        "threshold": false,
+        "clf_info": {
+            "numeric": [
+                [
+                    "sklearn.impute",
+                    "SimpleImputer",
+                    {
+                        "strategy": "mean"
+                    }
+                ],
+                [
+                    "sklearn.preprocessing",
+                    "StandardScaler",
+                    {}
+                ]
+            ]
+        }
+    }
+}

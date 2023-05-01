@@ -77,10 +77,9 @@ target/
 ./gec_visualization.ipynb
 
 # exclude data from source control by default
-data/
-features/
+data/features/
 model_specs/
-hpc_scripts/log_files
+log_files/
 messages/
 
 # Mac OS-specific storage files
