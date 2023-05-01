@@ -350,7 +350,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         {
         "diagnoses": [
             "ADHD",
-            "Autism_Spectrum_Disorder"
+            "Specific_Learning_Disorder_with_Impairment_in_Reading"
         ],
         "split": "train",
         "age": "all",
@@ -394,7 +394,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         {
         "diagnoses": [
             "ADHD",
-            "Autism_Spectrum_Disorder"
+            "Specific_Learning_Disorder_with_Impairment_in_Reading"
         ],
         "split": "train",
         "age": "all",
@@ -438,7 +438,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         {
         "diagnoses": [
             "ADHD",
-            "Autism_Spectrum_Disorder"
+            "Specific_Learning_Disorder_with_Impairment_in_Reading"
         ],
         "split": "train",
         "age": "all",
