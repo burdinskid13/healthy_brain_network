@@ -40,7 +40,7 @@ def load_data(assessments=['Child', 'Parent', 'Teacher'], data_type='preprocesse
     return df_data_all.reset_index(), df_dict_all, df_diagnosis
             
             
-def sentence_similarity(sentences, transformer='distilbert-base-nli-mean-tokens'):
+def sentence_similarity(sentences1, sentences2, transformer='distilbert-base-nli-mean-tokens'):
     """calculate sentence similarity across all sentence combinations
     
     Args:
@@ -51,11 +51,12 @@ def sentence_similarity(sentences, transformer='distilbert-base-nli-mean-tokens'
     # get model
     model = SentenceTransformer(transformer)
 
-    # calculate sentence embeddings
-    sentence_embeddings = model.encode(sentences)
-    
-    #Compute cosine-similarities for each sentence with each other sentence
-    cosine_scores = util.cos_sim(sentence_embeddings, sentence_embeddings)
+    #Compute embedding for both lists
+    embeddings1 = model.encode(sentences1, convert_to_tensor=True)
+    embeddings2 = model.encode(sentences2, convert_to_tensor=True)
+
+    #Compute cosine-similarities
+    cosine_scores = util.cos_sim(embeddings1, embeddings2)
     
     #Find the pairs with the highest cosine similarity scores
     pairs = []
@@ -66,7 +67,7 @@ def sentence_similarity(sentences, transformer='distilbert-base-nli-mean-tokens'
     #Sort scores in decreasing order
     pairs = sorted(pairs, key=lambda x: x['score'], reverse=True)
     
-    return cosine_scores, pairs, sentence_embeddings
+    return cosine_scores, pairs
 
 
 def answer_similarity(dataframe, pairs):

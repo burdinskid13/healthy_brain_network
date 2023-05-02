@@ -40,9 +40,37 @@ def clustering(
 
     return cluster
 
+def plotting_style():
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import numpy as np
+
+    plt.style.use('seaborn-poster') # ggplot
+    params = {'axes.labelsize': 20,
+            'axes.titlesize': 25,
+            'legend.fontsize': 15,
+            'xtick.labelsize': 20,
+            'ytick.labelsize': 20,
+            # 'figure.figsize': (10,5),
+            'font.weight': 'regular',
+            # 'font.size': 'regular',
+            'font.family': 'sans-serif',
+            'lines.markersize': 20,
+            'font.serif': 'Helvetica Neue',
+            'lines.linewidth': 4,
+            'axes.grid': False,
+            'axes.spines.top': False,
+            'axes.spines.right': False}
+    plt.rcParams.update(params)
+    sns.set_context(rc={'lines.markeredgewidth': 0.1})
+    np.set_printoptions(formatter={'float_kind':'{:f}'.format})
+
+
 def visualize_clusters(
     embeddings,
     cluster,
+    n_neighbors=15,
+    min_dist=0.0
     ):
     import pandas as pd
     import matplotlib.pyplot as plt
@@ -50,9 +78,9 @@ def visualize_clusters(
 
     # Prepare data
     umap_data = dimensionality_reduction(embeddings, 
-                                        n_neighbors=15, 
+                                        n_neighbors=n_neighbors, 
                                         n_components=2, 
-                                        min_dist=0.0, 
+                                        min_dist=min_dist, 
                                         metric='cosine'
                                         )
 
@@ -60,13 +88,58 @@ def visualize_clusters(
     result['labels'] = cluster.labels_
 
     # Visualize clusters
-    fig, ax = plt.subplots(figsize=(20, 10))
+    fig, ax = plt.subplots(figsize=(5, 5))
     outliers = result.loc[result.labels == -1, :]
     clustered = result.loc[result.labels != -1, :]
-    plt.scatter(outliers.x, outliers.y, color='#BDBDBD', s=0.05)
-    plt.scatter(clustered.x, clustered.y, c=clustered.labels, s=0.05, cmap='hsv_r')
+    plt.scatter(outliers.x, outliers.y, color='#BDBDBD', s=0.1)
+    plt.scatter(clustered.x, clustered.y, c=clustered.labels, s=2.0, cmap='hsv_r')
     plt.colorbar()
     plt.show()
+
+
+def visualize_clusters_interactive(
+    embeddings,
+    topic_data,
+    cluster,
+    color='labels',
+    hover_data=['datadic', 'questions', 'Topic'],
+    n_neighbors=15,
+    min_dist=0.0,
+    n_components=2
+   ):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+    import umap
+
+    # Prepare data
+    umap_data = dimensionality_reduction(embeddings, 
+                                        n_neighbors=n_neighbors, 
+                                        n_components=n_components, 
+                                        min_dist=min_dist, 
+                                        metric='cosine'
+                                        )
+
+    if n_components==3:
+        result = pd.DataFrame(umap_data, columns=['x', 'y', 'z'])
+    elif n_components==2:
+         result = pd.DataFrame(umap_data, columns=['x', 'y'])
+    result['labels'] = cluster.labels_
+
+    # Visualize clusters
+    df_all = pd.concat([result, topic_data], axis=1)
+
+    #identify outliers and clusters
+    outliers = df_all.loc[df_all.labels == -1, :]
+    clustered = df_all.loc[(df_all.labels != -1) & (df_all.Topic != -1), :]
+    
+    if n_components==2:
+        fig = px.scatter(clustered, 'x', 'y', color=color, hover_data=hover_data) # size='Size',
+    elif n_components==3:
+        fig = px.scatter_3d(clustered, x='x', y='y', z='z', color=color, hover_data=hover_data)
+    fig.show()
+
+    return df_all
 
 
 def tf_idf(
@@ -117,7 +190,8 @@ def extract_topic_sizes(df):
 
 def topic_reduction(
     data, 
-    docs_df
+    docs_df,
+    tf_idf
     ):
     from sklearn.metrics.pairwise import cosine_similarity
     import numpy as np
