@@ -40,34 +40,62 @@ def load_data(assessments=['Child', 'Parent', 'Teacher'], data_type='preprocesse
     return df_data_all.reset_index(), df_dict_all, df_diagnosis
             
             
-def sentence_similarity(sentences1, sentences2, transformer='distilbert-base-nli-mean-tokens'):
-    """calculate sentence similarity across all sentence combinations
+def sentence_similarity(data_dictionary, transformer='all-MiniLM-L6-v2'): # 'distilbert-base-nli-mean-tokens'
+    """calculate sentence similarity across all pairwise combinations of 
     
     Args:
-        sentences (list): list of sentences
+        data_dictionary (pd dataframe or str): fullpath to data dictionary ('item_names-cleaned.csv') or pd dataframe
+        transformer (str): transformer model to use
     """
-    from sentence_transformers import SentenceTransformer, util
-    
-    # get model
-    model = SentenceTransformer(transformer)
+    import pandas as pd
+    from sentence_transformers import SentenceTransformer, util   
+    import itertools
 
-    #Compute embedding for both lists
-    embeddings1 = model.encode(sentences1, convert_to_tensor=True)
-    embeddings2 = model.encode(sentences2, convert_to_tensor=True)
+    if isinstance(data_dictionary, str):
+        data_dictionary = pd.read_csv(data_dictionary)
 
-    #Compute cosine-similarities
-    cosine_scores = util.cos_sim(embeddings1, embeddings2)
-    
-    #Find the pairs with the highest cosine similarity scores
-    pairs = []
-    for i in range(len(cosine_scores)-1):
-        for j in range(i+1, len(cosine_scores)):
-            pairs.append({'index': [i, j], 'score': cosine_scores[i][j]})
+    # get all pairwise combinations
+    combos = list(itertools.combinations(data_dictionary['datadic'].unique(), 2))
 
-    #Sort scores in decreasing order
-    pairs = sorted(pairs, key=lambda x: x['score'], reverse=True)
-    
-    return cosine_scores, pairs
+    # including each measure with itself
+    list_all = []
+    for measure in data_dictionary['datadic'].unique():
+        list_all.append((measure,measure))
+        
+    pairwise_measures = combos + list_all
+
+    list_of_dicts = []
+    for idx,comb in enumerate(pairwise_measures):
+        model = SentenceTransformer(transformer)
+
+        sentences1 = data_dictionary[data_dictionary['datadic']==comb[0]]['questions'].tolist()
+        sentences2 = data_dictionary[data_dictionary['datadic']==comb[1]]['questions'].tolist()
+
+        #Compute embedding for both lists
+        embeddings1 = model.encode(sentences1, convert_to_tensor=True)
+        embeddings2 = model.encode(sentences2, convert_to_tensor=True)
+
+        #Compute cosine-similarities
+        cosine_scores = util.cos_sim(embeddings1, embeddings2)
+
+        # get corresponding data dictionary (incl. questions) for each index
+        df1 = data_dictionary[data_dictionary['datadic']==comb[0]]
+        df2 = data_dictionary[data_dictionary['datadic']==comb[1]]
+        
+        # put everything into a dictionary
+        data_dict = {'idx1': comb[0], 'idx2': comb[1], 
+                    'df1': df1, 'df2': df2,
+                    'cosine_scores': cosine_scores, 
+                    'mean_score': cosine_scores.mean()
+                    }
+        
+        # append to a list
+        list_of_dicts.append(data_dict)
+        
+        # print out progress
+        print(f'{idx}/{len(combos)}: calculated similarity between {comb[0]} and {comb[1]}\n', flush=True)
+
+    return list_of_dicts
 
 
 def answer_similarity(dataframe, pairs):

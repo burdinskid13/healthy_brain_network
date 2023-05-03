@@ -3,9 +3,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def run(
-    assessments=['Child', 'Parent', 'Teacher'], 
-    data_type='raw', 
-    transformer='all-mpnet-base-v2'
+    transformer='all-MiniLM-L6-v2'
     ):
     import os
     import pandas as pd
@@ -15,43 +13,22 @@ def run(
     from hbn.scripts import make_files
     from hbn import io
 
-    # make data files
-    #make_files.make_data_files()
-
     # load data
-    print("loading data and data dictionary", flush=True)
-    _, df_dict, df_diagnosis = item_analysis.load_data(
-                                            assessments=assessments, 
-                                            data_type=data_type
-                                            )
+    print("loading data dictionary", flush=True)
+    fpath = os.path.join(Defaults.PHENO_DIR, 'item-names-cleaned.csv')
+    dataframe = pd.read_csv(fpath)
 
+    # remove NaN values from dataframe
+    idx = dataframe['questions'].isna()
+    df = dataframe[~idx].reset_index(drop=True)
 
-    # calculate similarity
-    sentences = df_dict['questions'][:20]
+    # calculate similarity between clinical questionnaires
     print(f'calculating item analysis on {transformer}...', flush=True)
-    cosine_scores, pairs, embeddings = item_analysis.sentence_similarity(sentences, transformer=transformer)
-
-    # cosine scores
-    df1 = pd.DataFrame(np.array(cosine_scores), columns=sentences)
-
-    # score pairs
-    df2 = pd.DataFrame()
-    for idx, pair in enumerate(pairs):
-        df2.loc[idx, 'idx1'] = pairs[idx]['index'][0]
-        df2.loc[idx, 'idx2'] = pairs[idx]['index'][1]
-        df2.loc[idx, 'score'] = pairs[idx]['score'].tolist()
-
-    data_dict = {'dict': df_dict,
-                'diagnosis': df_diagnosis,
-                'cosine_scores': df1,
-                'pairs': df2,
-                'embeddings': embeddings,
-                'transformer': transformer
-                }
+    list_of_dicts = item_analysis.sentence_similarity(data_dictionary=df, transformer=transformer)
 
     # save as hdf5
-    fname = 'sentence-similarity' + '_' + '_'.join(assessments) + '_' + transformer + '.h5'
-    io.save_dict_as_hdf5(fpath=os.path.join(Defaults.SUBTYPE_DIR, fname), data_dict=data_dict)
+    fname = 'sentence-similarity_HBN_' + transformer + '.h5'
+    io.save_dict_as_hdf5(fpath=os.path.join(Defaults.SUBTYPE_DIR, fname), data_dict=list_of_dicts)
 
 if __name__ == "__main__":
     run()
