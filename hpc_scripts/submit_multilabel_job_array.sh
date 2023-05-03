@@ -10,6 +10,8 @@ base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
 out_dir=/om2/user/$(whoami)/hbn_data/interim/models/$model_name-models # MODELS WILL BE SAVED HERE
 bash_scripts=$base/hpc_scripts/ # BASH SCRIPTS ARE HERE
 
+mkdir -p $out_dir
+
 # Get participant spec names from the directory
 if [[ $# -eq 0 ]]; then
     pushd $base/model_specs/participant_specs

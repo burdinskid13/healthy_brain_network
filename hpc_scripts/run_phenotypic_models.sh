@@ -56,7 +56,7 @@ spec_dir=$scratch/$TIMESTAMP-$RANDOM_NUMBER
 python3 $python_scripts/make_phenotype_models.py \
 --out_dir=$spec_dir \
 --pydraml_spec=$base_dir/model_specs/pydraml_spec2.json \
---features="['${base_dir}/features/features-all-all-all-all-spec.json']" \
+--features="['${base_dir}/features/features-Parent_Measures-all-all-all-spec.json', '${base_dir}/features/features-Child_Measures-all-all-all-spec.json', '${base_dir}/features/features-Teacher_Measures-all-all-all-spec.json']" \
 --target=$base_dir/features/$target \
 --participant_spec=$base_dir/model_specs/participant_specs/$spec
 
@@ -69,7 +69,6 @@ echo "$'Command :\n'${cmd}"
 ${cmd}
 
 # copy files back
-mkdir -p $out_dir
-cp -nr $spec_dir/ $out_dir
+#cp -nr $spec_dir $out_dir
 
-echo "$'Copied data to'${out_dir}"
+#echo "$'Copied data from ${spec_dir} to ${out_dir}"
