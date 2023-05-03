@@ -10,7 +10,6 @@ def run(
     import numpy as np
     from hbn.constants import Defaults
     from hbn.models import item_analysis
-    from hbn.scripts import make_files
     from hbn import io
 
     # load data
@@ -24,11 +23,11 @@ def run(
 
     # calculate similarity between clinical questionnaires
     print(f'calculating item analysis on {transformer}...', flush=True)
-    list_of_dicts = item_analysis.sentence_similarity(data_dictionary=df, transformer=transformer)
+    df_out = item_analysis.sentence_similarity_all_pairs(data_dictionary=df, transformer=transformer)
 
-    # save as hdf5
-    fname = 'sentence-similarity_HBN_' + transformer + '.h5'
-    io.save_dict_as_hdf5(fpath=os.path.join(Defaults.SUBTYPE_DIR, fname), data_dict=list_of_dicts)
+    # save out abbrev version (without tensor)
+    fname = 'sentence-similarity_HBN_mean_scores-' + transformer + '.csv'
+    df_out.to_csv(os.path.join(Defaults.SUBTYPE_DIR, fname), index=False)
 
 if __name__ == "__main__":
     run()
