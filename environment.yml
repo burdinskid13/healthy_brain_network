@@ -19,5 +19,7 @@ dependencies:
   - openpyxl
   - tabulate
   - dcor
+  - hdbscan
+  - bertopic
   - pip:
     - pydra-ml
