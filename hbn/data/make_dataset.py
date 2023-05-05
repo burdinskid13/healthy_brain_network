@@ -6,16 +6,19 @@ import logging
 from hbn.constants import Defaults
 
 
-def make_summary(save=True):
+def make_summary(fpath=None, save=True):
     """
     Save summary of dataset `(Diagnosis_ClinicianConsensus` + `Basic_Demos`) and save out participant identifiers
     Returns: 
+        fpath (str or None): fullpath to `Diagnosis_ClinicianConsensus.csv` file. If None, then looks in Default directory.
         dx (pd dataframe)
     """
+    from pathlib import Path
     
     # READ CLINICAL CONSENSUS
-    dx_file = os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Diagnosis_ClinicianConsensus.csv')
-    dx = pd.read_csv(dx_file)
+    if fpath is None:
+        fpath = os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Diagnosis_ClinicianConsensus.csv')
+    dx = pd.read_csv(fpath)
 
     # do some clean up
     dx.columns = dx.columns.str.replace('Diagnosis_ClinicianConsensus,', '')

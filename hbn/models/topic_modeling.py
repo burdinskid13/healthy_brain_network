@@ -137,6 +137,9 @@ def visualize_clusters_interactive(
         fig = px.scatter(clustered, 'x', 'y', color=color, hover_data=hover_data) # size='Size',
     elif n_components==3:
         fig = px.scatter_3d(clustered, x='x', y='y', z='z', color=color, hover_data=hover_data)
+
+    fig.update_layout({'plot_bgcolor': 'rgba(0,0,0,0)',
+                  'paper_bgcolor': 'rgba(0,0,0,0)'})
     fig.show()
 
     return df_all
