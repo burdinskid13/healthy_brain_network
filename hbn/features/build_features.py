@@ -340,7 +340,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat",
-                        "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
+                        "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
                         "transform": "binarize",
                         "outname": "DX_01_Cat_binarize"
                         },
@@ -348,7 +348,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat_new",
-                        "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
+                        "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
                         "transform": "binarize",
                         "outname": "DX_01_Cat_new_binarize"
                         },
@@ -356,7 +356,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat_new",
-                        "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
+                        "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
                         "transform": "factorize",
                         "outname": "DX_01_Cat_new_factorize"
                         },
@@ -364,7 +364,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01_Cat",
-                        "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
+                        "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
                         "transform": "factorize",
                         "outname": "DX_01_Cat_factorize"
                         },
@@ -372,7 +372,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                         "domain": None,
                         "measure": "Clinical Diagnosis Demographics",
                         "target_column": "DX_01",
-                        "features_to_ignore": ['KSADS','Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
+                        "features_to_ignore": ['KSADS','Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
                         "transform": "binarize",
                         "outname": "DX_01_binarize"
                         },
@@ -380,7 +380,7 @@ def make_parent_spec(out_dir=Defaults.FEATURE_DIR):
                          "domain": None,
                          "measure": "Clinical Diagnosis Demographics",
                          "target_column": "DX_01",
-                         "features_to_ignore": ['KSADS','Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'DX_01', 'comorbidities'],
+                         "features_to_ignore": ['KSADS','Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
                          "transform": "factorize",
                          "outname": "DX_01_factorize"
                         },
