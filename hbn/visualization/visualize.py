@@ -135,16 +135,19 @@ def predictive_modeling(df, x='features', y='roc_auc_score'):
 def predictive_modeling_group(df, x='participant_group', y='roc_auc_score', title=None):
     import plotly.graph_objects as go
     import matplotlib.pyplot as plt
+    import plotly as px
     
     fig = go.Figure()
 
-    for group in df[x].unique():
+    line_colors = px.colors.sequential.Plasma_r
+    for group, color in zip(df[x].unique(), line_colors):
 
         df1 = df[(df[x]==group) & (df['data']=="data")]
 
         fig.add_trace(go.Violin(x=df1[x][df1[x]==group],
                                 y=df1[y][df1[x]==group],
                                 name=group,
+                                line_color=color
                                 )
                     )
         fig.add_hline(y=.5, line_width=1, line_dash="dash", line_color="black")
@@ -155,4 +158,5 @@ def predictive_modeling_group(df, x='participant_group', y='roc_auc_score', titl
     fig.update_yaxes(title_text='ROC AUC', range=[0.4, 1])
     fig.update_layout({'plot_bgcolor': 'rgba(0,0,0,0)',
                   'paper_bgcolor': 'rgba(0,0,0,0)'})
+
     fig.show()

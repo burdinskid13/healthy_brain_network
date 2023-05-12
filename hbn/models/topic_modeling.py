@@ -99,8 +99,8 @@ def visualize_clusters(
 
 def visualize_clusters_interactive(
     embeddings,
-    topic_data,
     cluster,
+    topic_data=None,
     color='labels',
     hover_data=['datadic', 'questions', 'Topic'],
     n_neighbors=15,
@@ -127,11 +127,16 @@ def visualize_clusters_interactive(
     result['labels'] = cluster.labels_
 
     # Visualize clusters
-    df_all = pd.concat([result, topic_data], axis=1)
+    if topic_data is not None:
+        df_all = pd.concat([result, topic_data], axis=1)
 
-    #identify outliers and clusters
-    outliers = df_all.loc[df_all.labels == -1, :]
-    clustered = df_all.loc[(df_all.labels != -1) & (df_all.Topic != -1), :]
+        #identify outliers and clusters
+        outliers = df_all.loc[(df_all.labels == -1) &  (df_all.Topic != -1), :]
+        clustered = df_all.loc[(df_all.labels != -1) & (df_all.Topic != -1), :]
+    else:
+        #identify outliers and clusters
+        outliers = result.loc[(result.labels == -1), :]
+        clustered = result.loc[(result.labels != -1), :]
     
     if n_components==2:
         fig = px.scatter(clustered, 'x', 'y', color=color, hover_data=hover_data) # size='Size',
