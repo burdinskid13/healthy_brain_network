@@ -368,7 +368,7 @@ def check_models(dirn=Defaults.MODEL_DIR,
     from hbn.constants import Defaults
     from hbn.data.make_dataset import make_summary
 
-    models = glob.glob(os.path.join(dirn, f'{filter}'))
+    models = glob.glob(os.path.join(dirn, filter))
 
     # load in clinical diagnosis
     if diagnosis_file is None:
@@ -378,26 +378,55 @@ def check_models(dirn=Defaults.MODEL_DIR,
 
     fname =  'classifier-all-phenotypic-models-performance.csv'
 
+    df_all = pd.DataFrame()
+    # loop over models
     for model_dir in models:
         try:
             # load models
             df = pd.read_csv(os.path.join(model_dir, fname))
-            
+
             # make participants dataframe
             participants = df['participants'].loc[0].split("-")
             df_part = pd.DataFrame(participants, columns=['Identifiers'])
-            
+
             # get target
             target = df['target'].unique().tolist()
-            
+
             # merge participants with diagnosis and sex
             diagnoses = dx.merge(df_part, on=['Identifiers'])['DX_01'].unique().tolist()
+            category = dx.merge(df_part, on=['Identifiers'])['DX_01_Cat_new'].unique().tolist()
             sex = dx.merge(df_part, on=['Identifiers'])['Sex'].unique().tolist()
-
+            age = dx.merge(df_part, on=['Identifiers'])['Age'].round().unique().astype(int)
+    
+            # make into str
+            if len(age)>1:
+                min_age = min(age); max_age = max(age)
+                age = f'{min_age:02d}-{max_age:02d}'
+            else:
+                age = f'{age[0]:02d}'
+            
+            if len(sex)>1:
+                sex = 'all'
+            else:
+                sex = sex[0]
+            
+            # add new columns to dataframe
+            df['diagnoses'], df['category'], df['sex'], df['age'] = '_'.join(diagnoses), '_'.join(category), sex, age
+            df['data'] = df['data'].map({'model-data': 'null', 'model-null': 'data'})
+            
+            # get model name
             model_name = Path(model_dir).name
-            print(f'{model_name}: {diagnoses}: {target}: {sex}')
+            
+            # print out models
+            #print(f'{model_name}: {diagnoses}: {target}: {sex}: {age}')
+            
+            # concat dataframes
+            df_all = pd.concat([df_all, df])
         except:
+            pass
             print(f'{fname} does not exist for {model_dir}, run `run_second_level.sh`')
+        
+    return df_all
 
 
 def _add_model_parameters(dataframe, spec_info):

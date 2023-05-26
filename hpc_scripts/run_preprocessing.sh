@@ -30,5 +30,5 @@ base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
 source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network 
 
 # preprocess phenotypes and make specs
-python3 $base/hbn/scripts/preprocess_phenotype.py
+#python3 $base/hbn/scripts/preprocess_phenotype.py
 python3 $base/hbn/scripts/make_phenotype_specs.py

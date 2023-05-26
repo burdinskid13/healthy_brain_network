@@ -6,77 +6,77 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
     from hbn import io
 
     spec_info = {
-        'spec-adhd-01':
+        'spec-adhd-No_Diagnosis_01':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-asd-01':
+        'spec-asd-No_Diagnosis_01':
         {'diagnoses': ['Autism_Spectrum_Disorder', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-02':
+        'spec-adhd-Subtypes_02':
         {'diagnoses': ['ADHD-Combined_Type', 'ADHD-Inattentive_Type'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-depression-01':
+        'spec-depression-No_Diagnosis_01':
         {'diagnoses': ['Depressive_Disorders', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-anxiety-01':
+        'spec-anxiety-No_Diagnosis_01':
         {'diagnoses': ['Anxiety_Disorders', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-reading-01':
+        'spec-reading-No_Diagnosis_01':
         {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-03':
+        'spec-adhd-No_Diagnosis_03':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-adhd-04':
+        'spec-adhd-No_Diagnosis_04':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-asd-02':
+        'spec-asd-No_Diagnosis_02':
         {'diagnoses': ['Autism_Spectrum_Disorder', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-asd-03':
+        'spec-asd-No_Diagnosis_03':
         {'diagnoses': ['Autism_Spectrum_Disorder', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-reading-02':
+        'spec-reading-No_Diagnosis_02':
         {
         "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
         "split": "train",
@@ -84,7 +84,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-reading-03':
+        'spec-reading-No_Diagnosis_03':
         {
         "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
         "split": "train",
@@ -92,7 +92,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-anxiety-02':
+        'spec-anxiety-No_Diagnosis_02':
         {
         "diagnoses": ['Anxiety_Disorders', 'No_Diagnosis_Given'],
         "split": "train",
@@ -100,7 +100,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-anxiety-03':
+        'spec-anxiety-No_Diagnosis_03':
         {
         "diagnoses": ['Anxiety_Disorders', 'No_Diagnosis_Given'],
         "split": "train",
@@ -108,7 +108,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-depression-02':
+        'spec-depression-No_Diagnosis_02':
         {
         "diagnoses": ['Depressive_Disorders', 'No_Diagnosis_Given'],
         "split": "train",
@@ -116,7 +116,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-depression-03':
+        'spec-depression-No_Diagnosis_03':
         {
         "diagnoses": ['Depressive_Disorders', 'No_Diagnosis_Given'],
         "split": "train",
@@ -124,196 +124,301 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-adhd-05':
+        'spec-adhd-age-05':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
-         'age': [5,6],
+         'age': [5],
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-06':
+        'spec-adhd-age-06':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [6],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-07':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [7],
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-07':
+        'spec-adhd-age-08':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [8],
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-08':
+        'spec-adhd-age-09':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [9],
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-09':
+        'spec-adhd-age-10':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [10],
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-10':
+        'spec-adhd-age-11':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [11],
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-11':
+        'spec-adhd-age-12':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [12],
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-12':
+        'spec-adhd-age-13':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
-         'age': [13,14],
+         'age': [13],
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-13':
+        'spec-adhd-age-14':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
-         'age': [15,16,17,18,19,20,21,22],
+         'age': [14],
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-14':
+        'spec-adhd-age-15':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
-         'age': [5,6],
+         'age': [15],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-16':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [16],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-17':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [17],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-18':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [18,19,20,21,22],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-male-05':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [5],
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-adhd-15':
+        'spec-adhd-age-male-06':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [6],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-male-07':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [7],
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-adhd-16':
+        'spec-adhd-age-male-08':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [8],
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-adhd-17':
+        'spec-adhd-age-male-09':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [9],
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-adhd-18':
+        'spec-adhd-age-male-10':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [10],
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-adhd-19':
+        'spec-adhd-age-male-11':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [11],
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-adhd-20':
+        'spec-adhd-age-male-12':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [12],
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-adhd-21':
+        'spec-adhd-age-male-13':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
-         'age': [13,14],
+         'age': [13],
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-adhd-22':
+        'spec-adhd-age-male-14':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
-         'age': [15,16,17,18,19,20,21,22],
+         'age': [14],
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-adhd-23':
+        'spec-adhd-age-male-15':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
-         'age': [5,6],
+         'age': [15],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-male-16':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [16],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-male-17':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [17],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-male-18':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [18,19,20,21,22],
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-female-05':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [5],
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-adhd-24':
+        'spec-adhd-age-female-06':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [6],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-female-07':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [7],
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-adhd-25':
+        'spec-adhd-age-female-08':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [8],
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-adhd-26':
+        'spec-adhd-age-female-09':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [9],
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-adhd-27':
+        'spec-adhd-age-female-10':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [10],
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-adhd-28':
+        'spec-adhd-age-female-11':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [11],
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-adhd-29':
+        'spec-adhd-age-female-12':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [12],
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-adhd-30':
+        'spec-adhd-age-female-13':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
-         'age': [13,14],
+         'age': [13],
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-adhd-31':
+        'spec-adhd-age-female-14':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
-         'age': [15,16,17,18,19,20,21,22],
+         'age': [14],
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-adhd-32':
+        'spec-adhd-age-female-15':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [15],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-female-16':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [16],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-female-17':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [17],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-age-female-18':
+        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [18,19,20,21,22],
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-anxiety-05':
         {
         "diagnoses": [
             "ADHD",
@@ -324,7 +429,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "all",
         "ethnicity": "all"
         },
-        'spec-adhd-33':
+        'spec-adhd-depression-06':
         {
         "diagnoses": [
             "ADHD",
@@ -335,7 +440,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "all",
         "ethnicity": "all"
         },
-        'spec-adhd-34':
+        'spec-adhd-asd-07':
         {
         "diagnoses": [
             "ADHD",
@@ -346,7 +451,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "all",
         "ethnicity": "all"
         },
-        'spec-adhd-35':
+        'spec-adhd-reading-08':
         {
         "diagnoses": [
             "ADHD",
@@ -357,7 +462,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "all",
         "ethnicity": "all"
         },
-        'spec-adhd-36':
+        'spec-adhd-anxiety-09':
         {
         "diagnoses": [
             "ADHD",
@@ -368,7 +473,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-adhd-37':
+        'spec-adhd-depression-10':
         {
         "diagnoses": [
             "ADHD",
@@ -379,7 +484,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-adhd-38':
+        'spec-adhd-asd-11':
         {
         "diagnoses": [
             "ADHD",
@@ -390,7 +495,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-adhd-39':
+        'spec-adhd-reading-12':
         {
         "diagnoses": [
             "ADHD",
@@ -401,7 +506,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-adhd-40':
+        'spec-adhd-anxiety-13':
         {
         "diagnoses": [
             "ADHD",
@@ -412,7 +517,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-adhd-41':
+        'spec-adhd-depression-14':
         {
         "diagnoses": [
             "ADHD",
@@ -423,7 +528,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-adhd-42':
+        'spec-adhd-asd-15':
         {
         "diagnoses": [
             "ADHD",
@@ -434,7 +539,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-adhd-43':
+        'spec-adhd-reading-16':
         {
         "diagnoses": [
             "ADHD",
