@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=run_phenotypic_models
+#SBATCH --job-name=preprocess_models
 #
 # Partition:
 #SBATCH --partition=gablab
@@ -15,7 +15,7 @@
 #SBATCH --mem=2G
 #
 # Wall clock limit:
-#SBATCH --time=02:00:00
+#SBATCH --time=01:00:00
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -30,5 +30,5 @@ base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
 source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network 
 
 # preprocess phenotypes and make specs
-#python3 $base/hbn/scripts/preprocess_phenotype.py
+python3 $base/hbn/scripts/preprocess_phenotype.py
 python3 $base/hbn/scripts/make_phenotype_specs.py

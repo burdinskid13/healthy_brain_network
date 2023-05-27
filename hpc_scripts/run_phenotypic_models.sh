@@ -25,8 +25,11 @@
 args=($@)
 specs=(${args[@]:1})
 base_dir=$1
-out_dir=$3
-target=(${args[-1]})
+out_dir=(${args[-3]})
+target=(${args[-2]})
+feature=(${args[-1]})
+
+echo "models will be saved to: ${out_dir}"
 
 ### SET DIRECTORIES - YOU MAY HAVE TO CHANGE VIRTUAL ENVIRONMENT PATH###
 source ~/.bash_profile # set paths
@@ -56,7 +59,7 @@ spec_dir=$scratch/$TIMESTAMP-$RANDOM_NUMBER
 python3 $python_scripts/make_phenotype_models.py \
 --out_dir=$spec_dir \
 --pydraml_spec=$base_dir/model_specs/pydraml_spec2.json \
---features="['${base_dir}/features/features-all-all-all-all-spec.json']" \
+--features="['${base_dir}/features/${feature}']" \
 --target=$base_dir/features/$target \
 --participant_spec=$base_dir/model_specs/participant_specs/$spec
 
@@ -69,6 +72,6 @@ echo "$'Command :\n'${cmd}"
 ${cmd}
 
 # copy files back
-#cp -nr $spec_dir $out_dir
+cp -nr $spec_dir $out_dir
 
-#echo "$'Copied data from ${spec_dir} to ${out_dir}"
+echo "$'Copied data from ${spec_dir} to ${out_dir}"

@@ -60,8 +60,8 @@ def make_model(
                         )
 
     # set certain conditionals for model spec to be run and model features to be created
-    # there have to be more than one column, more than one unique target, more than 100 participants
-    conditionals = all((df_features.shape[1]>1, len(df_features[target_info['outname']].unique())>1, df_features.shape[0]>100))
+    # there have to be more than one column, more than one unique target, more than 50 participants
+    conditionals = all((df_features.shape[1]>1, len(df_features[target_info['outname']].unique())>1, df_features.shape[0]>50))
     
     if conditionals: 
         
