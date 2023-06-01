@@ -2,7 +2,7 @@
 specs=($@)
 
 ### SET VARIABLES ###
-model_name=anxiety
+model_name=adhd-age
 target=target_DX_01_Cat_new_binarize-spec.json
 features=("features-all-all-all-all-spec.json" "features-Parent_Measures-all-all-all-spec.json" "features-Child_Measures-all-all-all-spec.json" "features-Teacher_Measures-all-all-all-spec.json")
 
@@ -13,12 +13,13 @@ out_dir=/om2/user/$(whoami)/hbn_data/interim/models/$model_name-models # OUTPUT 
 
 mkdir -p $out_dir
 
-# Get spec names (binary only) from the directory
-if [[ $# -eq 0 ]]; then
-    pushd $base/model_specs/participant_specs
-    specs=($(ls *$model_name* | egrep -v multilabel | egrep -v adhd-age))
-    popd
-fi
+# # Get spec names (binary only) from the directory
+# if [[ $# -eq 0 ]]; then
+#     pushd $base/model_specs/participant_specs
+#     specs=($(ls *$model_name* | egrep -v multilabel))
+#     popd
+# fi
+specs=(spec-adhd-age-05_06.json spec-adhd-age-07_08.json spec-adhd-age-09_10.json spec-adhd-age-11_12.json spec-adhd-age-13_14.json spec-adhd-age-15_16.json spec-adhd-age-17+.json spec-adhd-age-male-05_06.json spec-adhd-age-male-07_08.json spec-adhd-age-male-09_10.json spec-adhd-age-male-11_12.json spec-adhd-age-male-13_14.json spec-adhd-age-male-15_16.json spec-adhd-age-male-17+.json spec-adhd-age-female-05_06.json spec-adhd-age-female-07_08.json spec-adhd-age-female-09_10.json spec-adhd-age-female-11_12.json spec-adhd-age-female-13_14.json spec-adhd-age-female-15_16.json spec-adhd-age-female-17+.json)
 
 # take the length of the array
 # this will be useful for indexing later
