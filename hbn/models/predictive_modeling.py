@@ -9,6 +9,7 @@ def make_model(
     pydraml_spec,
     participant_spec,
     drop_identifiers=True,
+    min_participants=10,
     out_dir=Defaults.MODEL_SPEC_DIR
     ):
     """make model spec file using the following:`feature specs`, `targets`, `participant_spec`, `pydraml_spec`  
@@ -21,6 +22,7 @@ def make_model(
         target_spec (str): fullpath to target spec
         pydraml_spec (str): fullpath to pydraml spec
         participant_spec (str): fullpath to participant spec
+        min_participants (int): minimum number of participants to make the model
         out_dir (str): directory where model specs should be saved
     Returns:
         model_spec (str): full path to model spec
@@ -60,8 +62,8 @@ def make_model(
                         )
 
     # set certain conditionals for model spec to be run and model features to be created
-    # there have to be more than one column, more than one unique target, more than 50 participants
-    conditionals = all((df_features.shape[1]>1, len(df_features[target_info['outname']].unique())>1, df_features.shape[0]>50))
+    # there have to be more than one column, more than one unique target, more than `min_participants`
+    conditionals = all((df_features.shape[1]>1, len(df_features[target_info['outname']].unique())>1, df_features.shape[0]>min_participants))
     
     if conditionals: 
         
@@ -93,7 +95,7 @@ def make_model(
             print(f'created new file: {filename} and model spec file: {spec_name} in {out_dir}')
 
     else:
-        print(f'model spec not created for {filename} because one of the following conditions was not met: more than 1 feature, more than one unique target, more than 100 participants')
+        print(f'model spec not created for {filename} because one of the following conditions was not met: more than 1 feature, more than one unique target, more than {min_participants} participants')
 
     return model_spec, model_features
 
