@@ -387,7 +387,7 @@ def check_models(dirn=Defaults.MODEL_DIR,
         try:
             # load models
             df = pd.read_csv(os.path.join(model_dir, model_name))
-            df_feature = pd.read_csv(os.path.join(model_dir, feature_name))
+            #df_feature = pd.read_csv(os.path.join(model_dir, feature_name))
 
             # make participants dataframe
             participants = df['participants'].loc[0].split("-")
@@ -419,18 +419,16 @@ def check_models(dirn=Defaults.MODEL_DIR,
             df['data'] = df['data'].map({'model-data': 'null', 'model-null': 'data'})
             #df['top_features'] = 
             
-            # get model name
-            model_name = Path(model_dir).name
             
             # print out models
-            #print(f'{model_name}: {diagnoses}: {target}: {sex}: {age}')
+            #print(f'{Path(model_dir).name}: {diagnoses}: {target}: {sex}: {age}')
             
             # concat dataframes
             df_all = pd.concat([df_all, df])
 
         except:
             pass
-            print(f'{fname} does not exist for {model_dir}, run `run_second_level.sh`')
+            print(f'{model_name} does not exist for {model_dir}, run `run_second_level.sh`')
         
     return df_all
 
