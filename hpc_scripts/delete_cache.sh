@@ -1,4 +1,3 @@
-
 #!/bin/bash
 # Job name:
 #SBATCH --job-name=delete_cache

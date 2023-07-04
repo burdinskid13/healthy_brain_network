@@ -280,7 +280,7 @@ def calculate_R2(y, y_pred):
     return R2
 
 
-def secondlevel_summary(
+def model_summary(
     results,
     spec,
     out_dir=Defaults.MODEL_DIR,
@@ -319,7 +319,7 @@ def secondlevel_summary(
                 _save_to_existing_file(dataframe=df, fpath=os.path.join(out_dir, f'{clf_name}-{method}_importance.csv'))
 
     # get model summary (and save to disk)
-    model_dataframe = make_model_summary(results=data, spec_info=spec_info)
+    model_dataframe = get_model_metrics(results=data, spec_info=spec_info)
     model_dataframe['model'] = model_name
     model_fname = f'{clf_name}-all-phenotypic-models-performance.csv'
     _save_to_existing_file(dataframe=model_dataframe, fpath=os.path.join(out_dir, model_fname))
@@ -453,8 +453,8 @@ def _add_model_parameters(dataframe, spec_info):
     return dataframe
 
 
-def make_model_summary(results, spec_info):
-    """get model summary for `results`. code has only been tested on results which have one classifier.
+def get_model_metrics(results, spec_info):
+    """get model metrics for `results`. code has only been tested on results which have one classifier.
 
     Args: 
         results (list of dict): results output from `load_results`
