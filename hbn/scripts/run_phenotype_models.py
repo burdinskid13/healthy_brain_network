@@ -46,12 +46,12 @@ def run(
                 cachedir=cachedir
                 )
 
-            print('running second level', flush=True)
+            print('running model summary', flush=True)
             results_list = glob.glob(os.path.join(spec_dir, f'model_{dirn}', '*out-localspec*', '*results*.pkl'))
             
             # loop over results files (should just be one outspec folder per model directory)
             for result in results_list:
-                predictive_modeling.secondlevel_summary(
+                predictive_modeling.model_summary(
                     results=result,
                     spec=model_spec,
                     out_dir=spec_dir

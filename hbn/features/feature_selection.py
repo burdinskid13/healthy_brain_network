@@ -107,3 +107,42 @@ def phenotype_features(
         features_final = build_features.smote(y_train=features_final[[target_spec['outname']]], X_train=features_final[x_cols])
     
     return features_final
+
+
+def secondlevel_feature_selection(model_dir):
+    """Load features from first-level modeling routine and extract top features, which are then used to create a new model spec
+    (which can be used to run more models)
+    Args: 
+        model_dir (str): fullpath to model directory (e.g., "../<model_name>")
+    Returns: 
+        model_spec (str): fullpath to new model spec file
+    """
+    import glob
+    import pandas as pd
+    from hbn import io
+    import os
+    from hbn.constants import Defaults
+
+    # load spec info
+    model_spec = glob.glob(os.path.join(model_dir, '*.json'))[0] # ASSUMES ONLY ONE MODEL PER DIRECTORY
+    spec_info = io.read_json(model_spec)
+
+    # load feature importances
+    df_feat_importances = pd.read_csv(os.path.join(model_dir, 'classifier-feature_importance.csv'))
+
+    # load model features
+    features = glob.glob(os.path.join(model_dir, 'model_features_*'))[0]
+    df_features = pd.read_csv(features)
+    
+    # get top features from feature importances dataframe
+    top_features = df_feat_importances[df_feat_importances['top_features']==True]['feature_names'].tolist()
+
+    # get indices of top features
+    indices = []
+    for feat in top_features:
+        indices.append(df_features.columns.get_loc(feat))
+
+    # assign new features to spec file
+    spec_info['x_indices'] = indices
+
+    return spec_info

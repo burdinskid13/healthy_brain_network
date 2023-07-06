@@ -537,7 +537,7 @@ def make_specs(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs'
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-adhd-age-female-17+':
+        'spec-adhd-age-female-17':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': [17,18,19,20,21,22],
