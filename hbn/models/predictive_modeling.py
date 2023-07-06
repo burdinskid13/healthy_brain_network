@@ -387,7 +387,6 @@ def check_models(dirn=Defaults.MODEL_DIR,
         try:
             # load models
             df = pd.read_csv(os.path.join(model_dir, model_name))
-            #df_feature = pd.read_csv(os.path.join(model_dir, feature_name))
 
             # make participants dataframe
             participants = df['participants'].loc[0].split("-")
@@ -417,7 +416,6 @@ def check_models(dirn=Defaults.MODEL_DIR,
             # add new columns to dataframe
             df['diagnoses'], df['category'], df['sex'], df['age'] = '_'.join(diagnoses), '_'.join(category), sex, age
             df['data'] = df['data'].map({'model-data': 'null', 'model-null': 'data'})
-            #df['top_features'] = 
             
             
             # print out models
