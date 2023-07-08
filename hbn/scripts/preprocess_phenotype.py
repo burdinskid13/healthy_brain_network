@@ -39,13 +39,14 @@ def run(parse=False):
     # make demographic features (saved in FEATURE_DIR)
     make_dataset.make_demographics()
 
-    # make data files
-    make_files.make_data_files()
+    # make interim data files (Child, Parent, Teacher measures - preprocessed + raw)
+    make_dataset.make_interim_data_files()
+
+    # make item names
+    make_dataset.make_items()
 
     # makes test/train splits
     make_dataset.make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR)
-
-    return df
 
 
 if __name__ == "__main__":

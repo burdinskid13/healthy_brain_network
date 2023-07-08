@@ -3,25 +3,26 @@ warnings.filterwarnings("ignore")
 
 
 def run():
-    from hbn.features import build_features
-    from hbn.models import pydra_ml_specs
-    from hbn.data import participant_specs
     from hbn.constants import Defaults
+    from hbn.specs import make_specs
 
     print('making phenotypic specs...', flush=True)
 
-    # make parent spec file for features
-    parent_spec = build_features.make_parent_spec(out_dir=Defaults.FEATURE_DIR)
-    
-    # make feature and target spec files
-    build_features.make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
-    build_features.make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
+    # make parent spec
+    parent_spec  = make_specs.make_parent_spec(out_dir=Defaults.FEATURE_DIR)
 
-    # make participant specs
-    participant_specs.make_specs()
+    # make target spec files 
+    make_specs.make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
+
+    # make feature spec files
+    make_specs.make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
+
+    # make participant spec files
+    out_dir = os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs')
+    make_specs.make_participant_specs(out_dir=out_dir)
 
     # make pydraml base specs
-    pydra_ml_specs.make_specs(out_dir=Defaults.MODEL_SPEC_DIR)
+    make_specs.make_pydraml_specs(out_dir=Defaults.MODEL_SPEC_DIR, n_splits=5, test_size=0.2)
 
 if __name__ == "__main__":
     run()
