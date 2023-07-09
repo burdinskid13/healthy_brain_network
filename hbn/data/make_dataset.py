@@ -157,10 +157,16 @@ def make_items(fpath=None, out_dir=Defaults.SUBTYPE_DIR):
     # add new assessment, domain, measures info to item names
     df = _match_datadic_to_data(dataframe=df)
 
+    # fix domain name (missing domain in `Assessment_List_Jan2019.xlsx`)
+    df = _fix_domain(dataframe=df)
+
     # add proprietry/free questionnaires to item names
     #df = _match_proprietary_to_data(dataframe=df)
 
-    df.to_csv(os.path.join(out_dir, 'item-names-new.csv'))
+    # identify questions that contain total scores
+    #df = _identify_total_scores(dataframe=df)
+
+    df.to_csv(os.path.join(out_dir, 'item-names-new.csv'), index=False)
 
 
 def make_interim_data_files():
@@ -432,6 +438,7 @@ def _match_datadic_to_data(dataframe):
     """
     import os
     from hbn import io
+    import math
     import glob
     from hbn.constants import Defaults
     from collections import defaultdict
@@ -454,13 +461,36 @@ def _match_datadic_to_data(dataframe):
     # assign column names so that data can be indexed correctly
     for index in dataframe.index:
         key = dataframe.loc[index, 'datadic']
-        if key in new_dict:
+        is_str = type(dataframe.loc[index, 'keys']) is str
+        if key in new_dict and is_str:
             dataframe.loc[index, 'col_name'] = new_dict[key][0][0] + ',' + dataframe.loc[index, 'keys']
             dataframe.loc[index, 'assessment'] = new_dict[key][0][1]
             dataframe.loc[index, 'domains'] = new_dict[key][0][2]
             dataframe.loc[index, 'measures'] = new_dict[key][0][3]
 
     return dataframe
+
+
+def _fix_domain(dataframe):
+    measures_to_change = ['SympChck', 'ICU_P', 'ARI_P', 'SRS_Pre', 'SRS', 'RBS', 'SDQ', 'WHODAS_P', 'SAS', 
+                'CIS_P', 'SCQ', 'ASSQ', 'SWAN','ESWAN','SCARED_P','MFQ_P', 'CBCL', 'CBCL_Pre']
+    for abbrev in dataframe['datadic'].unique():
+        if abbrev in measures_to_change:
+            dataframe.loc[dataframe["datadic"]==abbrev, "domains"] = 'Questionnaire_Measures_of_Emotional_and_Cognitive_Status'
+
+    return dataframe
+
+
+def _match_proprietary_to_data(dataframe):
+
+    # get full path to proprietary data
+    fpath = os.path.join(Defaults.PHENO_DIR, 'Free_Assessments_HBN.xlsx')
+    
+    # read in data
+    df = pd.read_excel(fpath)
+
+    df['measure'] = df['Assessment'].str.split('(').str.get(0)
+    df['datadic'] = df['Assessment'].str.split('(').str.get(1).str.replace(')', '')
 
 
 def _add_demographics(dataframe):
