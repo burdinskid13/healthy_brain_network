@@ -161,10 +161,17 @@ def make_items(fpath=None, out_dir=Defaults.SUBTYPE_DIR):
     df = _fix_domain(dataframe=df)
 
     # add proprietry/free questionnaires to item names
-    #df = _match_proprietary_to_data(dataframe=df)
+    outpath = os.path.join(Defaults.SUBTYPE_DIR, 'Free_Assessments_HBN_new.csv')
+    fpath = os.path.join(Defaults.PHENO_DIR, 'Free_Assessments_HBN.xlsx')
+    if not os.path.isfile(outpath):
+        make_new_proprietary_assessments_file(fpath, outpath)
+    df_proprietary = pd.read_csv(outpath)
+
+    # add proprietary info to datafarme
+    df = df_proprietary[['datadic', 'Price']].merge(df, on='datadic', how='outer')
 
     # identify questions that contain total scores
-    #df = _identify_total_scores(dataframe=df)
+    df = _identify_total_scores(dataframe=df)
 
     df.to_csv(os.path.join(out_dir, 'item-names-new.csv'), index=False)
 
@@ -481,16 +488,115 @@ def _fix_domain(dataframe):
     return dataframe
 
 
-def _match_proprietary_to_data(dataframe):
+def _identify_total_scores(dataframe):
+
+    overall_scores = ['Total', 'Raw Score', 'T-Score', 'T Score', 'Standard']
+
+    # filter dataframe
+    questions_to_filter = dataframe[dataframe['questions'].str.contains('|'.join(overall_scores))==True]['questions'].unique()
+
+    # assign new column to identify whether qustion is a total score or not
+    dataframe['Total_Scores'] = dataframe['questions'].isin(questions_to_filter)
+
+    return dataframe
+
+
+def make_new_proprietary_assessments_file(fpath=None, outpath=None):
+    """
+    Args:
+        fpath (str or None): fullpath to `Free_Assessments_HBN.xlsx` file. If None, looks in `Defaults.PHENO_DIR`
+        outpath (str or None): save file to `outpath`. If None, saves to `Defaults.SUBTYPE_DIR` as `Free_Assessments_HBN_new.csv`
+    """
 
     # get full path to proprietary data
-    fpath = os.path.join(Defaults.PHENO_DIR, 'Free_Assessments_HBN.xlsx')
+    if fpath is None:
+        fpath = os.path.join(Defaults.PHENO_DIR, 'Free_Assessments_HBN.xlsx')
+
+    # get savedir
+    if outpath is None:
+        outpath = os.path.join(Defaults.SUBTYPE_DIR, 'Free_Assessments_HBN_new.csv')
     
     # read in data
     df = pd.read_excel(fpath)
 
+    add_cols = [
+        {'Assessment': 'Adverse Childhood Experiences Scale (ACE_P)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'Alabama Parenting Questionnaire – Self Report (APQ_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'Barratt Simplified Measure of Social Status (Barratt)', 'Price': 'Proprietary', 'used_in_study': 'HBN, NKI Rockland'},
+        {'Assessment': 'Conners 3 - Self-Report (C3SR)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Child Behavior Checklist - Pre-School (CBCL_Pre)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Teacher Report Form Preschool Age (TRF_P)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Teacher Report Form School Age (TRF)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Screener (CELF)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Full Assessment (CELF_Full_5to8)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Full Assessment (CELF_Full_9to21)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Metalinguistics (CELF_Meta)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Child Flourishing (CFS)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
+        {'Assessment': 'Ishihara Color Vision Test (ColorVision)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
+        {'Assessment': 'Comprehensive Test of Phonological Processing (CTOPP)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Dishion Social Acceptance Scale - Teacher (Dishion_Teacher)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
+        {'Assessment': 'Expressive Vocabulary Test (EVT)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Internet Use Questionnaire Parent (IUQ_P)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'Internet Use Questionnaire Self-Report (IUQ_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'Kaufman Brief Intelligence Test (KBIT)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'National Institute of Health Toolbox Full Data (NIH_Full)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'National Institute of Health Toolbox Full Data (NIH_Scores)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Negative Life Events Scale Self Report (NLES_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'The Positive and Negative Affect Schedule (PANAS)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'Positive Behavior Scale (PBS)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
+        {'Assessment': 'Screen for Anxiety Related Disorders Self Report (SCARED_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'TOWRE-2 (TOWRE)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Vineland Adaptive Behavior Scale-II (Vineland)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Wechsler Adult Intelligence Scale (WAIS)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Wechsler Adult Intelligence Scale (WAIS_abb)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Wechsler Abbreviated Scale of Intelligence (WASI)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Wechsler Individual Achievement Test (WIAT)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Wechsler Intelligence Scale for Children (WISC)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Grooved Pegboard (Pegboard)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Yale Food Addiction Scale (YFAS_C)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        ]
+
+    remap = {
+        'APQ _ Parent': 'APQ_P',
+        'APQ – Parent': 'APQ_P',
+        'CBCL _ TRF': 'TRF',
+        'C_SSRS': 'CSSRS',
+        'NLES _ Parent': 'NLES_P',
+        'E_SWAN': 'ESWAN',
+        'PSITM': 'PSI',
+        'RBS_R': 'RBS',
+        'SCARED': 'SCARED_P',
+        'SDSC': 'SDS',
+        'SRS_P': 'SRS_Pre',
+        'SRS_2': 'SRS',
+        'Symptom Checker': 'SympChck',
+        }
+
+    # need to match the keys in `Free_Assessments_HBN.xlsx` to the dataframe
+    def remap_keys(x):
+        if x in list(remap.keys()):
+            return remap[x]
+        else:
+            return x
+
+    # add new cols to dataframe
+    for row in add_cols:
+        df.loc[len(df.index)] = list(row.values())
+
+    # make new cols `measure` and `datadic`
     df['measure'] = df['Assessment'].str.split('(').str.get(0)
     df['datadic'] = df['Assessment'].str.split('(').str.get(1).str.replace(')', '')
+
+    # replace '-' with '_' in datadic
+    df['datadic'] = df['datadic'].str.replace('-', '_')
+
+    # match the keys in `Free_Asssessments_HBN.xlsx` to the dataframe
+    df['datadic'] = df['datadic'].apply(lambda x: remap_keys(x))
+
+    # save to file
+    df.to_csv(outpath, index=False)
+
+    return df
 
 
 def _add_demographics(dataframe):
