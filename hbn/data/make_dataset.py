@@ -173,7 +173,7 @@ def make_items(fpath=None, out_dir=Defaults.SUBTYPE_DIR):
     # identify questions that contain total scores
     df = _identify_total_scores(dataframe=df)
 
-    df.to_csv(os.path.join(out_dir, 'item-names-new.csv'), index=False)
+    df.to_csv(os.path.join(out_dir, 'item-names-cleaned.csv'), index=False)
 
 
 def make_interim_data_files():
