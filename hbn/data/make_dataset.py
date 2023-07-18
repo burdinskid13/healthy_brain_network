@@ -157,9 +157,6 @@ def make_items(fpath=None, out_dir=Defaults.SUBTYPE_DIR):
     # add new assessment, domain, measures info to item names
     df = _match_datadic_to_data(dataframe=df)
 
-    # fix domain name (missing domain in `Assessment_List_Jan2019.xlsx`)
-    df = _fix_domain(dataframe=df)
-
     # add proprietry/free questionnaires to item names
     outpath = os.path.join(Defaults.SUBTYPE_DIR, 'Free_Assessments_HBN_new.csv')
     fpath = os.path.join(Defaults.PHENO_DIR, 'Free_Assessments_HBN.xlsx')
@@ -170,9 +167,23 @@ def make_items(fpath=None, out_dir=Defaults.SUBTYPE_DIR):
     # add proprietary info to datafarme
     df = df_proprietary[['datadic', 'Price']].merge(df, on='datadic', how='outer')
 
+    # remove rows that don't have any questions or keys
+    conditional = (df['questions'].isna()) & (df['keys'].isna())
+    df = df[~conditional]
+
+    # fix domain name (missing domain in `Assessment_List_Jan2019.xlsx`)
+    df = _fix_domain(dataframe=df)
+
     # identify questions that contain total scores
     df = _identify_total_scores(dataframe=df)
 
+    # identify questions that are subheadings
+    df = _identify_subheadings(dataframe=df)
+
+    # identify questions that are preambles
+    df = _identify_preamble(dataframe=df)
+
+    # save out new file
     df.to_csv(os.path.join(out_dir, 'item-names-cleaned.csv'), index=False)
 
 
@@ -483,7 +494,7 @@ def _fix_domain(dataframe):
                 'CIS_P', 'SCQ', 'ASSQ', 'SWAN','ESWAN','SCARED_P','MFQ_P', 'CBCL', 'CBCL_Pre']
     for abbrev in dataframe['datadic'].unique():
         if abbrev in measures_to_change:
-            dataframe.loc[dataframe["datadic"]==abbrev, "domains"] = 'Questionnaire_Measures_of_Emotional_and_Cognitive_Status'
+            dataframe.loc[(dataframe["datadic"]==abbrev) & (~dataframe['keys'].isna()), "domains"] = 'Questionnaire_Measures_of_Emotional_and_Cognitive_Status'
 
     return dataframe
 
@@ -497,6 +508,41 @@ def _identify_total_scores(dataframe):
 
     # assign new column to identify whether qustion is a total score or not
     dataframe['Total_Scores'] = dataframe['questions'].isin(questions_to_filter)
+
+    return dataframe
+
+
+def _identify_preamble(dataframe):
+
+    # anything is a preamble if 'keys' is empty and is not a subheading
+    conditional = (dataframe['keys'].isna()) & (dataframe['Subheadings']==False) 
+
+    # filter dataframe
+    questions_to_filter = dataframe[conditional]['questions'].unique()
+
+    dataframe['Preamble'] = dataframe['questions'].isin(questions_to_filter)
+
+    # figure out which preambles are actually subheadings and reassign:
+    subheadings = ['Other (1)', 'Other (2)', 'Suicidal ideation', 'Suicidal behavior', 'Social Anxiety',
+                'Panic Disorder', 'Positive Behavior Scale Score']
+
+    dataframe.loc[dataframe['questions'].isin(subheadings), 'Subheadings'] = True
+    dataframe.loc[dataframe['questions'].isin(subheadings), 'Preamble'] = False
+
+    return dataframe
+
+
+def _identify_subheadings(dataframe):
+
+    # find keys with exact match: "Scores", "Scale Score", "Scoring"
+    # and find keys that contain "Scales"
+    conditional = (dataframe['questions']=='Scores') | (dataframe['questions'].str.contains('Scale Scores')) | (dataframe['questions']=='Scoring') |  (dataframe['questions'].str.contains('Scales')) & (dataframe['keys'].isna())
+    
+    # filter dataframe
+    questions_to_filter = dataframe[conditional]['questions'].unique()
+
+    # assign new column to identify whether qustion is a total score or not
+    dataframe['Subheadings'] = dataframe['questions'].isin(questions_to_filter)
 
     return dataframe
 
@@ -519,7 +565,8 @@ def make_new_proprietary_assessments_file(fpath=None, outpath=None):
     # read in data
     df = pd.read_excel(fpath)
 
-    add_cols = [
+    # rows to be added to the dataframe
+    add_rows = [
         {'Assessment': 'Adverse Childhood Experiences Scale (ACE_P)', 'Price': 'Free', 'used_in_study': 'HBN'},
         {'Assessment': 'Alabama Parenting Questionnaire – Self Report (APQ_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
         {'Assessment': 'Barratt Simplified Measure of Social Status (Barratt)', 'Price': 'Proprietary', 'used_in_study': 'HBN, NKI Rockland'},
@@ -580,7 +627,7 @@ def make_new_proprietary_assessments_file(fpath=None, outpath=None):
             return x
 
     # add new cols to dataframe
-    for row in add_cols:
+    for row in add_rows:
         df.loc[len(df.index)] = list(row.values())
 
     # make new cols `measure` and `datadic`
