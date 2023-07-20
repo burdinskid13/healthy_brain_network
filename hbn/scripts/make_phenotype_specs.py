@@ -1,21 +1,21 @@
 import warnings
 warnings.filterwarnings("ignore")
 
-
 def run():
     from hbn.constants import Defaults
     from hbn.specs import make_specs
+    from pathlib import Path
 
     print('making phenotypic specs...', flush=True)
 
-    # make parent spec
-    parent_spec  = make_specs.make_parent_spec(out_dir=Defaults.FEATURE_DIR)
+    # make parent specs
+    parent_specs = make_specs.make_parent_specs(out_dir=Defaults.FEATURE_DIR)
 
-    # make target spec files 
-    make_specs.make_target_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
+    # loop over parent spec files and make target and feature specs
+    for parent_spec in parent_specs:
 
-    # make feature spec files
-    make_specs.make_feature_specs(parent_spec, out_dir=Defaults.FEATURE_DIR)
+        make_specs.make_target_specs(parent_spec, out_dir=Path(parent_spec).parent) # make target spec files 
+        make_specs.make_feature_specs(parent_spec, out_dir=Path(parent_spec).parent) # make feature spec files
 
     # make participant spec files
     out_dir = os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs')

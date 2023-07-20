@@ -164,8 +164,8 @@ def make_items(fpath=None, out_dir=Defaults.SUBTYPE_DIR):
         make_new_proprietary_assessments_file(fpath, outpath)
     df_proprietary = pd.read_csv(outpath)
 
-    # add proprietary info to datafarme
-    df = df_proprietary[['datadic', 'Price']].merge(df, on='datadic', how='outer')
+    # add proprietary info to dataframe and assign NaN to Unknown
+    df = df_proprietary[['datadic', 'Price', 'Free_Assessments', 'Proprietary_Assessments']].merge(df, on='datadic', how='outer')
 
     # remove rows that don't have any questions or keys
     conditional = (df['questions'].isna()) & (df['keys'].isna())
@@ -508,6 +508,7 @@ def _identify_total_scores(dataframe):
 
     # assign new column to identify whether qustion is a total score or not
     dataframe['Total_Scores'] = dataframe['questions'].isin(questions_to_filter)
+    dataframe.loc[dataframe['Total_Scores']==False, 'Not_Total_Scores'] = True
 
     return dataframe
 
@@ -639,6 +640,13 @@ def make_new_proprietary_assessments_file(fpath=None, outpath=None):
 
     # match the keys in `Free_Asssessments_HBN.xlsx` to the dataframe
     df['datadic'] = df['datadic'].apply(lambda x: remap_keys(x))
+
+    # Convert NaN values to Unknown
+    df.loc[df['Price'].isna(), 'Price'] = 'Unknown'
+
+    # create boolean columns for proprietary/free questionnaires
+    df['Free_Assessments'] = np.where(df['Price'] =='Free', True, False)
+    df['Proprietary_Assessments'] = np.where(df['Price'] =='Proprietary', True, False)
 
     # save to file
     df.to_csv(outpath, index=False)

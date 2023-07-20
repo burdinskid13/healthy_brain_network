@@ -11,7 +11,7 @@ def phenotype_features(
     Features for selected "participants" are returned
     Args: 
         feature_spec (str or dict): full path to feature spec file OR dict loaded from file
-        participants (list of str or None): (optional) list of participant identifiers (output from `make_dataset.get_participants`)
+        participants (list of str or None): (optional) list of participant identifiers (output from `make_dataset.get_participants`).
         target_spec (str or dict or None): (optional) full path to target spec file. if None, then only features (X) are returned, else features (X) + target variable (y) are returned.
         drop_identifiers (bool): (optional) default is True (returns dataframe without 'Identifiers' column)
     Returns: 
@@ -27,6 +27,7 @@ def phenotype_features(
     if isinstance(feature_spec, str):
         feature_spec = io.read_json(feature_spec)
 
+    # load target spec from json file
     if isinstance(target_spec, str):
         target_spec = io.read_json(target_spec)
 
@@ -53,28 +54,23 @@ def phenotype_features(
                     )
         features = pd.concat([features, feat], axis=1)
 
-    # filter based on participants
+    # merge features with participants
     features = build_features.drop_duplicates(dataframe=features)
     features = features.merge(participants_df, on='Identifiers')
-    
-    # optionally add demographics as features (if there is a filename)
-    add_features = feature_spec['add_features']
-    if add_features['filename'] is not None:
-        features_df = pd.read_csv(os.path.join(Defaults.FEATURE_DIR, add_features['filename']))
-        tmp = features_df.merge(features, on=['Identifiers'])
-        cols_to_factorize = add_features['cols_to_include']
-        for col in cols_to_factorize:
-            if col in tmp.columns and tmp[col].dtype=='object':
-                tmp.loc[:, col] = tmp[col].factorize()[0]
-        features = tmp
 
-    # remove `features_to_ignore` from dataframe if any are provided in `target_spec`
+    # optionally filter features (based on feature_spec)
+    features = _filter_features(feature_spec, features)
+    
+    # optionally add features (based on feature_spec)
+    features = _add_features(feature_spec, features)
+
+    # optionally filter features (based on target_spec)
     if target_spec is not None:
         if target_spec['features_to_ignore'] is not None:
             idx = features.columns.str.contains(('|'.join(target_spec['features_to_ignore'])))
             features = features[features.columns[~idx]]
 
-    # preprocess
+    # preprocess features
     preprocessing = feature_spec['preprocessing']
     if preprocessing['preprocess']:
         features = build_features.preprocess(
@@ -107,6 +103,46 @@ def phenotype_features(
         features_final = build_features.smote(y_train=features_final[[target_spec['outname']]], X_train=features_final[x_cols])
     
     return features_final
+
+
+def _add_features(feature_spec, features):
+    # optionally add features (if there is a filename given)
+    fname = feature_spec['add_features']['filename']
+    cols_to_include = feature_spec['add_features']['columns']
+    if fname is not None:
+        features_df = pd.read_csv(os.path.join(Defaults.FEATURE_DIR, fname))
+        tmp = features_df.merge(features, on=['Identifiers'])
+        # factorize columns
+        for col in cols_to_include:
+            if col in tmp.columns and tmp[col].dtype=='object':
+                tmp.loc[:, col] = tmp[col].factorize()[0]
+        features = tmp
+    
+    return features
+
+
+def _filter_features(feature_spec, features):
+    # optionally filter features (if there is a filename given)
+    fname = feature_spec['filter_features']['filename']
+    cols_to_filter = feature_spec['filter_features']['columns']
+    if fname is not None:
+        features_df = pd.read_csv(os.path.join(Defaults.SUBTYPE_DIR, fname))
+        
+        # loop over columns to filter
+        features_filtered = pd.DataFrame()
+        for filter_col in cols_to_filter:
+            list_of_cols = features_df[features_df[filter_col]==True]['col_name'].dropna().unique()
+
+            # loop over columns to filter
+            for col in list_of_cols:
+                if col in features.columns:
+                    features_filtered.loc[:, col] = features[col]
+        
+        # merge 'Identifiers' back with filtered features
+        features_filtered = pd.concat([features[['Identifiers']], features_filtered], axis=1)
+        return features_filtered
+    else:
+        return features
 
 
 def secondlevel_feature_selection(model_dir):

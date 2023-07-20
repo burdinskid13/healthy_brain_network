@@ -1,7 +1,7 @@
 import os
 from hbn import io
 from hbn.constants import Defaults
-
+from hbn.features import build_features
 
 def pydralml_base(n_splits=5, test_size=0.2):
 
@@ -770,14 +770,6 @@ def parent_features_base(out_dir=Defaults.FEATURE_DIR):
                         }
             }
             }
-    
-    # get target info
-    target_info = targets()
-    base_info.update({'target': target_info})
-
-    # get feature info
-    feature_info = features()
-    base_info.update({'features': feature_info})
 
     return base_info
 
@@ -848,23 +840,126 @@ def targets():
 
 
 def features():
-    ### RETURN TO THIS ###
-    feature_info = 
-            [
+    # get separate bases - we will get all combinations of assessment*domains*measures to create unique feature specs
+    feature_info = {
+            'basic_demographics':
             {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
             "domains": "all",
             "measures": "all",
             "abbrevs": 'all',
-            "filter": None,
-            "add_features": 'Demographic_Features.csv' # add additional features. (str or None)   
+            "filter_features": {'filename': None, 'columns': None},
+            "add_features": {'filename': 'Demographic_Features.csv', 'columns': ['Sex', 'Age', 'Diagnosis', 'Category', 'comorbidities', 'Race', 'Ethnicity']} 
             }, 
+            'total_scores_demographics':
             {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
             "domains": "all",
             "measures": "all",
             "abbrevs": 'all',
-            "filter": "",
-            "add_features": 'Demographic_Features.csv' # add additional features. (str or None)   
+            "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Total_Scores']},
+            "add_features": {'filename': 'Demographic_Features.csv', 'columns': ['Sex', 'Age', 'Diagnosis', 'Category', 'comorbidities', 'Race', 'Ethnicity']}   
+            },
+            'remove_total_scores_demographics':
+            {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
+            "domains": "all",
+            "measures": "all",
+            "abbrevs": 'all',
+            "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Not_Total_Scores']},
+            "add_features": {'filename': 'Demographic_Features.csv', 'columns': ['Sex', 'Age', 'Diagnosis', 'Category', 'comorbidities', 'Race', 'Ethnicity']}   
+            },
+            'free_assessments_demographics':
+            {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
+            "domains": "all",
+            "measures": "all",
+            "abbrevs": 'all',
+            "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Free_Assessments']},
+            "add_features": {'filename': 'Demographic_Features.csv', 'columns': ['Sex', 'Age', 'Diagnosis', 'Category', 'comorbidities', 'Race', 'Ethnicity']}   
+            },
+            'proprietary_assessments_demographics':
+            {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
+            "domains": "all",
+            "measures": "all",
+            "abbrevs": 'all',
+            "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Proprietary_Assessments']},
+            "add_features": {'filename': 'Demographic_Features.csv', 'columns': ['Sex', 'Age', 'Diagnosis', 'Category', 'comorbidities', 'Race', 'Ethnicity']}   
             }
-            ]
+    }
 
-    return feature_info
+    # loop over these feature sets and make unique feature specs
+    spec_info = {}
+    for k,v in feature_info.items():
+
+        # get all combinations
+        specs = _get_feature_combinations(spec_info=v)
+        spec_info.update({k: specs})
+
+    return spec_info
+
+
+def _get_feature_combinations(spec_info):
+    """gets combinations of assessment*domain*measure to make many feature files from `parent_spec`
+
+    horrible code -- need to rewrite
+
+    Args:
+        parent_spec (dict): parent spec info (output from `make_parent_spec`)
+    """
+
+    assessments = spec_info['assessment']
+    domains = spec_info['domains']
+    measures = spec_info['measures']
+    abbrevs = spec_info['abbrevs']
+    filter_features = spec_info['filter_features']
+    add_features = spec_info['add_features']
+
+    # check arguments
+    if not isinstance(assessments, list):
+        assessments = [assessments]
+    if (not isinstance(domains, list) and (domains!='all')):
+        domains = [domains]
+    if (not isinstance(measures, list) and (measures!='all')):
+        measures = [measures]
+
+    # write out all possible feature combinations
+    spec_info = []
+    for assess in assessments:
+        if domains=='all':
+            domain_names = build_features.get_domains(assess)[assess]
+            if domain_names is not None:
+                domain_names.remove('all')
+            elif domain_names is None:
+                domain_names = [domain_names]
+        for domain in domain_names:
+            if measures=='all':
+                measure_names = build_features.get_measures(assess, domain)[domain]
+            for measure in measure_names:
+                abbrevs = build_features.get_abbrevs(assess, measure)
+                for abbrev in abbrevs:
+                    spec_info.append({'assessment': assess,
+                            'domains': domain,
+                            'measures': measure,
+                            'abbrevs': abbrev,
+                            'filter_features': filter_features,
+                            'add_features': add_features
+                            })
+
+        # write out assessment-feature models
+        spec_info.append(
+            {'assessment': assess,
+            'domains': 'all',
+            'measures': 'all',
+            'abbrevs': 'all',
+            'filter_features': filter_features,
+            'add_features': add_features
+            })
+
+        # write out all-feature models
+        spec_info.append(
+            {'assessment': 'all',
+             'domains': 'all',
+             'measures': 'all',
+             'abbrevs': 'all',
+             'filter_features': filter_features,
+             'add_features': add_features
+             })
+
+    return spec_info
