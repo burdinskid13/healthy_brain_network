@@ -165,7 +165,7 @@ def make_items(fpath=None, out_dir=Defaults.SUBTYPE_DIR):
     df_proprietary = pd.read_csv(outpath)
 
     # add proprietary info to dataframe and assign NaN to Unknown
-    df = df_proprietary[['datadic', 'Price', 'Free_Assessments', 'Proprietary_Assessments']].merge(df, on='datadic', how='outer')
+    df = df_proprietary.merge(df, on='datadic', how='outer')
 
     # remove rows that don't have any questions or keys
     conditional = (df['questions'].isna()) & (df['keys'].isna())
@@ -339,11 +339,14 @@ def get_participants(
     elif not isinstance(split, list):
         split = [split]
 
+    # if 'All_Other_Diagnoses' is given, then return all participants
+    if 'All_Other_Diagnoses' in disorders:
+        disorders = ['all']
+        
     df_all = pd.DataFrame()
     # loop over disorders
     for disorder in disorders:
         for sp in split:
-            #name = '_'.join(re.split(r'_|,|/| ', disorder))
             fname = os.path.join(path, sp, f'{sp}_participants-{disorder}.csv')
             if os.path.isfile(fname):
                 df = pd.read_csv(fname)
@@ -372,6 +375,46 @@ def get_participants(
     identifiers = df_all.reset_index(drop=True)['Identifiers'].tolist()
 
     return identifiers
+
+
+def add_participant_groups(
+    participants,
+    disorders=['ADHD', 'All_Other_Diagnoses'], 
+    ):
+    """ add participant groups to participant identifiers if one of the disorders is 'All_Other_Diagnoses'
+    Args:
+        participants (list of str): list of participant identifiers (output from `get_participants`)
+        disorders (list of str): list of disorders, must include 'All_Other_Diagnoses'
+    Returns:
+        df (pd dataframe): contains columns: 'Identifiers' and 'participant_groups'
+    """
+
+    # make pandas dataframe
+    df = pd.DataFrame(participants, columns=['Identifiers'])
+
+    # load clinical diagnosis
+    dx = make_summary(save=False)
+
+    # merge on clinical diagnosis
+    df = dx.merge(df, on=['Identifiers'])
+
+    # get all disorders other than 'All_Other_Diagnoses
+    disorders_to_leave_out = [d for d in disorders if d!='All_Other_Diagnoses']
+
+    # which column are we using?
+    columns = ['DX_01', 'DX_01_Cat_new']
+    for col in columns:
+        disorders_present = sum(df[col].isin(disorders_to_leave_out))
+        if disorders_present>1:
+            break
+
+    # index disorders
+    for disorder in disorders_to_leave_out:
+        idx = df[col].isin([disorder])
+        df.loc[idx, 'participant_groups'] = disorder
+        df.loc[~idx, 'participant_groups'] = 'All_Other_Diagnoses'
+
+    return df[['Identifiers', 'participant_groups']]
 
 
 def define_new_categories(dataframe):
@@ -458,11 +501,17 @@ def _match_datadic_to_data(dataframe):
     from hbn import io
     import math
     import glob
-    from hbn.constants import Defaults
     from collections import defaultdict
+    from hbn.constants import Defaults
+    from hbn.specs import make_specs
+
 
     # grab all feature files and make dictionary from abbrevs and datadic args
-    feature_specs = glob.glob(os.path.join(Defaults.FEATURE_DIR, '*features*'))
+    fdir = os.path.join(Defaults.FEATURE_DIR, 'basic_demographics')
+    parent_spec = os.path.join(fdir, 'features-parent_spec.json')
+    if not os.path.isdir(fdir):
+        make_specs.make_feature_specs(parent_spec, out_dir=fdir) # make feature spec files if they don't exist
+    feature_specs = glob.glob(os.path.join(fdir, '*features*'))
 
     # initializing dict with lists
     new_dict = defaultdict(list)

@@ -11,7 +11,7 @@ def phenotype_features(
     Features for selected "participants" are returned
     Args: 
         feature_spec (str or dict): full path to feature spec file OR dict loaded from file
-        participants (list of str or None): (optional) list of participant identifiers (output from `make_dataset.get_participants`).
+        participants (list of str or None or pd dataframe): (optional) list of participant identifiers (output from `make_dataset.get_participants`) or pd dataframe containing column 'Identifiers' which contains participant identifiers and optionally containing 'participant_groups'
         target_spec (str or dict or None): (optional) full path to target spec file. if None, then only features (X) are returned, else features (X) + target variable (y) are returned.
         drop_identifiers (bool): (optional) default is True (returns dataframe without 'Identifiers' column)
     Returns: 
@@ -33,7 +33,9 @@ def phenotype_features(
 
     # make `participants` is None is given
     if participants is None:
-        participants_df = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'participants.csv'))
+        participants_df = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'participants.csv'))[['Identifiers']]
+    elif isinstance(participants, pd.DataFrame):
+        participants_df = participants[['Identifiers']]
     else:
         participants_df = pd.DataFrame(participants, columns=['Identifiers'])
 
@@ -81,13 +83,19 @@ def phenotype_features(
                         threshold=preprocessing['threshold']
                         )
 
+    # figure out if there are participant groups to be used in getting targets
+    participant_groups = None
+    if (isinstance(participants, pd.DataFrame)) and ('participant_groups' in participants.columns):
+        participant_groups = participants['participant_groups'].tolist()
+
     # combine features, targets, participants into one dataframe
     identifiers = features['Identifiers'].tolist()
     targets = pd.DataFrame(identifiers, columns=['Identifiers'])
     if target_spec is not None:
         targets = build_features.get_targets(
                                 target_info=target_spec, 
-                                participants=identifiers
+                                participants=identifiers,
+                                participant_groups=participant_groups
                                 )   
     # drop identifiers (and duplicates) from final feature matrix
     if drop_identifiers:
@@ -106,6 +114,10 @@ def phenotype_features(
 
 
 def _add_features(feature_spec, features):
+    import pandas as pd
+    import os
+    from hbn.constants import Defaults
+
     # optionally add features (if there is a filename given)
     fname = feature_spec['add_features']['filename']
     cols_to_include = feature_spec['add_features']['columns']
@@ -122,6 +134,10 @@ def _add_features(feature_spec, features):
 
 
 def _filter_features(feature_spec, features):
+    import pandas as pd
+    import os
+    from hbn.constants import Defaults
+    
     # optionally filter features (if there is a filename given)
     fname = feature_spec['filter_features']['filename']
     cols_to_filter = feature_spec['filter_features']['columns']

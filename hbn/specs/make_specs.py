@@ -7,7 +7,8 @@ from hbn.specs import base_specs
 def make_pydraml_specs(
     out_dir=Defaults.MODEL_SPEC_DIR,
     n_splits=5, 
-    test_size=0.2):
+    test_size=0.2
+    ):
 
     # get pydraml base
     clf_info, base_info = base_specs.pydralml_base(n_splits=n_splits, test_size=test_size)
@@ -15,6 +16,7 @@ def make_pydraml_specs(
     # loop over classifies and save out pydra-ml specs
     for name,clf in clf_info.items():
 
+        clf = {'clf_info': clf}
         clf.update(base_info)
 
         # write out pydra-ml specs

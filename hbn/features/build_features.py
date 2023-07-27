@@ -8,12 +8,10 @@ import itertools
 import glob
 import re
 import warnings
-from imblearn.over_sampling import SMOTE
 
 from hbn.data import make_dataset
 from hbn import io
 from hbn.constants import Defaults
-
 
 def get_features(
     assessment='Child Measures',
@@ -106,14 +104,15 @@ def get_features(
 
 def get_targets(
     target_info,
-    participants=None
+    participants=None,
+    participant_groups=None
     ):
     """Return target dataframe using arguments in `target_info` (data loaded from target spec file)
 
     Args:
         target_info (dict): dictionary loaded from target spec file (e.g., target_DX_01_Cat_binarize-spec.json)
         participants (list of str or None): (optional) if list of identifiers are passed, then returned dataframe filters for 'participants'
-
+        participant_groups (list of str or None): (optional) group identifiers by disorder to allow for binarization/factorization
     Returns:
         dataframe (pd dataframe)
     """
@@ -129,10 +128,14 @@ def get_targets(
         participants_df = pd.DataFrame(participants, columns=['Identifiers'])
         df = df.merge(participants_df, on='Identifiers')
 
-    # category of target
+    # get variables from target_info
     col = target_info['target_column']
     target = target_info['transform']
     new_target = target_info['outname']
+
+    # change column values if participant_groups is given
+    if participant_groups is not None:
+        df[col] = participant_groups
     
     # get new targets (binarize, factorize, or leave as is)
     if target=='binarize':
@@ -305,8 +308,16 @@ def smote(y_train, X_train):
     Returns:
         df_smote (pd dataframe)
     """
-    sm = SMOTE(random_state=42, sampling_strategy='auto') # was .5
-    X_train_oversampled, y_train_oversampled = sm.fit_resample(np.array(X_train), np.array(y_train))
+    from imblearn.over_sampling import SMOTE, RandomOverSampler
+
+    # try SMOTE and if it throws an error, try RandomOverSampler to oversample the minority class
+    try:
+        sm = SMOTE(random_state=42, sampling_strategy='auto') # was .5
+        X_train_oversampled, y_train_oversampled = sm.fit_resample(np.array(X_train), np.array(y_train))
+    except:
+        ros = RandomOverSampler(random_state=42, sampling_strategy='auto')
+        X_train_oversampled, y_train_oversampled = ros.fit_resample(np.array(X_train), np.array(y_train))
+
     new_x = pd.DataFrame(X_train_oversampled, columns=X_train.columns)
     new_y = pd.DataFrame(y_train_oversampled, columns=y_train.columns)
     df_smote = pd.concat([new_x, new_y], axis=1)

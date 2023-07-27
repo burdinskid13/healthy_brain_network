@@ -23,7 +23,7 @@ class PythonLiteralOption(click.Option):
 
 def run(
     features=['features-all-all-all-all-spec.json'],
-    participant_spec='spec-adhd-01.json',
+    participant_spec='spec-adhd-No_Diagnosis_Given.json',
     target='target_DX_01_Cat_new_binarize-spec.json',
     pydraml_spec='pydraml_spec2.json',
     out_dir=Defaults.MODEL_SPEC_DIR,

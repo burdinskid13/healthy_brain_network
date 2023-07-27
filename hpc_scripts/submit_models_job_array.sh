@@ -3,22 +3,23 @@ specs=($@)
 
 ### SET VARIABLES ###
 participants=adhd
-target=target_DX_01_Cat_new_binarize-spec.json
-features_dir=remove_total_scores_demographics
+model=pydraml_spec3.json
+features_dir=basic_demographics
+target=$features_dir/target_DX_01_Cat_new_binarize-spec.json
 features=("$features_dir/features-all-all-all-all-spec.json" "$features_dir/features-Parent_Measures-all-all-all-spec.json" "$features_dir/features-Child_Measures-all-all-all-spec.json" "$features_dir/features-Teacher_Measures-all-all-all-spec.json")
-model_name=$participants-$feature_dir-models
+outname=$participants-$features_dir-multiple-classifiers-models
 
 ### SET DIRECTORIES ###
 base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
 bash_scripts=$base/hpc_scripts/ # BASH SCRIPTS ARE HERE
-out_dir=/om2/user/$(whoami)/hbn_data/interim/models/$model_name # OUTPUT DIR
+out_dir=/om2/user/$(whoami)/hbn_data/interim/models/$outname # OUTPUT DIR
 
 mkdir -p $out_dir
 
 # Get spec names (binary only) from the directory
 if [[ $# -eq 0 ]]; then
     pushd $base/model_specs/participant_specs
-    specs=($(ls *$participants* | egrep -v multilabel))
+    specs=($(ls *$participants* | egrep -v multilabel | egrep -v adhd-age))
     popd
 fi
 
@@ -33,5 +34,5 @@ echo Spawning ${#specs[@]} spec-jobs.
 # loop over features
 for feature in "${features[@]}"
 do
-    sbatch --array=0-$len $bash_scripts/run_phenotypic_models.sh $base ${specs[@]} $out_dir $target $feature
+    sbatch --array=0-$len $bash_scripts/run_phenotypic_models.sh $base ${specs[@]} $out_dir $target $feature $model
 done;

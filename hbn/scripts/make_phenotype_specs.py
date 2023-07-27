@@ -2,6 +2,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def run():
+    import os
     from hbn.constants import Defaults
     from hbn.specs import make_specs
     from pathlib import Path

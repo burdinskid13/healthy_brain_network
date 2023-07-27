@@ -25,21 +25,22 @@
 args=($@)
 specs=(${args[@]:1})
 base_dir=$1
-out_dir=(${args[-3]})
-target=(${args[-2]})
-feature=(${args[-1]})
+out_dir=(${args[-4]})
+target=(${args[-3]})
+feature=(${args[-2]})
+model=(${args[-1]})
 
 echo "models will be saved to: ${out_dir}"
 
 ### SET DIRECTORIES - YOU MAY HAVE TO CHANGE VIRTUAL ENVIRONMENT PATH###
 source ~/.bash_profile # set paths
 source ~/.bashrc # set paths
-source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network 
+source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
 
 set -eu # Stop on errors
 
 # index slurm array to grab participant specs
-spec=${specs[${SLURM_ARRAY_TASK_ID}]}
+participant_spec=${specs[${SLURM_ARRAY_TASK_ID}]}
 
 # Define scratch directory
 scratch=/om2/scratch/tmp/$(whoami)/HBN_Models/ # assign working directory
@@ -58,16 +59,16 @@ spec_dir=$scratch/$TIMESTAMP-$RANDOM_NUMBER
 # make model specs
 python3 $python_scripts/make_phenotype_models.py \
 --out_dir=$spec_dir \
---pydraml_spec=$base_dir/model_specs/pydraml_spec2.json \
+--pydraml_spec=$base_dir/model_specs/$model \
 --features="['${base_dir}/features/${feature}']" \
 --target=$base_dir/features/$target \
---participant_spec=$base_dir/model_specs/participant_specs/$spec
+--participant_spec=$base_dir/model_specs/participant_specs/$participant_spec
 
 # run workflow
 cmd="python3 $python_scripts/run_phenotype_models.py --spec_dir=$spec_dir --cachedir=$scratch/.cache/pydra-ml/cache-wf/"
 
 # Run the command
-echo "Submitted job for: ${spec}"
+echo "Submitted job for: ${participant_spec}"
 echo "$'Command :\n'${cmd}"
 ${cmd}
 

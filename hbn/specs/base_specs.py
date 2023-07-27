@@ -9,7 +9,6 @@ def pydralml_base(n_splits=5, test_size=0.2):
         "filename" : None,
         "x_indices" : None,
         "target_vars" : None,
-        "clf_info" : clf_info,
         "permute" : [True, False],
         "group_var" : None,
         "n_splits" : n_splits,
@@ -41,9 +40,17 @@ def pydralml_base(n_splits=5, test_size=0.2):
         ],
         'spec2':
         [
-         ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]
+        ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}],
         ],
         'spec3':
+        [
+        ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}],
+        ["sklearn.svm", "SVC", {"probability": True},
+            [{"kernel": ["rbf", "linear"], "C": [1, 10, 100, 1000]}]],
+        ["sklearn.linear_model", "LogisticRegressionCV", {"solver": "liblinear", "penalty": "l1"}],
+        ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 100}]
+        ],
+        'spec4':
         [
             ["sklearn.feature_selection", "SelectFromModel", {"estimator": "LinearSVC"}],
             ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]
@@ -55,77 +62,140 @@ def pydralml_base(n_splits=5, test_size=0.2):
 def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs')):
 
     spec_info = {
-        'spec-adhd-No_Diagnosis_01':
+        'spec-adhd-No_Diagnosis':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-asd-No_Diagnosis_01':
+        'spec-adhd-All_Other_Diagnoses':
+        {'diagnoses': ['ADHD', 'All_Other_Diagnoses'],
+         'split': 'train',
+         'age': 'all',
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-asd-No_Diagnosis':
         {'diagnoses': ['Autism_Spectrum_Disorder', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-Subtypes_02':
-        {'diagnoses': ['ADHD-Combined_Type', 'ADHD-Inattentive_Type'],
+        'spec-asd-All_Other_Diagnoses':
+        {'diagnoses': ['Autism_Spectrum_Disorder', 'All_Other_Diagnoses'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-depression-No_Diagnosis_01':
+        # 'spec-adhd-Subtypes_02':
+        # {'diagnoses': ['ADHD-Combined_Type', 'ADHD-Inattentive_Type'],
+        #  'split': 'train',
+        #  'age': 'all',
+        #  'sex': 'all',
+        #  'ethnicity': 'all'
+        # },
+        'spec-depression-No_Diagnosis':
         {'diagnoses': ['Depressive_Disorders', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-anxiety-No_Diagnosis_01':
+        'spec-depression-All_Other_Diagnoses':
+        {'diagnoses': ['Depressive_Disorders', 'All_Other_Diagnoses'],
+         'split': 'train',
+         'age': 'all',
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-anxiety-No_Diagnosis':
         {'diagnoses': ['Anxiety_Disorders', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-reading-No_Diagnosis_01':
+        'spec-anxiety-All_Other_Diagnoses':
+        {'diagnoses': ['Anxiety_Disorders', 'All_Other_Diagnoses'],
+         'split': 'train',
+         'age': 'all',
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-No_Diagnosis':
         {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'all',
          'ethnicity': 'all'
         },
-        'spec-adhd-No_Diagnosis_03':
+        'spec-reading-All_Other_Diagnoses':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'All_Other_Diagnoses'],
+         'split': 'train',
+         'age': 'all',
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-No_Diagnosis-male':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-adhd-No_Diagnosis_04':
+        'spec-adhd-All_Other_Diagnoses-male':
+        {'diagnoses': ['ADHD', 'All_Other_Diagnoses'],
+         'split': 'train',
+         'age': 'all',
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec-adhd-No_Diagnosis-female':
         {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-asd-No_Diagnosis_02':
+        'spec-adhd-All_Other_Diagnoses-female':
+        {'diagnoses': ['ADHD', 'All_Other_Diagnoses'],
+         'split': 'train',
+         'age': 'all',
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec-asd-No_Diagnosis-male':
         {'diagnoses': ['Autism_Spectrum_Disorder', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'male',
          'ethnicity': 'all'
         },
-        'spec-asd-No_Diagnosis_03':
+        'spec-asd-All_Other_Diagnoses-male':
+        {'diagnoses': ['Autism_Spectrum_Disorder', 'All_Other_Diagnoses'],
+         'split': 'train',
+         'age': 'all',
+         'sex': 'male',
+         'ethnicity': 'all'
+        },
+        'spec-asd-No_Diagnosis-female':
         {'diagnoses': ['Autism_Spectrum_Disorder', 'No_Diagnosis_Given'],
          'split': 'train',
          'age': 'all',
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-reading-No_Diagnosis_02':
+        'spec-asd-All_Other_Diagnoses-female':
+        {'diagnoses': ['Autism_Spectrum_Disorder', 'All_Other_Diagnoses'],
+         'split': 'train',
+         'age': 'all',
+         'sex': 'female',
+         'ethnicity': 'all'
+        },
+        'spec-reading-No_Diagnosis-male':
         {
         "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
         "split": "train",
@@ -133,7 +203,15 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-reading-No_Diagnosis_03':
+        'spec-reading-All_Other_Diagnoses-male':
+        {
+        "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'All_Other_Diagnoses'],
+        "split": "train",
+        "age": "all",
+        "sex": "male",
+        "ethnicity": "all"
+        },
+        'spec-reading-No_Diagnosis-female':
         {
         "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
         "split": "train",
@@ -141,7 +219,15 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-anxiety-No_Diagnosis_02':
+        'spec-reading-All_Other_Diagnoses-female':
+        {
+        "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'All_Other_Diagnoses'],
+        "split": "train",
+        "age": "all",
+        "sex": "female",
+        "ethnicity": "all"
+        },
+        'spec-anxiety-No_Diagnosis-female':
         {
         "diagnoses": ['Anxiety_Disorders', 'No_Diagnosis_Given'],
         "split": "train",
@@ -149,7 +235,15 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-anxiety-No_Diagnosis_03':
+        'spec-anxiety-All_Other_Diagnoses-female':
+        {
+        "diagnoses": ['Anxiety_Disorders', 'All_Other_Diagnoses'],
+        "split": "train",
+        "age": "all",
+        "sex": "female",
+        "ethnicity": "all"
+        },
+        'spec-anxiety-No_Diagnosis-male':
         {
         "diagnoses": ['Anxiety_Disorders', 'No_Diagnosis_Given'],
         "split": "train",
@@ -157,7 +251,15 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-depression-No_Diagnosis_02':
+        'spec-anxiety-All_Other_Diagnoses-male':
+        {
+        "diagnoses": ['Anxiety_Disorders', 'All_Other_Diagnoses'],
+        "split": "train",
+        "age": "all",
+        "sex": "male",
+        "ethnicity": "all"
+        },
+        'spec-depression-No_Diagnosis-female':
         {
         "diagnoses": ['Depressive_Disorders', 'No_Diagnosis_Given'],
         "split": "train",
@@ -165,9 +267,25 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-depression-No_Diagnosis_03':
+        'spec-anxiety-All_Other_Diagnoses-female':
+        {
+        "diagnoses": ['Anxiety_Disorders', 'All_Other_Diagnoses'],
+        "split": "train",
+        "age": "all",
+        "sex": "female",
+        "ethnicity": "all"
+        },
+        'spec-depression-No_Diagnosis-male':
         {
         "diagnoses": ['Depressive_Disorders', 'No_Diagnosis_Given'],
+        "split": "train",
+        "age": "all",
+        "sex": "male",
+        "ethnicity": "all"
+        },
+        'spec-depression-All_Other_Diagnoses-male':
+        {
+        "diagnoses": ['Depressive_Disorders', 'All_Other_Diagnoses'],
         "split": "train",
         "age": "all",
         "sex": "male",
@@ -593,7 +711,7 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
          'sex': 'female',
          'ethnicity': 'all'
         },
-        'spec-adhd-anxiety-05':
+        'spec-adhd-anxiety':
         {
         "diagnoses": [
             "ADHD",
@@ -604,7 +722,7 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "all",
         "ethnicity": "all"
         },
-        'spec-adhd-depression-06':
+        'spec-adhd-depression':
         {
         "diagnoses": [
             "ADHD",
@@ -615,7 +733,7 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "all",
         "ethnicity": "all"
         },
-        'spec-adhd-asd-07':
+        'spec-adhd-asd':
         {
         "diagnoses": [
             "ADHD",
@@ -626,7 +744,7 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "all",
         "ethnicity": "all"
         },
-        'spec-adhd-reading-08':
+        'spec-adhd-reading':
         {
         "diagnoses": [
             "ADHD",
@@ -637,7 +755,7 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "all",
         "ethnicity": "all"
         },
-        'spec-adhd-anxiety-09':
+        'spec-adhd-anxiety-male':
         {
         "diagnoses": [
             "ADHD",
@@ -648,7 +766,7 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-adhd-depression-10':
+        'spec-adhd-depression-male':
         {
         "diagnoses": [
             "ADHD",
@@ -659,7 +777,7 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-adhd-asd-11':
+        'spec-adhd-asd-male':
         {
         "diagnoses": [
             "ADHD",
@@ -670,7 +788,7 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-adhd-reading-12':
+        'spec-adhd-reading-male':
         {
         "diagnoses": [
             "ADHD",
@@ -681,7 +799,7 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "male",
         "ethnicity": "all"
         },
-        'spec-adhd-anxiety-13':
+        'spec-adhd-anxiety-female':
         {
         "diagnoses": [
             "ADHD",
@@ -692,7 +810,7 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-adhd-depression-14':
+        'spec-adhd-depression-female':
         {
         "diagnoses": [
             "ADHD",
@@ -703,7 +821,7 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-adhd-asd-15':
+        'spec-adhd-asd-female':
         {
         "diagnoses": [
             "ADHD",
@@ -714,11 +832,134 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "female",
         "ethnicity": "all"
         },
-        'spec-adhd-reading-16':
+        'spec-adhd-reading-female':
         {
         "diagnoses": [
             "ADHD",
             "Specific_Learning_Disorder_with_Impairment_in_Reading"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "female",
+        "ethnicity": "all"
+        },
+        'spec-reading-anxiety':
+        {
+        "diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "Anxiety_Disorders"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "all",
+        "ethnicity": "all"
+        },
+        'spec-reading-depression':
+        {"diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "Depressive_Disorders"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "all",
+        "ethnicity": "all"
+        },
+        'spec-reading-asd':
+        {"diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "Autism_Spectrum_Disorder"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "all",
+        "ethnicity": "all"
+        },
+        'spec-reading-No_Diagnosis':
+        {"diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "No_Diagnosis_Given"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "all",
+        "ethnicity": "all"
+        },
+        'spec-reading-anxiety-male':
+        {
+        "diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "Anxiety_Disorders"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "male",
+        "ethnicity": "all"
+        },
+        'spec-reading-depression-male':
+        {"diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "Depressive_Disorders"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "male",
+        "ethnicity": "all"
+        },
+        'spec-reading-asd-male':
+        {"diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "Autism_Spectrum_Disorder"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "male",
+        "ethnicity": "all"
+        },
+        'spec-reading-No_Diagnosis-male':
+        {"diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "No_Diagnosis_Given"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "male",
+        "ethnicity": "all"
+        },
+        'spec-reading-anxiety-female':
+        {
+        "diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "Anxiety_Disorders"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "female",
+        "ethnicity": "all"
+        },
+        'spec-reading-depression-female':
+        {"diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "Depressive_Disorders"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "female",
+        "ethnicity": "all"
+        },
+        'spec-reading-asd-female':
+        {"diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "Autism_Spectrum_Disorder"
+        ],
+        "split": "train",
+        "age": "all",
+        "sex": "female",
+        "ethnicity": "all"
+        },
+        'spec-reading-No_Diagnosis-female':
+        {"diagnoses": [
+            "Specific_Learning_Disorder_with_Impairment_in_Reading",
+            "No_Diagnosis_Given"
         ],
         "split": "train",
         "age": "all",

@@ -2,7 +2,6 @@ import os
 from hbn.constants import Defaults
 from hbn.data import make_dataset
     
-
 def make_model(
     feature_spec,
     target_spec,
@@ -51,6 +50,11 @@ def make_model(
                                                     age=participant_info['age'],
                                                     sex=participant_info['sex']
                                                     )
+    # optionally add participant groups if 'All_Other_Diagnoses' is given
+    if 'All_Other_Diagnoses' in participant_info['diagnoses']:
+        participants_all = make_dataset.add_participant_groups(participants=participants_all, 
+                            disorders=participant_info['diagnoses']
+                            )
 
     model_spec = None; model_features = None
     # make multiple model specs using features, target, and participant specs 
