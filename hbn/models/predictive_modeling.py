@@ -69,6 +69,10 @@ def make_model(
     # there have to be more than one column, more than one unique target, more than `min_participants`
     conditionals = all((df_features.shape[1]>1, len(df_features[target_info['outname']].unique())>1, df_features.shape[0]>min_participants))
     
+    # make sure participants are list of str
+    if isinstance(participants_all, pd.DataFrame):
+        participants_all = participants_all['Identifiers'].tolist()
+
     if conditionals: 
         
         # chain together dictionaries

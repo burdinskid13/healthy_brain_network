@@ -45,10 +45,10 @@ def pydralml_base(n_splits=5, test_size=0.2):
         'spec3':
         [
         ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}],
-        ["sklearn.svm", "SVC", {"probability": True},
-            [{"kernel": ["rbf", "linear"], "C": [1, 10, 100, 1000]}]],
+        ["sklearn.svm", "SVC", {"probability": False}, # was True
+            [{"kernel": ["linear"], "C": [1, 10, 100, 1000]}]], # included "kernel": ["rbf", "linear"]
         ["sklearn.linear_model", "LogisticRegressionCV", {"solver": "liblinear", "penalty": "l1"}],
-        ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 100}]
+        ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}] # default is 100
         ],
         'spec4':
         [
