@@ -23,6 +23,7 @@ if [[ $# -eq 0 ]]; then
     popd
 fi
 
+
 #specs=(spec-adhd-age-05_06.json spec-adhd-age-07_08.json spec-adhd-age-09_10.json spec-adhd-age-11_12.json spec-adhd-age-13_14.json spec-adhd-age-15_16.json spec-adhd-age-17+.json spec-adhd-age-male-05_06.json spec-adhd-age-male-07_08.json spec-adhd-age-male-09_10.json spec-adhd-age-male-11_12.json spec-adhd-age-male-13_14.json spec-adhd-age-male-15_16.json spec-adhd-age-male-17+.json spec-adhd-age-female-05_06.json spec-adhd-age-female-07_08.json spec-adhd-age-female-09_10.json spec-adhd-age-female-11_12.json spec-adhd-age-female-13_14.json spec-adhd-age-female-15_16.json spec-adhd-age-female-17+.json)
 
 # take the length of the array

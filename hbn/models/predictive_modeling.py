@@ -11,20 +11,16 @@ def make_model(
     min_participants=10,
     out_dir=Defaults.MODEL_SPEC_DIR
     ):
-    """make model spec file using the following:`feature specs`, `targets`, `participant_spec`, `pydraml_spec`  
-    
-    Models are only created if they satisfy the following conditions:
-    more than one feature, more than one target class, more than 100 participants
+    """Make phenotype model(s) using the following:`feature specs`, `targets`, `participant_spec`, `pydraml_spec`
 
-    Args: 
-        feature_spec (str): fullpath to feature spec
-        target_spec (str): fullpath to target spec
-        pydraml_spec (str): fullpath to pydraml spec
-        participant_spec (str): fullpath to participant spec
-        min_participants (int): minimum number of participants to make the model
-        out_dir (str): directory where model specs should be saved
-    Returns:
-        model_spec (str): full path to model spec
+    Args:
+        feature_spec (str): fullpath to feature spec.
+        target_spec (str): fullpath to target spec.
+        pydraml_spec (str): fullpath to pydraml spec.
+        participant_spec (str): fullpath to participant spec.
+        drop_identifiers (bool): (optional) default is True (returns dataframe without 'Identifiers' column)
+        min_participants (int): (optional) default is 10 (returns dataframe with at least 10 participants)
+        out_dir (str): directory where model spec files will be saved.
     """
     import re
     import os
@@ -213,12 +209,21 @@ def evaluation(results_dir, test_spec):
 
 
 def get_test(feature_spec, target_spec, test_spec, feature_names):
+    """ get test data
+
+    Args:
+        feature_spec (str): fullpath to feature spec
+        target_spec (str): fullpath to target spec
+        test_spec (str): fullpath to test spec
+        feature_names (list): list of feature names
+    """ 
+
     import os
     import pandas as pd
     from hbn import io
     from hbn.constants import Defaults
     from hbn.data.make_dataset import get_participants
-    from hbn.features.feature_selection import phenotype_features   
+    from hbn.features.feature_selection import phenotype_features 
 
     # get participant identifiers (test)
     participants = get_participants(split='train', 
@@ -615,6 +620,17 @@ def _most_commonly_occuring_features(dataframe):
 
 
 def _sum_feature_weights(feature_splits, feature_names):
+    """
+    Calculate the sum of weights for each feature across splits.
+
+    Parameters:
+    - feature_splits (numpy.ndarray): An array of shape (n_splits, n_features) containing the weights for each feature across splits.
+    - feature_names (list): A list of length n_features containing the names of the features.
+
+    Returns:
+    - df (pandas.DataFrame): A DataFrame with two columns: 'feature_sum' and 'feature_names_sum'. The 'feature_sum' column contains the summed weights for each feature, while the 'feature_names_sum' column contains the corresponding feature names.
+
+    """
     import numpy as np
     import pandas as pd
 
