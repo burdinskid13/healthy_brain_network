@@ -2,6 +2,19 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def run():
+    """
+    Runs the main function of the program.
+
+    This function imports the necessary modules and packages, and then performs a series of actions to make phenotypic specs,
+    target specs, feature specs, participant specs, and pydraml base specs. The function does not take any parameters and does 
+    not return any values.
+
+    Parameters:
+    None
+
+    Returns:
+    None
+    """
     import os
     from hbn.constants import Defaults
     from hbn.specs import make_specs
