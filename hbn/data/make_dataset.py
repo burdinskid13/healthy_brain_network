@@ -23,9 +23,14 @@ def make_summary(fpath=None, save=True):
     # do some clean up
     dx.columns = dx.columns.str.replace('Diagnosis_ClinicianConsensus,', '')
 
-    # Replace "NaN" diagnosis with 'No Diagnosis Given: No Reason Given'
-    dx.loc[dx['DX_01']==' ','DX_01'] = 'No Diagnosis Given: No Reason Given'
-    dx.loc[dx['DX_01_Cat'].isna(),'DX_01_Cat'] = 'No Diagnosis Given: No Reason Given'
+    # replace NaN
+    for num in range(1,11):
+        # num
+        num_str = str(num).zfill(2)
+        
+        # Replace "NaN" diagnosis with 'No Diagnosis Given: No Reason Given'
+        dx.loc[dx[f'DX_{num_str}']==' ',f'DX_{num_str}'] = 'No Diagnosis Given: No Reason Given'
+        dx.loc[dx[f'DX_{num_str}_Cat'].isna(),f'DX_{num_str}_Cat'] = 'No Diagnosis Given: No Reason Given'
 
     # new disorder category
     diagnoses = [f'DX_{f:02}' for f in np.arange(1,11)]
@@ -442,21 +447,21 @@ def define_new_categories(dataframe):
             else:
                 return y
 
-    ## divide neurodevelopmental disorders into other categories
-    dataframe['DX_01_Cat_new'] = dataframe.apply(lambda x: new_categories(x['DX_01'], x['DX_01_Cat']), axis=1)
-
+        
     dx_to_model = ['Anxiety Disorders', 'Autism Spectrum Disorder', 'ADHD', 'No Diagnosis Given: No Reason Given',
-                                        'No Diagnosis Given', 'No Diagnosis Given: Incomplete Eval',
-                                        'Specific Learning Disorder with Impairment in Reading']
-    dx_not_to_model = dataframe[~dataframe['DX_01_Cat_new'].isin(dx_to_model)].reset_index(drop=True)
-    dx_not_to_model['dx_model'] = False
+                'No Diagnosis Given', 'No Diagnosis Given: Incomplete Eval',
+                'Specific Learning Disorder with Impairment in Reading']
 
-    dx_model = dataframe[dataframe['DX_01_Cat_new'].isin(dx_to_model)].reset_index(drop=True)
-    dx_model['dx_model'] = True
+    for num in range(1,11):
+        
+        num_str = str(num).zfill(2)
+        
+        ## divide neurodevelopmental disorders into other categories
+        dataframe[f'DX_{num_str}_Cat_new'] = dataframe.apply(lambda x: new_categories(x[f'DX_{num_str}'], x[f'DX_{num_str}_Cat']), axis=1)
+        
+        # removed column 'to_model' from dataframe
 
-    df_concat = pd.concat([dx_model, dx_not_to_model])
-
-    return df_concat
+    return dataframe
 
 
 def assessment_list(assessment, save=True):
