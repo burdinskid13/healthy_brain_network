@@ -328,14 +328,16 @@ def model_summary(
         if not res[0]['ml_wf.permute']:
             for method in methods:
                 df = feature_interpretability(results=res[1], spec_info=spec_info, method=method)
-                df['model'] = model_name
-                _save_to_existing_file(dataframe=df, fpath=os.path.join(out_dir, f'{clf_name}-{method}_importance.csv'))
+                if not df.empty: # only save if dataframe is not empty
+                    df['model'] = model_name
+                    _save_to_existing_file(dataframe=df, fpath=os.path.join(out_dir, f'{clf_name}-{method}_importance.csv'))
 
     # get model summary (and save to disk)
     model_dataframe = get_model_metrics(results=data, spec_info=spec_info)
-    model_dataframe['model'] = model_name
-    model_fname = f'{clf_name}-all-phenotypic-models-performance.csv'
-    _save_to_existing_file(dataframe=model_dataframe, fpath=os.path.join(out_dir, model_fname))
+    if not model_dataframe.empty: # only save if dataframe is not empty
+        model_dataframe['model'] = model_name
+        model_fname = f'{clf_name}-all-phenotypic-models-performance.csv'
+        _save_to_existing_file(dataframe=model_dataframe, fpath=os.path.join(out_dir, model_fname))
 
 
 def feature_interpretability(results, spec_info, method='feature'):
@@ -348,7 +350,8 @@ def feature_interpretability(results, spec_info, method='feature'):
     df_features = pd.concat([df1, df2], axis=1)
 
     # add model parameters
-    df_features = _add_model_parameters(df_features, spec_info=spec_info)
+    if not df_features.empty:
+        df_features = _add_model_parameters(dataframe=df_features, spec_info=spec_info)
 
     return df_features
 
@@ -510,30 +513,36 @@ def order_across_splits(results, method='feature'):
     df_features = pd.DataFrame()
 
     # extract importances (feature or permuation)
-    if method=='feature':
+    if (method=='feature'):
         feature_splits = np.array(results.output.feature_importance)
-    elif method=='permutation':
+    elif (method=='permutation'):
         feature_splits = np.array(results.output.permuation_importance)
     feature_names = np.array(results.output.feature_names)
 
     if len(feature_splits.shape) == 3:
         feature_splits = np.reshape(feature_splits, (feature_splits.shape[0], feature_splits.shape[2]))
-    n_splits, n_feats = feature_splits.shape
-    
-    if n_feats==len(feature_names):
 
-        feature_names_mat = np.tile(np.reshape(feature_names, (n_feats,1)), n_splits).T
-        feature_splits_sort_idx = np.argsort(feature_splits)
+    # rank features
+    try:
+        # get n splits and features
+        n_splits, n_feats = feature_splits.shape
 
-        features_sorted = np.take_along_axis(feature_names_mat, feature_splits_sort_idx, axis=1)
-        features_sorted = features_sorted[:,::-1] # reverse order
+        if n_feats==len(feature_names):
 
-        # get features across splits
-        df_rank = _rank_order_features_across_splits(dataframe=pd.DataFrame(features_sorted))
-        df_common = _most_commonly_occuring_features(dataframe=pd.DataFrame(features_sorted))
-        df_sum = _sum_feature_weights(feature_splits, feature_names)
+            feature_names_mat = np.tile(np.reshape(feature_names, (n_feats,1)), n_splits).T
+            feature_splits_sort_idx = np.argsort(feature_splits)
 
-        df_features = pd.concat([df_rank, df_common, df_sum], axis=1)
+            features_sorted = np.take_along_axis(feature_names_mat, feature_splits_sort_idx, axis=1)
+            features_sorted = features_sorted[:,::-1] # reverse order
+
+            # get features across splits
+            df_rank = _rank_order_features_across_splits(dataframe=pd.DataFrame(features_sorted))
+            df_common = _most_commonly_occuring_features(dataframe=pd.DataFrame(features_sorted))
+            df_sum = _sum_feature_weights(feature_splits, feature_names)
+
+            df_features = pd.concat([df_rank, df_common, df_sum], axis=1)
+    except:
+        continue
 
     return df_features
 
