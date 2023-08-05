@@ -331,6 +331,7 @@ def model_summary(
                 if not df.empty: # only save if dataframe is not empty
                     df['model'] = model_name
                     _save_to_existing_file(dataframe=df, fpath=os.path.join(out_dir, f'{clf_name}-{method}_importance.csv'))
+                    print('feature summary saved to disk')
 
     # get model summary (and save to disk)
     model_dataframe = get_model_metrics(results=data, spec_info=spec_info)
@@ -338,6 +339,7 @@ def model_summary(
         model_dataframe['model'] = model_name
         model_fname = f'{clf_name}-all-phenotypic-models-performance.csv'
         _save_to_existing_file(dataframe=model_dataframe, fpath=os.path.join(out_dir, model_fname))
+        print('model summary saved to disk')
 
 
 def feature_interpretability(results, spec_info, method='feature'):
@@ -493,7 +495,7 @@ def get_model_metrics(results, spec_info):
         df = pd.DataFrame(np.array(res[1].output.score), columns=spec_info['metrics'])
         df['data'] = data
         df['splits'] = df.index
-        df['clf'] = res[0]['ml_wf.clf_info'][1]
+        df['clf'] = res[0]['ml_wf.clf_info'][-1][1] # get classifier name (should always be the last list element in list)
         df = _add_model_parameters(df, spec_info=spec_info)
 
         df_all = pd.concat([df_all, df])
@@ -542,7 +544,7 @@ def order_across_splits(results, method='feature'):
 
             df_features = pd.concat([df_rank, df_common, df_sum], axis=1)
     except:
-        continue
+        pass
 
     return df_features
 
@@ -597,8 +599,7 @@ def _rank_order_features_across_splits(dataframe):
                 break
             idx += 1
         feature_importances.append(feat)
-        feature_probabilities.append(val)
-        print(f'adding {feat} to list')
+        feature_probabilities.append(val) 
     df_features = pd.DataFrame(feature_importances, columns=['feature_names_rank_order'])
     df_features['feature_probabilities_rank_order'] = feature_probabilities
     
@@ -620,7 +621,6 @@ def _most_commonly_occuring_features(dataframe):
         val = dataframe[col].value_counts().values[idx] / len(dataframe)
         feature_importances.append(feat)
         feature_probabilities.append(val)
-        print(f'adding {feat} to list')
     df_features = pd.DataFrame(feature_importances, columns=['feature_names_common'])
     df_features['feature_probabilities_common'] = feature_probabilities
     

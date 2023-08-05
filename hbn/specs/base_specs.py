@@ -40,17 +40,17 @@ def pydralml_base(n_splits=5, test_size=0.2):
         ],
         'spec2':
         [
-        [["sklearn.preprocessing", "StandardScaler"]
+        [["sklearn.preprocessing", "StandardScaler"],
             ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]],
         ],
         'spec3':
         [
         [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]],
+            ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]], # classifier has to be last list
         [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.linear_model", "LogisticRegressionCV", {"solver": "saga", "penalty": "l1"}]],
+            ["sklearn.linear_model", "LogisticRegressionCV", {"solver": "saga", "penalty": "l1", "max_iter": 5000}]], # classifier has to be last list
         [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]] 
+            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]] # classifier has to be last list
         ],
         'spec4':
         [
