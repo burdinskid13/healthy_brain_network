@@ -982,6 +982,139 @@ def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_
         "sex": "all",
         "ethnicity": "all"
         },
+        'spec-reading-age-05':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [5],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-06':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [6],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-07':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [7],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-08':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [8],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-09':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [9],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-10':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [10],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-11':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [11],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-12':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [12],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-13':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [13],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-14':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [14],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-15':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [15],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-16':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [16],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-17+':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [17,18,19,20,21,22],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-05-06':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [5,6],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-07-08':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [7,8],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-09-10':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [9,10],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-11-12':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [11,12],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-13-14':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [13,14],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
+        'spec-reading-age-15-16':
+        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
+         'split': 'train',
+         'age': [15,16],
+         'sex': 'all',
+         'ethnicity': 'all'
+        },
         }
     return spec_info
 

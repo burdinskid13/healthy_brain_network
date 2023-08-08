@@ -4,7 +4,7 @@ specs=($@)
 ### SET VARIABLES ###
 participants=adhd
 model=pydraml_spec3.json
-features_dir=remove_total_scores_demographics
+features_dir=total_scores_demographics
 target=$features_dir/target_DX_01_Cat_new_binarize-spec.json
 features=("$features_dir/features-all-all-all-all-spec.json" "$features_dir/features-Parent_Measures-all-all-all-spec.json" "$features_dir/features-Child_Measures-all-all-all-spec.json" "$features_dir/features-Teacher_Measures-all-all-all-spec.json")
 outname=$participants-$features_dir-multiple-classifiers-models
