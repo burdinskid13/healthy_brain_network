@@ -46,6 +46,7 @@ def make_model(
                                                     age=participant_info['age'],
                                                     sex=participant_info['sex']
                                                     )
+
     # optionally add participant groups if 'All_Other_Diagnoses' is given
     if 'All_Other_Diagnoses' in participant_info['diagnoses']:
         participants_all = make_dataset.add_participant_groups(participants=participants_all, 

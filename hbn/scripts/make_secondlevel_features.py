@@ -28,14 +28,16 @@ def run(old_dir, new_dir):
         shutil.copy(file, new_dir)
 
     # make new model spec based on second level feature selection
-    model_spec_new = secondlevel_feature_selection(new_dir)
+    model_specs_new, spec_names = secondlevel_feature_selection(new_dir)
 
     # save to file in new directory
-    io.save_dict_as_JSON(fpath=os.path.join(new_dir, Path(model_spec).name), data_dict=model_spec_new)
+    for (model_spec_new, spec_name) in zip(model_specs_new, spec_names):
+        io.save_dict_as_JSON(fpath=os.path.join(new_dir, spec_name), data_dict=model_spec_new)
 
     # remove classifier feature importance file from new directory
+    # remove old model spec file from new directory
     os.remove(os.path.join(new_dir, Path(feature_spec).name))
-    
+    os.remove(os.path.join(new_dir, Path(model_spec).name))
     
 if __name__ == "__main__":
     run()
