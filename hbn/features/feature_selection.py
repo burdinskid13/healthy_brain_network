@@ -172,6 +172,7 @@ def secondlevel_feature_selection(model_dir):
     import glob
     import pandas as pd
     from hbn import io
+    from pathlib import Path
     import os
     from hbn.constants import Defaults
 
@@ -211,7 +212,7 @@ def secondlevel_feature_selection(model_dir):
         spec_info['x_indices'] = indices
 
         # update classifier
-        spec_info['clf_info'] = spec_info['clf_info'][idx]
+        spec_info['clf_info'] = [spec_info['clf_info'][idx]] ## FIX THIS LINE
 
         spec_info_all.append(spec_info)
 

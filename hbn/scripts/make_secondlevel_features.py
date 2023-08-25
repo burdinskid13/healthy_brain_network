@@ -14,6 +14,12 @@ def run(old_dir, new_dir):
     import shutil
     from pathlib import Path
     from hbn.features.feature_selection import secondlevel_feature_selection
+    """Make secondlevel features
+
+    Args:
+        old_dir (str): fullpath to old model directory (e.g., "../<model_name>/<model_version>")
+        new_dir (str): fullpath to new model directory
+    """
 
     # make new directory
     io.make_dirs(new_dir)

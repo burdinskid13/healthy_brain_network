@@ -37,7 +37,7 @@ source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
 
 set -eu # Stop on errors
 
-# index slurm array to grab participant specs
+# index slurm array to grab specs
 spec=${specs[${SLURM_ARRAY_TASK_ID}]}
 
 # Define scratch directory
@@ -57,7 +57,7 @@ spec_dir=$scratch/$TIMESTAMP-$RANDOM_NUMBER
 mkdir -p $spec_dir
 
 # make new model spec based on feature selection from first-level modeling
-python3 $python_scripts/make_secondlevel_features.py --old_dir=$model_dir --new_dir=$spec_dir 
+python3 $python_scripts/make_secondlevel_features.py --old_dir=$model_dir/$spec --new_dir=$spec_dir 
 
 # run workflow
 cmd="python3 $python_scripts/run_phenotype_models.py --spec_dir=$spec_dir --cachedir=$scratch/.cache/pydra-ml/cache-wf/"
