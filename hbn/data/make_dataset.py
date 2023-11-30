@@ -369,6 +369,10 @@ def add_participant_groups(
 
     # index disorders
     for disorder in disorders_to_leave_out:
+
+        # disorder to leave out should match unique values in df[col]
+        disorder = disorder.replace('_', ' ')
+
         idx = df[col].isin([disorder])
         df.loc[idx, 'participant_groups'] = disorder
         df.loc[~idx, 'participant_groups'] = 'All_Other_Diagnoses'

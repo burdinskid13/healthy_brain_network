@@ -1,7 +1,7 @@
-Healthy Brain Networks
+Healthy Brain Network
 ==============================
 
-cerebellar fingerprints for neurodevelopmental disorders
+Analysis of phenotypic data from the Child Mind Institute's Healthy Brain Network Initiative
 
 First Steps
 ------------
@@ -40,13 +40,6 @@ cp -R /om2/user/maedbh/hbn_data/raw /om2/user/"username"/hbn_data/
 ```
 * Go to **constants.py** and set __DATA_DIR__ to be the fullpath to your top-level directory of **hbn_data**
 > For example: DATA_DIR = PosixPath("/om2/user/"username"/hbn_data")
-
-
-Data Exploration
-------------
-* To explore and visualize clinical diagnoses, check out **notebooks/clinical_dx.ipynb**
-* To explore any of the phenotypic measures yourself, check out **notebooks/data-exploration.ipynb**
-* To visualize output of predictive modeling, check out **notebooks/phenotype_models.ipynb**
 
 * You can explore the HBN data dictionary `Release9_DataDic`, which is located on OpenMind at **hbn_data/raw/phenotype**
 

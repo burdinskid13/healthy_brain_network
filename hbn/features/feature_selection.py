@@ -166,17 +166,17 @@ def secondlevel_feature_selection(model_dir):
     Args: 
         model_dir (str): fullpath to model directory (e.g., "../<model_name>")
     Returns: 
-        model_spec (str): fullpath to new model spec file
+        model_spec (list of str): fullpaths to new model spec files
     """
     import glob
     import pandas as pd
     from hbn import io
+    from pathlib import Path
     import os
     from hbn.constants import Defaults
 
     # load spec info
     model_spec = glob.glob(os.path.join(model_dir, '*.json'))[0] # ASSUMES ONLY ONE MODEL PER DIRECTORY
-    spec_info = io.read_json(model_spec)
 
     # load feature importances
     df_feat_importances = pd.read_csv(os.path.join(model_dir, 'classifier-feature_importance.csv'))
@@ -185,15 +185,34 @@ def secondlevel_feature_selection(model_dir):
     features = glob.glob(os.path.join(model_dir, 'model_features_*'))[0]
     df_features = pd.read_csv(features)
     
-    # get top features from feature importances dataframe
-    top_features = df_feat_importances[df_feat_importances['top_features']==True]['feature_names'].tolist()
+    # loop over classifiers (if there are more than one)
+    spec_info_all = []; spec_names = []
+    classifiers = df_feat_importances['clf'].unique()
+    for idx, clf in enumerate(classifiers):
 
-    # get indices of top features
-    indices = []
-    for feat in top_features:
-        indices.append(df_features.columns.get_loc(feat))
+        # get spec names
+        spec_name = Path(model_spec).stem.split('-')[:-1]
+        spec_name_new = '-'.join(spec_name) + '-' + clf + '-spec.json'
+        spec_names.append(spec_name_new)
 
-    # assign new features to spec file
-    spec_info['x_indices'] = indices
+        # load spec info
+        spec_info = io.read_json(model_spec)
 
-    return spec_info
+        df1 = df_feat_importances[df_feat_importances['clf']==clf]
+        # get top features from feature importances dataframe
+        top_features = df1[df1['top_features']==True]['feature_names'].tolist()
+
+        # get indices of top features
+        indices = []
+        for feat in top_features:
+            indices.append(df_features.columns.get_loc(feat))
+
+        # assign new features to spec file
+        spec_info['x_indices'] = indices
+
+        # update classifier
+        spec_info['clf_info'] = [spec_info['clf_info'][idx]] ## FIX THIS LINE
+
+        spec_info_all.append(spec_info)
+
+    return spec_info_all, spec_names
