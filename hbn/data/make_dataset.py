@@ -39,9 +39,9 @@ def make_summary(fpath=None, save=True):
     # add demographics
     dx = _add_demographics(dataframe=dx)
 
-    # bucket ages: over and under 10 yrs of age
-    dx.loc[dx['Age']>10, 'Age_bracket'] = "over10"
-    dx.loc[dx['Age']<=10, 'Age_bracket'] = "under10"
+    # bucket ages: early, emerging, and fluent readers
+    dx.loc[dx['Age']>=10, 'Age_bracket'] = "over10"
+    dx.loc[dx['Age']<10, 'Age_bracket'] = "under10"
 
     # deal with missing values and NaN
     dx = dx.replace(' ', np.float("NaN")).fillna(np.float("NaN")).dropna(how='all', axis=1)
@@ -65,41 +65,87 @@ def make_summary(fpath=None, save=True):
     return dx
 
 
-def make_demographics(fpath=None):
-    """Get fullpath to clinical diagnosis and demographics and modify to save out specific columns (as numeric values)
-    Returns:
-        filename (str): includes cols ['Age', 'Sex', 'Race', 'Ethnicity', 'Diagnosis'], also saves file 'Demographic_Features.csv' in `out_dir`
+def get_all_diagnoses(dataframe=None):
+    """Get all diagnoses from dataframe
+
+    Args:
+        dataframe (pd dataframe): must contain cols `DX_{num_str}_Cat_new` and `DX_{num_str}`. If None, will use `make_summary`
+    Returns: 
+        diagnoses_all (dict): dict of all diagnoses and subtypes
     """
-    # read in clinical diagnosis and demographics
-    if fpath is None:
-        fpath = os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv')
-    df = pd.read_csv(fpath)
+    import numpy as np
 
-    col_dict = {'Sex': 'Sex', 
-                'Age': 'Age', 
-                'DX_01': 'Diagnosis', 
-                'DX_01_Cat_new': 'Category',
-                'comorbidities': 'comorbidities', 
-                'PreInt_Demos_Fam,Child_Race_cat': 'Race', 
-                'PreInt_Demos_Fam,Child_Ethnicity_cat': 'Ethnicity'
-                } 
-    for k,v in col_dict.items():
-        df.loc[:,v] = df[k]
-    df = pd.concat([df[['Identifiers']], df[col_dict.values()]], axis=1)
+    # get dataframe if None is given
+    if dataframe is None:
+        dataframe = make_summary(save=False)
 
-    # save to file
-    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-    df.to_csv(os.path.join(Defaults.FEATURE_DIR, 'Demographic_Features.csv'), index=False)
+    diagnoses_all = []; subtypes_all = []
+    for num in range(1,11):
+        
+        num_str = str(num).zfill(2)
 
-    return 'Demographic_Features.csv'
+        # get categories
+        diagnoses = dataframe[f'DX_{num_str}_Cat_new'].unique()
+        subtypes = dataframe[f'DX_{num_str}'].unique()
+
+        diagnoses_all.extend(diagnoses)
+        subtypes_all.extend(subtypes)
+    
+    data_dict = {'diagnosis': np.unique(np.array(diagnoses_all)), 'subtype': np.unique(np.array(subtypes_all))}
+
+    return data_dict
 
 
-def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
+def filter_dataframe(dataframe=None, column='diagnosis', value='ADHD'):
+    """ Return participant identifiers for either `diagnosis` (e.g., ADHD) or `subtype` ('ADHD-Combined Type')
+
+    Args:
+        dataframe (pd dataframe or None): must contain columns `DX_{num_str}_Cat_new` and `DX_{num_str}`. If None, will use `make_summary`
+        column (str): must be either 'diagnosis' or 'subtype'
+        value (str): e.g. 'ADHD'    
+    Returns:
+        dataframe_filtered (pd dataframe): contains columns `Identifiers`
+    """
+
+    # get dataframe if None is given
+    if dataframe is None:
+        dataframe = make_summary(save=False)
+
+    subjs_all = []
+    for num in range(1, 11):
+        num_str = str(num).zfill(2)
+
+        # diagnosis or subtype?
+        if column=='diagnosis':
+            col = f'DX_{num_str}_Cat_new'
+        elif column=='subtype':
+            col = f'DX_{num_str}'
+
+        # Filtering dataframe for diagnosis
+        subjs = dataframe[(dataframe[col]==value) &
+                (dataframe[f'DX_{num_str}_RuleOut']!=1) &
+                (dataframe[f'DX_{num_str}_Rem']!=1)
+                   ]['Identifiers']
+        subjs_all.extend(subjs)
+
+    # return select participants
+    dataframe_filtered = dataframe[dataframe['Identifiers'].isin(subjs_all)]
+
+    # figure out if participants have more than one diagnosis
+    dataframe_filtered.loc[dataframe_filtered['comorbidities']>0, 'only_diagnosis'] = False
+    dataframe_filtered.loc[dataframe_filtered['comorbidities']==0, 'only_diagnosis'] = True
+
+    return dataframe_filtered
+
+
+def make_train_test_splits(dataframe=None, diagnoses=None, out_dir=Defaults.MODEL_SPEC_DIR):
     """get train/validate and test identifiers (from dataframe output by `make_summary`), save them to file
 
     We try to balance the train/test splits 
 
     Args:
+        dataframe (pd DataFrame or None): dataframe containing all participants + diagnoses. if None, will use `make_summary` function
+        diagnoses (list of str or None): list of diagnoses. If None, will use `get_all_diagnoses`
         out_dir (str): full path to out dir where train and test identifiers will be stored. default is `MODEL_SPEC_DIR`
     """
     import re
@@ -112,40 +158,36 @@ def make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR):
     io.make_dirs(os.path.join(out_dir, 'train'))
     io.make_dirs(os.path.join(out_dir, 'test'))
 
-    # get dataframe containing all participants + diagnoses
-    dataframe = make_summary(save=False)
+    if dataframe is None:
+        # get dataframe containing all participants + diagnoses
+        dataframe = make_summary(save=False)
+
+    # get all diagnoses and subtypes
+    if diagnoses is None:
+        diagnoses = get_all_diagnoses(dataframe)
+
     dataframe['Sex_binarize'] = dataframe['Sex'].map({'male': 0, 'female': 1})
-    dataframe['DX_01_Cat_new_factorize'] = dataframe['DX_01_Cat_new'].factorize()[0]
 
-    # get train/test for all participants
-    strat_array = np.array(dataframe[['DX_01_Cat_new_factorize']])
-    train_participants, test_participants, _, _ = train_test_split(dataframe['Identifiers'], dataframe['Identifiers'], test_size=0.2, random_state=42, stratify=strat_array)
-
-    train_all_df = dataframe[dataframe['Identifiers'].isin(train_participants)].reset_index(drop=True)
-    test_all_df = dataframe[dataframe['Identifiers'].isin(test_participants)].reset_index(drop=True)
-    train_all_df['Identifiers'].to_csv(os.path.join(out_dir, 'train', f'train_participants-all.csv'), index=False)
-    test_all_df['Identifiers'].to_csv(os.path.join(out_dir, 'test', f'test_participants-all.csv'), index=False)
-
-    # get train/test separately for each disorder
-    cols_to_group = ['DX_01_Cat_new', 'DX_01']
-    for col in cols_to_group:
-        for name, group in dataframe.groupby(col):
+    # loop over diagnoses and subtypes
+    for key in diagnoses.keys():
+        for diag in diagnoses[key]:
 
             # get diagnosis name
-            outname = '_'.join(re.split(r'_|,|/| ', name))
+            outname = '_'.join(re.split(r'_|,|/| ', diag))
 
             try: 
-                # split train/test participants
+                # get participant identifiers
+                group = filter_dataframe(dataframe, column=key, value=diag)
+
+                # get labels to stratify
                 labels = np.array(group['Sex_binarize'])
+
+                # split train/test participants
                 X_train, X_test, _, _ = train_test_split(group['Identifiers'], group['Identifiers'], test_size=0.2, random_state=42, stratify=labels)
-                
-                # get train and test dataframes
-                X_train = group.merge(pd.DataFrame(X_train).reset_index(drop=True), on='Identifiers')
-                X_test = group.merge(pd.DataFrame(X_test).reset_index(drop=True), on='Identifiers')
 
                 # save to file
-                X_train['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, 'train', f'train_participants-{outname}.csv'), index=False)
-                X_test['Identifiers'].reset_index(drop=True).to_csv(os.path.join(out_dir, 'test', f'test_participants-{outname}.csv'), index=False)
+                X_train.reset_index(drop=True).to_csv(os.path.join(out_dir, 'train', f'train_participants-{outname}.csv'), index=False)
+                X_test.reset_index(drop=True).to_csv(os.path.join(out_dir, 'test', f'test_participants-{outname}.csv'), index=False)
                 print(f'writing train and test participants to file for {outname}')
             except:
                 print(f'could not write out train and test participants for {outname} -- likely too few samples')
@@ -157,7 +199,7 @@ def make_items(fpath=None, out_dir=Defaults.SUBTYPE_DIR):
     # load item names fname
     if fpath is None:
         fpath = os.path.join(Defaults.PHENO_DIR, 'item-names.csv')
-    df = pd.read_csv(fpath)
+    dataframe = pd.read_csv(fpath)
 
     # add new assessment, domain, measures info to item names
     df = _match_datadic_to_data(dataframe=df)
@@ -217,109 +259,8 @@ def make_interim_data_files():
             print(f'saving out {assessment}-features-{v}.csv to disk')
 
 
-def make_item_names_OLD():
-    # read file
-    with open(os.path.join(Defaults.PHENO_DIR, 'item-names.csv'), "r") as f:
-        data = [re.sub(r"�+", "'", l).strip().split(";", -1) for l in f.readlines()]
-
-    # make pandas dataframe
-    questions = []
-    keys = []
-    for d in data:
-
-        questions.append(' '.join(d[:-1]))
-        if len(d)>1:
-            keys.append(d[-1])
-        else:
-            keys.append(None)
-
-    df = pd.DataFrame(np.array([questions, keys]).T, columns=['questions', 'keys'])
-
-    # get all data dictionaries
-    data_dir = os.path.join(Defaults.PHENO_DIR, 'Release9_DataDic')
-    os.chdir(data_dir)
-    data_dics = glob.glob('*xlsx')
-
-    dicts = {}
-    for data_dic in data_dics:
-        if '~$' not in data_dic:
-            df_dict = pd.read_excel(data_dic)
-            dict_list = df_dict.to_numpy().flatten()
-            key = data_dic.strip('.xlsx')
-            dicts.update({key: dict_list})
-
-    keys_mat = np.array(np.zeros((len(df),2)), dtype=object)
-    for idx in df.index:
-        datadics = []
-        # loop over dictionary keys
-        for k,v in dicts.items():
-            if df.loc[idx, 'keys'] in v:
-                datadics.append(k)
-        if 0<len(datadics)<=2:
-            keys_mat[idx,:] = datadics
-        else:
-            keys_mat[idx,:] = 'No Key'
-
-    # now loop over `keys` and link keys to data dictionary
-    for idx in df.index:
-
-        similarity = SequenceMatcher(None, keys_mat[idx,0], keys_mat[idx,1]).ratio()
-
-        # if keys have two corresponding measures
-        # check which sentences match and return most likely measure
-        if similarity==1:
-            df.loc[idx,'datadic'] = keys_mat[idx][0]
-        else:
-            removelist = " "
-            question = re.sub(r'[^\w'+removelist+']', '', df.loc[idx, 'questions'])
-            ratios = {}
-            for kk in keys_mat[idx]:
-                for vv in dicts[kk]:
-                    print(f'comparing {question} to {vv}')
-                    try:
-                        # strip non-alphanumeric characters from strings and compare
-                        compare_str = re.sub(r'[^\w'+removelist+']', '', vv)
-                        ratio = SequenceMatcher(None, question, compare_str).ratio()
-                        ratios.update({f'{kk}:{compare_str}': ratio})
-                    except:
-                        pass
-            # find matching sentence
-            sentence_idx = np.argmax(list(ratios.values()))
-            correct_key, correct_sentence = list(ratios.keys())[sentence_idx].split(':')
-            #df.loc[idx, 'new_question'] = correct_sentence
-            df.loc[idx, 'datadic'] = correct_key
-
-    # make new column names
-    df = _match_datadic_to_data(dataframe=df)
-
-    # save out new file
-    df.to_csv(os.path.join(Defaults.PHENO_DIR, 'item-names-new.csv'), index=False)
-
-
-def get_disorder_categories():
-    # get dataframe containing clinical diagnoses
-    dataframe = make_summary()
-    
-    # get categories of diagnoses
-    column='DX_01_Cat_new'
-    categories = dataframe[column].unique().tolist()
-    
-    return categories + ['all'] 
-
-
-def get_disorder(column='DX_01', category='Anxiety Disorders'):
-    # get dataframe containing clinical diagnoses
-    dataframe = make_summary()
-    
-    if category != 'all':
-        disorders = dataframe[dataframe['DX_01_Cat_new']==category][column].unique()
-    elif category=='all':
-        disorders = dataframe[column].unique()
-    
-    return disorders
-
-
 def get_participants(
+    dataframe=None,
     split='train', 
     disorders=['ADHD-Combined_Type', 'ADHD-Inattentive_Type'], 
     age='all',
@@ -329,14 +270,16 @@ def get_participants(
     """return list of participant identifiers and filter based on `disorders`, `age`, `sex`
 
     Args:  
+        dataframe (pd dataframe or None): default is None. Must contain `Age`, `Sex`, and `Identifiers`. If None, will use `make_summary`
         split (str): default is 'train', other option is 'test' or 'all'
-        disorders (list of str): list of diagnoses
+        disorders (list of str): list of diagnoses. get options from `get_all_diagnoses`
         age (int or 'all'): (optional): default is 'all'. other options are list of numbers between 6 - 21
         sex (str or 'all'): (optional): default is 'all'. other options 'male' or 'female
     Returns:
         `identifiers` (list of str): participant list
     """
     import os
+    import re
     import pandas as pd
 
     if split=='all':
@@ -347,6 +290,9 @@ def get_participants(
     # if 'All_Other_Diagnoses' is given, then return all participants
     if 'All_Other_Diagnoses' in disorders:
         disorders = ['all']
+
+    # check if `disorders` is coded correctly
+    disorders = ['_'.join(re.split(r'_|,|/| ', d)) for d in disorders]
         
     df_all = pd.DataFrame()
     # loop over disorders
@@ -357,7 +303,10 @@ def get_participants(
                 df = pd.read_csv(fname)
 
                 # load clinical diagnosis
-                dx = make_summary(save=False)
+                if dataframe is None:
+                    dx = make_summary(save=False)
+                else:
+                    dx = dataframe
             
                 # integrate dataframes
                 df_dx = df.merge(dx, on=['Identifiers'])
@@ -384,11 +333,13 @@ def get_participants(
 
 def add_participant_groups(
     participants,
+    dataframe=None,
     disorders=['ADHD', 'All_Other_Diagnoses'], 
     ):
     """ add participant groups to participant identifiers if one of the disorders is 'All_Other_Diagnoses'
     Args:
         participants (list of str): list of participant identifiers (output from `get_participants`)
+        dataframe (pd dataframe or None): default is None. Must contain `DX_{num_str}_Cat_new` and `DX_{num_str}` and `Identifiers`. If None, will use `make_summary`
         disorders (list of str): list of disorders, must include 'All_Other_Diagnoses'
     Returns:
         df (pd dataframe): contains columns: 'Identifiers' and 'participant_groups'
@@ -398,7 +349,10 @@ def add_participant_groups(
     df = pd.DataFrame(participants, columns=['Identifiers'])
 
     # load clinical diagnosis
-    dx = make_summary(save=False)
+    if dataframe is None:
+        dx = make_summary(save=False)
+    else:
+        dx = dataframe
 
     # merge on clinical diagnosis
     df = dx.merge(df, on=['Identifiers'])
@@ -422,11 +376,13 @@ def add_participant_groups(
     return df[['Identifiers', 'participant_groups']]
 
 
-def define_new_categories(dataframe):
-    """define new disorder categories using labels from `DX_01_Cat`
+def define_new_categories(dataframe=None):
+    """define new disorder categories using labels from `DX_<num>_Cat`
 
     Args:
-        dataframe (pd dataframe)
+        dataframe (pd dataframe or None): default is None. Must contain columns `DX_{num_str}_Cat_new` and `DX_{num_str}`. If None, will use `make_summary`
+    Returns:
+        dataframe (pd dataframe): contains columns `DX_{num_str}_Cat_new`
     """
     import pandas as pd
 
@@ -451,6 +407,10 @@ def define_new_categories(dataframe):
     dx_to_model = ['Anxiety Disorders', 'Autism Spectrum Disorder', 'ADHD', 'No Diagnosis Given: No Reason Given',
                 'No Diagnosis Given', 'No Diagnosis Given: Incomplete Eval',
                 'Specific Learning Disorder with Impairment in Reading']
+
+    # get dataframe if None is given
+    if dataframe is None:
+        dataframe = make_summary(save=False)
 
     for num in range(1,11):
         
@@ -529,6 +489,10 @@ def _match_datadic_to_data(dataframe):
             dict = {info['datadic']: [info['abbrevs'], info['assessment'], info['domains'], info['measures']]}
         for k,v in dict.items():
             new_dict[k].append(v)
+    
+    # get dataframe if None is given
+    if dataframe is None:
+        dataframe = make_summary(save=False)
 
     # assign column names so that data can be indexed correctly
     for index in dataframe.index:
@@ -708,11 +672,11 @@ def make_new_proprietary_assessments_file(fpath=None, outpath=None):
     return df
 
 
-def _add_demographics(dataframe):
+def _add_demographics(dataframe=None):
     """add demographics to existing dataframe, merging on participant id `Identifiers`
 
     Args: 
-        dataframe (pd dataframe): must contain col `Identifiers`
+        dataframe (pd dataframe or None): default is None. Must contain columns `Identifiers`. If None, will use `make_summary`
     Returns:
         dataframe (pd dataframe): returns `dataframe` with additional demographic columns
     """
@@ -720,16 +684,21 @@ def _add_demographics(dataframe):
     df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Demographic_Questionnaire_Measures/Basic_Demos.csv'))
     df_demo.columns = df_demo.columns.str.replace('Basic_Demos,','')
     df_demo['Sex'] = df_demo['Sex'].map({0: 'male', 1: 'female'})
+
+    # get dataframe if None is given
+    if dataframe is None:
+        dataframe = make_summary(save=False)
+
     df_merged = df_demo[['Identifiers', 'Age', 'Sex', 'Enroll_Year']].merge(dataframe, on='Identifiers') # 'Sex_binarize',
 
     return df_merged
 
 
-def _add_race_ethnicity(dataframe):
+def _add_race_ethnicity(dataframe=None):
     """add race and ethnicity to existing dataframe, merging on participant id `Identifiers`
 
     Args: 
-        dataframe (pd dataframe): must contain col `Identifiers`
+        dataframe (pd dataframe): must contain col `Identifiers`. If None, will use `make_summary`
     Returns:
         dataframe (pd dataframe): returns `dataframe` with additional demographic columns
     """
@@ -759,6 +728,10 @@ def _add_race_ethnicity(dataframe):
             }
         return ethnicity_dict[x]
 
+    # get dataframe if None is given
+    if dataframe is None:
+        dataframe = make_summary(save=False)
+
     # READ DEMOGRAPHICS - INTAKE INTERVIEW
     df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Interview_of_Emotional_and_Psychological_Function/PreInt_Demos_Fam.csv'))
     df_merged = dataframe.merge(df_demo, on='Identifiers', how='left')
@@ -768,7 +741,7 @@ def _add_race_ethnicity(dataframe):
     return df_merged
 
 
-def add_CGAS_Score(dataframe):
+def add_CGAS_Score(dataframe=None):
     """add CGAS_Score to existing dataframe, merging on participant id `Identifiers`
 
     Args: 
@@ -776,6 +749,10 @@ def add_CGAS_Score(dataframe):
     Returns: 
         returns `dataframe` with additional `CGAS_Score` column
     """
+
+    # get dataframe if None is given
+    if dataframe is None:
+        dataframe = make_summary(save=False)
 
     df_score = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'CGAS.csv'))
     df_score.columns = df_score.columns.str.replace('CGAS,','')

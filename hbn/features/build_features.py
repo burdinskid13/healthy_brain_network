@@ -102,6 +102,45 @@ def get_features(
     return df_all
 
 
+def get_targets_NEW(
+    binarize=True,
+    participants=None,
+    participant_groups=None
+    ):
+    """Return target dataframe
+
+    Args:
+        participants (list of str or None): (optional) if list of identifiers are passed, then returned dataframe filters for 'participants'
+        participant_groups (list of str or None): (optional) group identifiers by disorder to allow for binarization/factorization
+    Returns:
+        dataframe (pd dataframe)
+    """
+    import pandas as pd
+
+    # read in targets
+    df = pd.read_csv(target_info['filename'])
+    df = get_
+    
+    # optionally filter dataframe to contain certain participants
+    if participants is not None:
+        participants_df = pd.DataFrame(participants, columns=['Identifiers'])
+        df = df.merge(participants_df, on='Identifiers')
+
+    # change column values if participant_groups is given
+    if participant_groups is not None:
+        df['target'] = participant_groups
+    
+    # binarize `target`
+    if binarize:
+        df['target'] = df['target'].factorize()[0]
+
+    # remove -1 (corresponds to "NaN")
+    df = df[df['target']!=-1]
+
+    df_target = df[['Identifiers', 'target']]
+
+    return df_target
+
 def get_targets(
     target_info,
     participants=None,
@@ -110,18 +149,21 @@ def get_targets(
     """Return target dataframe using arguments in `target_info` (data loaded from target spec file)
 
     Args:
-        target_info (dict): dictionary loaded from target spec file (e.g., target_DX_01_Cat_binarize-spec.json)
+        target_info (dict): dictionary loaded from target spec file (e.g., target_DX_<num>_Cat_binarize-spec.json)
         participants (list of str or None): (optional) if list of identifiers are passed, then returned dataframe filters for 'participants'
         participant_groups (list of str or None): (optional) group identifiers by disorder to allow for binarization/factorization
     Returns:
         dataframe (pd dataframe)
     """
 
-    # get questionnaire
-    df = get_features(assessment=target_info['assessment'],
-                domains=[target_info['domain']],
-                measures=[target_info['measure']]
-                )
+    # get relevent features to predict
+    # df = get_features(assessment=target_info['assessment'],
+    #             domains=[target_info['domain']],
+    #             measures=[target_info['measure']]
+    #             )
+
+    # read in targets
+    df = pd.read_csv(target_info['filename'])
     
     # optionally filter dataframe to contain certain participants
     if participants is not None:

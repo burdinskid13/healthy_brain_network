@@ -1153,62 +1153,27 @@ def parent_features_base(out_dir=Defaults.FEATURE_DIR):
 def targets():
     """hardcode target features
     """
+
+    for num in range(1,11):
+        num_str = str(num).zfill(2)
+        diagnosis = f'Diagnosis_{num_str}'
+        category = f'Subtype_{num_str}'
+        cols_to_ignore.extend([diagnosis, category])
+
     target_info = [
                     {"assessment": "Clinical Measures",
                     "domain": None,
                     "measure": "Clinical Diagnosis Demographics",
-                    "target_column": "DX_01_Cat",
-                    "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
-                    "transform": "binarize",
-                    "outname": "DX_01_Cat_binarize"
-                    },
-                    {"assessment": "Clinical Measures",
-                    "domain": None,
-                    "measure": "Clinical Diagnosis Demographics",
                     "target_column": "DX_01_Cat_new",
-                    "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
                     "transform": "binarize",
                     "outname": "DX_01_Cat_new_binarize"
                     },
                     {"assessment": "Clinical Measures",
                     "domain": None,
                     "measure": "Clinical Diagnosis Demographics",
-                    "target_column": "DX_01_Cat_new",
-                    "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
-                    "transform": "factorize",
-                    "outname": "DX_01_Cat_new_factorize"
-                    },
-                    {"assessment": "Clinical Measures",
-                    "domain": None,
-                    "measure": "Clinical Diagnosis Demographics",
-                    "target_column": "DX_01_Cat",
-                    "features_to_ignore": ['KSADS', 'Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
-                    "transform": "factorize",
-                    "outname": "DX_01_Cat_factorize"
-                    },
-                    {"assessment": "Clinical Measures",
-                    "domain": None,
-                    "measure": "Clinical Diagnosis Demographics",
                     "target_column": "DX_01",
-                    "features_to_ignore": ['KSADS','Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
                     "transform": "binarize",
                     "outname": "DX_01_binarize"
-                    },
-                    {"assessment": "Clinical Measures",
-                    "domain": None,
-                    "measure": "Clinical Diagnosis Demographics",
-                    "target_column": "DX_01",
-                    "features_to_ignore": ['KSADS','Diagnosis', 'DX_01_Cat', 'DX_01_Cat_new', 'Category', 'DX_01', 'comorbidities'],
-                    "transform": "factorize",
-                    "outname": "DX_01_factorize"
-                    },
-                    {"assessment": "Clinical Measures",
-                    "domain": None,
-                    "measure": "Clinical Diagnosis Demographics",
-                    "target_column": "Sex",
-                    "features_to_ignore": ['KSADS','Sex'],
-                    "transform": "binarize",
-                    "outname": "Sex_binarize"
                     }
                 ]
 
@@ -1216,7 +1181,11 @@ def targets():
 
 
 def features():
-    # get separate bases - we will get all combinations of assessment*domains*measures to create unique feature specs
+    # get separate bases - we will get all combinations ofassessment*domains*measures to create unique feature specs
+
+    features_to_add = ['Sex', 'Age', 'PreInt_Demos_Fam,Child_Race_cat', 'PreInt_Demos_Fam,Child_Ethnicity_cat']
+    features_to_remove = ['KSADS', 'comorbidities']
+
     feature_info = {
             'basic_demographics':
             {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
@@ -1224,7 +1193,8 @@ def features():
             "measures": "all",
             "abbrevs": 'all',
             "filter_features": {'filename': None, 'columns': None},
-            "add_features": {'filename': 'Demographic_Features.csv', 'columns': ['Sex', 'Age', 'Diagnosis', 'Category', 'comorbidities', 'Race', 'Ethnicity']} 
+            "add_features": {'filename': 'Clinical_Diagnosis_Demographics.csv', 'columns': features_to_add}, 
+            "remove_features":  features_to_remove 
             }, 
             'total_scores_demographics':
             {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
@@ -1232,7 +1202,8 @@ def features():
             "measures": "all",
             "abbrevs": 'all',
             "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Total_Scores']},
-            "add_features": {'filename': 'Demographic_Features.csv', 'columns': ['Sex', 'Age', 'Diagnosis', 'Category', 'comorbidities', 'Race', 'Ethnicity']}   
+            "add_features": {'filename': 'Clinical_Diagnosis_Demographics.csv', 'columns': features_to_add},
+            "remove_features":  features_to_remove 
             },
             'remove_total_scores_demographics':
             {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
@@ -1240,7 +1211,8 @@ def features():
             "measures": "all",
             "abbrevs": 'all',
             "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Not_Total_Scores']},
-            "add_features": {'filename': 'Demographic_Features.csv', 'columns': ['Sex', 'Age', 'Diagnosis', 'Category', 'comorbidities', 'Race', 'Ethnicity']}   
+            "add_features": {'filename': 'Clinical_Diagnosis_Demographics.csv', 'columns': features_to_add},
+            "remove_features":  features_to_remove 
             },
             'free_assessments_demographics':
             {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
@@ -1248,7 +1220,8 @@ def features():
             "measures": "all",
             "abbrevs": 'all',
             "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Free_Assessments']},
-            "add_features": {'filename': 'Demographic_Features.csv', 'columns': ['Sex', 'Age', 'Diagnosis', 'Category', 'comorbidities', 'Race', 'Ethnicity']}   
+            "add_features": {'filename': 'Clinical_Diagnosis_Demographics.csv', 'columns': features_to_add},
+            "remove_features":  features_to_remove 
             },
             'proprietary_assessments_demographics':
             {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
@@ -1256,7 +1229,8 @@ def features():
             "measures": "all",
             "abbrevs": 'all',
             "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Proprietary_Assessments']},
-            "add_features": {'filename': 'Demographic_Features.csv', 'columns': ['Sex', 'Age', 'Diagnosis', 'Category', 'comorbidities', 'Race', 'Ethnicity']}   
+            "add_features": {'filename': 'Clinical_Diagnosis_Demographics.csv', 'columns': features_to_add},
+            "remove_features":  features_to_remove 
             }
     }
 
