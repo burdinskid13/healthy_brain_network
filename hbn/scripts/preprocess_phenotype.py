@@ -36,10 +36,6 @@ def run(parse=False):
     df = make_dataset.make_summary()
     print('created new clinical diagnosis file', flush=True)
 
-    # make demographic features (saved in FEATURE_DIR)
-    make_dataset.make_demographics()
-    print('created new demographics file', flush=True)
-
     # make interim data files (Child, Parent, Teacher measures - preprocessed + raw)
     make_dataset.make_interim_data_files()
     print('created new interm data files', flush=True)

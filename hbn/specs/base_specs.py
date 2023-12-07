@@ -1,9 +1,9 @@
 import os
-from hbn import io
-from hbn.constants import Defaults
-from hbn.features import build_features
+import numpy as np
 
-def pydralml_base(n_splits=5, test_size=0.2):
+def pydraml():
+    """Parameters in `base_info` and `spec_info` are required by pydraml pipeline: https://github.com/nipype/pydra-ml 
+    """
 
     base_info = {
         "filename" : None,
@@ -11,8 +11,8 @@ def pydralml_base(n_splits=5, test_size=0.2):
         "target_vars" : None,
         "permute" : [True, False],
         "group_var" : None,
-        "n_splits" : n_splits,
-        "test_size" : test_size,
+        "n_splits" : 5,
+        "test_size" : .2,
         "permute" : [True, False],
         "gen_feature_importance" : True,
         "gen_permutation_importance" : True,
@@ -25,8 +25,9 @@ def pydralml_base(n_splits=5, test_size=0.2):
         "metrics" : ['roc_auc_score', 'f1_score', 'precision_score', 'recall_score']
         }
 
-    clf_info = {
-        'spec1':
+    spec_info = {
+        'pydraml1':
+        {'clf_info': 
         [
             ["sklearn.ensemble", "AdaBoostClassifier"],
             ["sklearn.naive_bayes", "GaussianNB"],
@@ -37,13 +38,10 @@ def pydralml_base(n_splits=5, test_size=0.2):
             ["sklearn.neural_network", "MLPClassifier", {"alpha": 1, "max_iter": 1000}],
             ["sklearn.svm", "SVC", {"probability": True},
             [{"kernel": ["rbf", "linear"], "C": [1, 10, 100, 1000]}]],
-        ],
-        'spec2':
-        [
-        [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]],
-        ],
-        'spec3':
+        ]
+        },
+        'pydraml2':
+        {'clf_info': 
         [
         [["sklearn.preprocessing", "StandardScaler"],
             ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]], # classifier has to be last list
@@ -52,1535 +50,181 @@ def pydralml_base(n_splits=5, test_size=0.2):
         [["sklearn.preprocessing", "StandardScaler"],
             ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]] # classifier has to be last list
         ],
-        'spec4':
+        },
+        'pydraml3':
+        {'clf_info': 
         [
-            ["sklearn.feature_selection", "SelectFromModel", {"estimator": "LinearSVC"}],
-            ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]
+        [["sklearn.preprocessing", "StandardScaler"],
+            ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]], # classifier has to be last list
         ],
-        'spec5':
-        [
-            [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]] # classifier has to be last list 
-        ]
+        },
         }
-    return clf_info, base_info
+    return base_info, spec_info
 
 
-def participant_base(out_dir=os.path.join(Defaults.MODEL_SPEC_DIR, 'participant_specs')):
+def participants():
+    """Any variables set in `spec_info` (e.g., `age`, `sex`, `race`) should be present in `base_info.filename` 
+    """
 
+    base_info = {'filename': 'participant_train_test.csv',
+                'participant_id': 'Identifiers' # should be string (e.g., 'Identifiers', 'pat_id') and it's assumed that the `participant_id` column is in the features and targets dataframes (code checks this)
+                }
+    
     spec_info = {
-        'spec-adhd-No_Diagnosis':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-All_Other_Diagnoses':
-        {'diagnoses': ['ADHD', 'All_Other_Diagnoses'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-asd-No_Diagnosis':
-        {'diagnoses': ['Autism_Spectrum_Disorder', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-asd-All_Other_Diagnoses':
-        {'diagnoses': ['Autism_Spectrum_Disorder', 'All_Other_Diagnoses'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        # 'spec-adhd-Subtypes_02':
-        # {'diagnoses': ['ADHD-Combined_Type', 'ADHD-Inattentive_Type'],
-        #  'split': 'train',
-        #  'age': 'all',
-        #  'sex': 'all',
-        #  'ethnicity': 'all'
-        # },
-        'spec-depression-No_Diagnosis':
-        {'diagnoses': ['Depressive_Disorders', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-depression-All_Other_Diagnoses':
-        {'diagnoses': ['Depressive_Disorders', 'All_Other_Diagnoses'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-anxiety-No_Diagnosis':
-        {'diagnoses': ['Anxiety_Disorders', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-anxiety-All_Other_Diagnoses':
-        {'diagnoses': ['Anxiety_Disorders', 'All_Other_Diagnoses'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-No_Diagnosis':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-All_Other_Diagnoses':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'All_Other_Diagnoses'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-No_Diagnosis-male':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-All_Other_Diagnoses-male':
-        {'diagnoses': ['ADHD', 'All_Other_Diagnoses'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-No_Diagnosis-female':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-All_Other_Diagnoses-female':
-        {'diagnoses': ['ADHD', 'All_Other_Diagnoses'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-asd-No_Diagnosis-male':
-        {'diagnoses': ['Autism_Spectrum_Disorder', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-asd-All_Other_Diagnoses-male':
-        {'diagnoses': ['Autism_Spectrum_Disorder', 'All_Other_Diagnoses'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-asd-No_Diagnosis-female':
-        {'diagnoses': ['Autism_Spectrum_Disorder', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-asd-All_Other_Diagnoses-female':
-        {'diagnoses': ['Autism_Spectrum_Disorder', 'All_Other_Diagnoses'],
-         'split': 'train',
-         'age': 'all',
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-No_Diagnosis-male':
+        'participants-Reading-all':
         {
-        "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
+         'split': ['train'],
+         'Age_round': [int(t) for t in np.arange(5,22)],
+         'Sex': ['male', 'female'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
         },
-        'spec-reading-All_Other_Diagnoses-male':
+        'participants-Reading-male':
         {
-        "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'All_Other_Diagnoses'],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
+         'split': ['train'],
+         'Age_round': [int(t) for t in np.arange(5,22)],
+         'Sex': ['male'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
         },
-        'spec-reading-No_Diagnosis-female':
+        'participants-Reading-female':
         {
-        "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
+         'split': ['train'],
+         'Age_round': [int(t) for t in np.arange(5,22)],
+         'Sex': ['female'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
         },
-        'spec-reading-All_Other_Diagnoses-female':
+        'participants-Reading-White':
         {
-        "diagnoses": ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'All_Other_Diagnoses'],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
+         'split': ['train'],
+         'Age_round': [int(t) for t in np.arange(5,22)],
+         'Sex': ['male', 'female'],
+         'PreInt_Demos_Fam,Child_Race_cat': ['White/Caucasian'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
         },
-        'spec-anxiety-No_Diagnosis-female':
+        'participants-Reading-Black':
         {
-        "diagnoses": ['Anxiety_Disorders', 'No_Diagnosis_Given'],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
+         'split': ['train'],
+         'Age_round': [int(t) for t in np.arange(5,22)],
+         'Sex': ['male', 'female'],
+         'PreInt_Demos_Fam,Child_Race_cat': ['Black/African American'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
         },
-        'spec-anxiety-All_Other_Diagnoses-female':
+        'participants-Reading-multiple-races':
         {
-        "diagnoses": ['Anxiety_Disorders', 'All_Other_Diagnoses'],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
+         'split': ['train'],
+         'Age_round': [int(t) for t in np.arange(5,22)],
+         'Sex': ['male', 'female'],
+         'PreInt_Demos_Fam,Child_Race_cat': ['Two or more races'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
         },
-        'spec-anxiety-No_Diagnosis-male':
+        'participants-Reading-Hispanic':
         {
-        "diagnoses": ['Anxiety_Disorders', 'No_Diagnosis_Given'],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-anxiety-All_Other_Diagnoses-male':
-        {
-        "diagnoses": ['Anxiety_Disorders', 'All_Other_Diagnoses'],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-depression-No_Diagnosis-female':
-        {
-        "diagnoses": ['Depressive_Disorders', 'No_Diagnosis_Given'],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
-        },
-        'spec-anxiety-All_Other_Diagnoses-female':
-        {
-        "diagnoses": ['Anxiety_Disorders', 'All_Other_Diagnoses'],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
-        },
-        'spec-depression-No_Diagnosis-male':
-        {
-        "diagnoses": ['Depressive_Disorders', 'No_Diagnosis_Given'],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-depression-All_Other_Diagnoses-male':
-        {
-        "diagnoses": ['Depressive_Disorders', 'All_Other_Diagnoses'],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-adhd-age-05':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-06':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [6],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-07':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-08':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [8],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-09':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-10':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [10],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-11':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-12':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [12],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-13':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-14':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [14],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-15':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-16':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [16],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-17+':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [17,18,19,20,21,22],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-05':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-06':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [6],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-07':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-08':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [8],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-09':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-10':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [10],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-11':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-12':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [12],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-13':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-14':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [14],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-15':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-16':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [16],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-17+':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [17,18,19,20,21,22],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-05':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-06':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [6],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-07':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-08':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [8],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-09':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-10':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [10],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-11':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-12':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [12],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-13':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-14':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [14],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-15':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-16':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [16],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-17+':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [17,18,19,20,21,22],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-05_06':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5,6],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-07_08':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7,8],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-09_10':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9,10],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-11_12':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11,12],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-13_14':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13,14],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-15_16':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15,16],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-17+':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [17,18,19,20,21,22],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-05_06':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5,6],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-07_08':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7,8],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-09_10':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9,10],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-11_12':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11,12],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-13_14':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13,14],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-15_16':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15,16],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-male-17+':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [17,18,19,20,21,22],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-05_06':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5,6],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-07_08':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7,8],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-09_10':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9,10],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-11_12':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11,12],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-13_14':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13,14],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-15_16':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15,16],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-age-female-17':
-        {'diagnoses': ['ADHD', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [17,18,19,20,21,22],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-adhd-anxiety':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Anxiety_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "all",
-        "ethnicity": "all"
-        },
-        'spec-adhd-depression':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Depressive_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "all",
-        "ethnicity": "all"
-        },
-        'spec-adhd-asd':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Autism_Spectrum_Disorder"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "all",
-        "ethnicity": "all"
-        },
-        'spec-adhd-reading':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Specific_Learning_Disorder_with_Impairment_in_Reading"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "all",
-        "ethnicity": "all"
-        },
-        'spec-adhd-anxiety-male':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Anxiety_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-adhd-depression-male':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Depressive_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-adhd-asd-male':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Autism_Spectrum_Disorder"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-adhd-reading-male':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Specific_Learning_Disorder_with_Impairment_in_Reading"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-adhd-anxiety-female':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Anxiety_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
-        },
-        'spec-adhd-depression-female':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Depressive_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
-        },
-        'spec-adhd-asd-female':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Autism_Spectrum_Disorder"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
-        },
-        'spec-adhd-reading-female':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Specific_Learning_Disorder_with_Impairment_in_Reading"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
-        },
-        'spec-reading-anxiety':
-        {
-        "diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "Anxiety_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "all",
-        "ethnicity": "all"
-        },
-        'spec-reading-depression':
-        {"diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "Depressive_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "all",
-        "ethnicity": "all"
-        },
-        'spec-reading-asd':
-        {"diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "Autism_Spectrum_Disorder"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "all",
-        "ethnicity": "all"
-        },
-        'spec-reading-No_Diagnosis':
-        {"diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "No_Diagnosis_Given"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "all",
-        "ethnicity": "all"
-        },
-        'spec-reading-anxiety-male':
-        {
-        "diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "Anxiety_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-reading-depression-male':
-        {"diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "Depressive_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-reading-asd-male':
-        {"diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "Autism_Spectrum_Disorder"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-reading-No_Diagnosis-male':
-        {"diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "No_Diagnosis_Given"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "male",
-        "ethnicity": "all"
-        },
-        'spec-reading-anxiety-female':
-        {
-        "diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "Anxiety_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
-        },
-        'spec-reading-depression-female':
-        {"diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "Depressive_Disorders"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
-        },
-        'spec-reading-asd-female':
-        {"diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "Autism_Spectrum_Disorder"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
-        },
-        'spec-reading-No_Diagnosis-female':
-        {"diagnoses": [
-            "Specific_Learning_Disorder_with_Impairment_in_Reading",
-            "No_Diagnosis_Given"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "female",
-        "ethnicity": "all"
-        },
-        'spec-adhd-multilabel':
-        {
-        "diagnoses": [
-            "ADHD",
-            "Autism_Spectrum_Disorder",
-            "Anxiety_Disorders",
-            "Depressive_Disorders",
-            "Specific_Learning_Disorder_with_Impairment_in_Reading"
-        ],
-        "split": "train",
-        "age": "all",
-        "sex": "all",
-        "ethnicity": "all"
-        },
-        'spec-reading-age-05':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-06':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [6],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-07':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-08':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [8],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-09':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-10':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [10],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-11':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-12':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [12],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-13':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-14':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [14],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-15':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-16':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [16],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-17+':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [17,18,19,20,21,22],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-05-06':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5,6],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-07-08':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7,8],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-09-10':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9,10],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-11-12':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11,12],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-13-14':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13,14],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-15-16':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15,16],
-         'sex': 'all',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-05':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-06':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [6],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-07':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-08':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [8],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-09':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-10':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [10],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-11':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-12':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [12],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-13':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-14':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [14],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-15':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-16':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [16],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-17+':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [17,18,19,20,21,22],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-05-06':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5,6],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-07-08':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7,8],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-09-10':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9,10],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-11-12':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11,12],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-13-14':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13,14],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-female-15-16':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15,16],
-         'sex': 'female',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-05':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-06':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [6],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-07':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-08':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [8],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-09':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-10':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [10],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-11':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-12':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [12],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-13':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-14':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [14],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-15':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-16':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [16],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-17+':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [17,18,19,20,21,22],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-05-06':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [5,6],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-07-08':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [7,8],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-09-10':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [9,10],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-11-12':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [11,12],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-13-14':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [13,14],
-         'sex': 'male',
-         'ethnicity': 'all'
-        },
-        'spec-reading-age-male-15-16':
-        {'diagnoses': ['Specific_Learning_Disorder_with_Impairment_in_Reading', 'No_Diagnosis_Given'],
-         'split': 'train',
-         'age': [15,16],
-         'sex': 'male',
-         'ethnicity': 'all'
+         'split': ['train'],
+         'Age_round': [int(t) for t in np.arange(5,22)],
+         'Sex': ['male', 'female'],
+         'PreInt_Demos_Fam,Child_Race_cat': ['Hispanic'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
         },
         }
-    return spec_info
 
-
-def parent_features_base(out_dir=Defaults.FEATURE_DIR):
-
-    base_info = {
-                "preprocessing": {
-                    "preprocess": True,
-                    "cols_to_drop": ['EID', 'Comment_ID', 'Unnamed', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID', 'Release_Number'], # cols to drop while preprocessing
-                    "cols_to_ignore": ['Identifiers'], # cols to ignore in the preprocessing routine (column transformation)
-                    "upsample": True, # upsample minority class using SMOTE
-                    "threshold": False, #threshold dataframe based on some fixed criterion
-                    "clf_info": {
-                        "numeric": [
-                            [
-                                "sklearn.impute",
-                                "SimpleImputer",
-                                {
-                                    "strategy": "mean"
-                                }
-                            ],
-                            [
-                                "sklearn.preprocessing",
-                                "StandardScaler",
-                                {}
-                            ]
-                        ]
-                        }
-            }
-            }
-
-    return base_info
+    return base_info, spec_info
 
 
 def targets():
     """hardcode target features
     """
 
-    for num in range(1,11):
-        num_str = str(num).zfill(2)
-        diagnosis = f'Diagnosis_{num_str}'
-        category = f'Subtype_{num_str}'
-        cols_to_ignore.extend([diagnosis, category])
-
-    target_info = [
-                    {"assessment": "Clinical Measures",
-                    "domain": None,
-                    "measure": "Clinical Diagnosis Demographics",
-                    "target_column": "DX_01_Cat_new",
-                    "transform": "binarize",
-                    "outname": "DX_01_Cat_new_binarize"
-                    },
-                    {"assessment": "Clinical Measures",
-                    "domain": None,
-                    "measure": "Clinical Diagnosis Demographics",
-                    "target_column": "DX_01",
-                    "transform": "binarize",
-                    "outname": "DX_01_binarize"
+    base_info = {
+        'upsample': True, # upsample minority target class using SMOTE
                     }
-                ]
+    spec_info = {'target-Diagnosis':
+                    {
+                    'filename': 'all_participant_diagnoses.csv',
+                    'target_column': 'DX_Cat_Name', # should be string (e.g., 'age', 'diagnosis')
+                    'binarize': True,
+                    'cols_to_keep': ['Identifiers', 'DX_Cat_Name'], # columns we want in the final dataframe
+                    },
+                }
 
-    return target_info
+    return base_info, spec_info
 
 
 def features():
-    # get separate bases - we will get all combinations ofassessment*domains*measures to create unique feature specs
+    base_info = {
+                "threshold": False, # threshold dataframe based on some fixed criterion. We are using 50% for columns and 20% for rows. If threshold is False, then only NaN entries are removed (no thresholding applied)
+                "clf_info": {
+                    "numeric": [
+                        [
+                            "sklearn.impute",
+                            "SimpleImputer",
+                            {
+                                "strategy": "mean"
+                            }
+                        ],
+                        [
+                            "sklearn.preprocessing",
+                            "StandardScaler",
+                            {}
+                        ]
+                    ],
+                    "category": [
+                        [
+                            "sklearn.impute",
+                            "SimpleImputer",
+                            {
+                                "strategy": "constant", # most_frequent,
+                                "fill_value": "missing"
+                            }
+                        ],
+                        [
+                            "sklearn.preprocessing",
+                            "OneHotEncoder",
+                            {
+                                "handle_unknown": "ignore",
+                                "sparse_output": False,
+                                "categories": 'auto',
+                                "drop": 'if_binary',
+                                "max_categories": 10
+                            }
+                        ]
+                    ]
+                    }
+        }
 
-    features_to_add = ['Sex', 'Age', 'PreInt_Demos_Fam,Child_Race_cat', 'PreInt_Demos_Fam,Child_Ethnicity_cat']
-    features_to_remove = ['KSADS', 'comorbidities']
-
-    feature_info = {
-            'basic_demographics':
-            {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
-            "domains": "all",
-            "measures": "all",
-            "abbrevs": 'all',
-            "filter_features": {'filename': None, 'columns': None},
-            "add_features": {'filename': 'Clinical_Diagnosis_Demographics.csv', 'columns': features_to_add}, 
-            "remove_features":  features_to_remove 
+    spec_info = {
+            'features-Child':
+            {
+            "filename": 'Child-features-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
             }, 
-            'total_scores_demographics':
-            {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
-            "domains": "all",
-            "measures": "all",
-            "abbrevs": 'all',
-            "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Total_Scores']},
-            "add_features": {'filename': 'Clinical_Diagnosis_Demographics.csv', 'columns': features_to_add},
-            "remove_features":  features_to_remove 
+            'features-Parent':
+            {
+            "filename": 'Parent-features-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
             },
-            'remove_total_scores_demographics':
-            {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
-            "domains": "all",
-            "measures": "all",
-            "abbrevs": 'all',
-            "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Not_Total_Scores']},
-            "add_features": {'filename': 'Clinical_Diagnosis_Demographics.csv', 'columns': features_to_add},
-            "remove_features":  features_to_remove 
+            'features-Teacher':
+            {
+            "filename": 'Teacher-features-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
             },
-            'free_assessments_demographics':
-            {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
-            "domains": "all",
-            "measures": "all",
-            "abbrevs": 'all',
-            "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Free_Assessments']},
-            "add_features": {'filename': 'Clinical_Diagnosis_Demographics.csv', 'columns': features_to_add},
-            "remove_features":  features_to_remove 
+            'features-Child-remove-total-scores':
+            {
+            "filename": 'Child-features-Not_Total_Scores-raw.csv ', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
+            }, 
+            'features-Parent-remove-total-scores':
+            {
+            "filename": 'Parent-features-Not_Total_Scores-raw.csv ', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
             },
-            'proprietary_assessments_demographics':
-            {"assessment": ["Child Measures", "Parent Measures", "Teacher Measures", "Clinical Measures"],
-            "domains": "all",
-            "measures": "all",
-            "abbrevs": 'all',
-            "filter_features": {'filename': 'item-names-cleaned.csv', 'columns': ['Proprietary_Assessments']},
-            "add_features": {'filename': 'Clinical_Diagnosis_Demographics.csv', 'columns': features_to_add},
-            "remove_features":  features_to_remove 
-            }
+            'features-Teacher-remove-total-scores':
+            {
+            "filename": 'Teacher-features-Not_Total_Scores-raw.csv ', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
+            },
     }
 
-    # loop over these feature sets and make unique feature specs
-    spec_info = {}
-    for k,v in feature_info.items():
-
-        # get all combinations
-        specs = _get_feature_combinations(spec_info=v)
-        spec_info.update({k: specs})
-
-    return spec_info
+    return base_info, spec_info
 
 
-def _get_feature_combinations(spec_info):
-    """gets combinations of assessment*domain*measure to make many feature files from `parent_spec`
 
-    horrible code -- need to rewrite
 
-    Args:
-        parent_spec (dict): parent spec info (output from `make_parent_spec`)
-    """
-
-    assessments = spec_info['assessment']
-    domains = spec_info['domains']
-    measures = spec_info['measures']
-    abbrevs = spec_info['abbrevs']
-    filter_features = spec_info['filter_features']
-    add_features = spec_info['add_features']
-
-    # check arguments
-    if not isinstance(assessments, list):
-        assessments = [assessments]
-    if (not isinstance(domains, list) and (domains!='all')):
-        domains = [domains]
-    if (not isinstance(measures, list) and (measures!='all')):
-        measures = [measures]
-
-    # write out all possible feature combinations
-    spec_info = []
-    for assess in assessments:
-        if domains=='all':
-            domain_names = build_features.get_domains(assess)[assess]
-            if domain_names is not None:
-                domain_names.remove('all')
-            elif domain_names is None:
-                domain_names = [domain_names]
-        for domain in domain_names:
-            if measures=='all':
-                measure_names = build_features.get_measures(assess, domain)[domain]
-            for measure in measure_names:
-                abbrevs = build_features.get_abbrevs(assess, measure)
-                for abbrev in abbrevs:
-                    spec_info.append({'assessment': assess,
-                            'domains': domain,
-                            'measures': measure,
-                            'abbrevs': abbrev,
-                            'filter_features': filter_features,
-                            'add_features': add_features
-                            })
-
-        # write out assessment-feature models
-        spec_info.append(
-            {'assessment': assess,
-            'domains': 'all',
-            'measures': 'all',
-            'abbrevs': 'all',
-            'filter_features': filter_features,
-            'add_features': add_features
-            })
-
-        # write out all-feature models
-        spec_info.append(
-            {'assessment': 'all',
-             'domains': 'all',
-             'measures': 'all',
-             'abbrevs': 'all',
-             'filter_features': filter_features,
-             'add_features': add_features
-             })
-
-    return spec_info
