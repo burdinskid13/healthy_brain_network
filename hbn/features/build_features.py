@@ -1,150 +1,155 @@
-import os
-from this import d
+from src import io
+import pandas as pd 
 import numpy as np
-import pandas as pd
-import logging
-from pathlib import Path
-import itertools
-import glob
-import re
-import warnings
+import os
 
-from hbn.data import make_dataset
-from hbn import io
-from hbn.constants import Defaults
-
-
-def get_targets_NEW(
-    binarize=True,
-    participants=None,
-    participant_groups=None
-    ):
-    """Return target dataframe
+def get_features(info, dirn):
+    """Create features from parameters set in `feature_spec`, do some basic preprocessing (removing superfluous columns)
 
     Args:
-        participants (list of str or None): (optional) if list of identifiers are passed, then returned dataframe filters for 'participants'
-        participant_groups (list of str or None): (optional) group identifiers by disorder to allow for binarization/factorization
-    Returns:
-        dataframe (pd dataframe)
-    """
-    import pandas as pd
-
-    # read in targets
-    df = pd.read_csv(target_info['filename'])
-    df = get_
-    
-    # optionally filter dataframe to contain certain participants
-    if participants is not None:
-        participants_df = pd.DataFrame(participants, columns=['Identifiers'])
-        df = df.merge(participants_df, on='Identifiers')
-
-    # change column values if participant_groups is given
-    if participant_groups is not None:
-        df['target'] = participant_groups
-    
-    # binarize `target`
-    if binarize:
-        df['target'] = df['target'].factorize()[0]
-
-    # remove -1 (corresponds to "NaN")
-    df = df[df['target']!=-1]
-
-    df_target = df[['Identifiers', 'target']]
-
-    return df_target
-
-def get_targets(
-    target_info,
-    participants=None,
-    participant_groups=None
-    ):
-    """Return target dataframe using arguments in `target_info` (data loaded from target spec file)
-
-    Args:
-        target_info (dict): dictionary loaded from target spec file (e.g., target_DX_<num>_Cat_binarize-spec.json)
-        participants (list of str or None): (optional) if list of identifiers are passed, then returned dataframe filters for 'participants'
-        participant_groups (list of str or None): (optional) group identifiers by disorder to allow for binarization/factorization
-    Returns:
-        dataframe (pd dataframe)
+        info (dict): dictionary loaded from `feature_spec`
+        dirn (str): directory where 'filename' from `feature_spec` is located
+    Retunrs:
+        df (pd dataframe): dataframe of features
     """
 
-    # get relevent features to predict
-    # df = get_features(assessment=target_info['assessment'],
-    #             domains=[target_info['domain']],
-    #             measures=[target_info['measure']]
-    #             )
+    # load in csv file
+    df = pd.read_csv(os.path.join(dirn, info['filename']))
 
-    # read in targets
-    df = pd.read_csv(target_info['filename'])
-    
-    # optionally filter dataframe to contain certain participants
-    if participants is not None:
-        participants_df = pd.DataFrame(participants, columns=['Identifiers'])
-        df = df.merge(participants_df, on='Identifiers')
-
-    # get variables from target_info
-    col = target_info['target_column']
-    target = target_info['transform']
-    new_target = target_info['outname']
-
-    # change column values if participant_groups is given
-    if participant_groups is not None:
-        df[col] = participant_groups
-    
-    # get new targets (binarize, factorize, or leave as is)
-    if target=='binarize':
-        df[new_target] = df[col].factorize()[0]
-    elif target=='factorize':
-        df[new_target] = df[col].factorize()[0]
-    else:
-        df[new_target] = df[col]
-
-    # remove -1 (corresponds to "NaN")
-    df = df[df[new_target]!=-1]
-
-    df_target = df[['Identifiers', new_target]]
-
-    return df_target
-
-
-def preprocess(
-        dataframe,
-        cols_to_drop=['EID', 'Comment_ID', 'Administration', 'Days_Baseline', 'Data_entry', 'START_DATE', 'Year', 'Site', 'Season', 'Visit_label', 'Study', 'PSCID'],
-        clf_info=None,
-        cols_to_ignore=None,
-        threshold=False
-        ):
-
-    """Preprocess the features (data cleaning, scaling, imputation, standarization, one-hot encoding)
-
-    Args:
-        dataframe (pd dataframe): pandas dataframe to preprocess, should include X features and y target var, output from `get_features`
-        cols_to_drop (list of str): (optional) list of columns to drop from dataframe
-        clf_info (dict of lists of scikit-learn classifiers or None): (optional) see `hbn/features/*.json` for example of structure. default is None
-        cols_to_ignore (list of str or None): (optional) columns to ignore in preprocessing. Default is None.
-        threshold (bool): threshold dataframe based on some fixed criterion. We are using 50% for columns and 20% for rows. If threshold is False, then only NaN entries are removed (no thresholding applied)
-    """
     # do some scrubbing (e.g., remove superfluous columns)
-    df_all = pd.DataFrame()
-    for filter in cols_to_drop:
-        df = dataframe.filter(like=filter)
-        df_all = pd.concat([df_all, df], axis=1)
+    df_drop = pd.DataFrame()
+    for filter in info['cols_to_drop']:
+        df_filter = df.filter(like=filter)
+        df_drop = pd.concat([df_drop, df_filter], axis=1)
+    df.drop(df_drop.columns, axis=1, inplace=True)
 
-    # drop superfluous columns
-    dataframe.drop(df_all.columns, axis=1, inplace=True)
+    return df
 
-    if threshold:
-        # drop by threshold of NaN rows and columns 
-        limitPerCols = dataframe.shape[1] * .50
-        limitPerRows = dataframe.shape[0] * .20
-        dataframe = dataframe.dropna(thresh=limitPerCols, axis='columns')
-        dataframe = dataframe.dropna(thresh=limitPerRows, axis='index')
 
-    # preprocessing: column transformation
-    if clf_info is not None:
-        dataframe = column_transform(dataframe=dataframe, clf_info=clf_info, cols_to_ignore=cols_to_ignore)
-    dataframe = dataframe.reset_index(drop=True)
-    dataframe = dataframe.loc[:, ~dataframe.columns.str.contains('^Unnamed')]
+def get_targets(info, dirn):
+    """Create target(s) from parameters set in `target_spec`, do some basic preprocessing (binarize `target_column` and impute if there are NaN values)
+
+    Args:
+        info (dict): dictionary loaded from `target_spec`
+        dirn (str): directory where 'filename' from `target_spec` is located
+    Retunrs:
+        df (pd dataframe): dataframe of targets. 
+    """
+
+    # load in csv file
+    df = pd.read_csv(os.path.join(dirn, info['filename']))
+
+    # which column is the target
+    target = info['target_column']
+
+    # which columns are we keeping
+    if len(info['cols_to_keep']) > 0:
+        df = df[info['cols_to_keep']]
+
+    # binarize `target_column`
+    if info['binarize']:
+        df[target] = df[target].factorize()[0]
+        # remove -1 (corresponds to "NaN")
+        df = df[df[target]!=-1]
+
+    return df
+
+
+def get_participants(info, dirn):
+    """Get participant identifiers from parameters set in `participant_spec`
+
+    Args:
+        info (dict): dictionary loaded from `participant_spec`
+        dirn (str): directory where 'filename' from `participant_spec` is located
+    Retunrs:
+        df (pd dataframe): dataframe of participant identifiers 
+    """
+
+    # load in csv file
+    df = pd.read_csv(os.path.join(dirn, info['filename']))
+
+    # get columns and values from variables set in `participant_spec`
+    columns = list(info.keys())
+    values = list(info.values())
+
+    # return relevant participants indexed by columns and values
+    df = _index_dataframe_by_columns_values(dataframe=df, 
+                                    columns=columns, 
+                                    values_list=values
+                                    )
+
+    return df
+
+
+def combine_features_and_targets(features, targets, participant_id, participants=None):
+    """Combine features and targets into a single dataframe merging on `participant_id`. 
+    Optionally index by `participant_id` present in `participants`
+
+    Args:
+        features (pandas.DataFrame): The features dataframe.
+        targets (pandas.DataFrame): The targets dataframe.
+        participant_id (str): The column name of the participant identifier. Should be present in `features`, `targets`, and `participants`.
+        participants (pandas.DataFrame or None): The participants dataframe. Default is None.
+    Returns:
+        pandas.DataFrame: The combined and filtered dataframe.
+    """
+
+    # Check if the number of columns in the features and targets dataframes match.
+    # if features.shape[0] != targets.shape[0]:
+    #     raise ValueError("The number of rows in the features and targets dataframes must match.")
+
+    # get the intersection of columns between dataframes and remove `participant_id`
+    common_cols = list(features.columns.intersection(targets.columns))
+    common_cols = [c for c in common_cols if participant_id!=c]
+
+    # make sure the target column is not included in features dataframe
+    features = features.drop(common_cols, axis=1)
+
+    # Combine the features and targets dataframes into a single dataframe.
+    combined_df = features.merge(targets)
+
+    # drop duplicates
+    combined_df = combined_df.drop_duplicates().reset_index(drop=True)
+
+    # Index the combined dataframe by `participant_id` in participants dataframe (if provided).
+    if participants is not None:
+        participants_list = participants[participant_id].tolist()
+        combined_df = combined_df[combined_df[participant_id].isin(participants_list)]
+
+    return combined_df
+
+
+def _index_dataframe_by_columns_values(dataframe, columns, values_list):
+    """Indexes a Pandas DataFrame using a list of columns and a list of specific values.
+
+    Args:
+    dataframe (pandas.DataFrame): The DataFrame to index.
+    columns (list): A list of column names to index by.
+    values_list (list): A list of specific values to match.
+
+    Returns:
+    pandas.DataFrame: The filtered DataFrame.
+    """
+
+    # Check if the number of columns and values in the lists match.
+    if len(columns) != len(values_list):
+        raise ValueError("The number of columns and values in the lists must match.")
+
+    # Create a list of boolean values indicating whether each row matches the values.
+    row_matches = []
+    for i, column in enumerate(columns):
+        if column in dataframe.columns:
+            row_matches.append(dataframe[column].isin(values_list[i]))
+
+    # if there are multiple columns, combine the boolean values into a single boolean value
+    if len(row_matches)>0:
+        if len(row_matches)>1:
+            row_matches = np.logical_and(*row_matches)
+        else:
+            row_matches = row_matches[0]
+
+        # Filter the DataFrame to only include rows where the row_matches_combined value is True.
+        dataframe = dataframe[row_matches]
 
     return dataframe
 
@@ -167,6 +172,7 @@ def column_transform(
     from sklearn.compose import ColumnTransformer
     from sklearn.compose import make_column_selector as selector
     from sklearn.utils.validation import check_is_fitted
+    import pandas as pd
 
     ## functionality borrowed from pydra-ml
     def to_instance(clf_info):
@@ -199,7 +205,7 @@ def column_transform(
     dataframe_final = pd.DataFrame()
     if cols_to_ignore is not None:
         dataframe_final = dataframe.drop(cols_to_ignore, axis=1)
-        dataframe_to_ignore = dataframe[cols_to_ignore]
+        dataframe_to_ignore = dataframe[cols_to_ignore].reset_index(drop=True)
 
     # set up numeric pipeline
     transformers = []
@@ -213,44 +219,22 @@ def column_transform(
     # column transformer
     preprocesser = ColumnTransformer(transformers=transformers,
                 verbose_feature_names_out=True,
-                # remainder='passthrough'
+                #remainder='passthrough'
                 )
 
-    df_transformed = preprocesser.fit_transform(dataframe_final)
+    arr_transformed = preprocesser.fit_transform(dataframe_final)
 
     # get transformed feature names (on fitted transformers only)
     feature_names = preprocesser.get_feature_names_out()
 
     # make pandas dataframe from transformed data
-    df_transformed = pd.DataFrame(df_transformed, columns=feature_names)
+    df_transformed = pd.DataFrame(arr_transformed, columns=feature_names)
 
     # add `col_to_ignore` back in
     if cols_to_ignore is not None:
         df_transformed = pd.concat([dataframe_to_ignore, df_transformed], axis=1)
 
     return df_transformed
-
-
-def drop_duplicates(dataframe):
-    """some measures (i.e. Teacher) have duplicate rows (multiple Identifiers). We take the mean across the duplicate Identifiers (for numeric columns)
-    and take the first row (for object columns)
-    Args:
-        dataframe (pd dataframe):
-    Returns: 
-        df (pd dataframe): preprocessed dataframe (remove duplicates)
-    """
-    # remove duplicate columns
-    dataframe = dataframe.loc[:,~dataframe.columns.duplicated()].copy()
-    # remove trailing numbers (e.g., '_1', '_2')
-    dataframe['Identifiers'] = dataframe['Identifiers'].str.split('_').str.get(0)
-    # group by unique identifiers and take the mean value for the numeric items
-    tmp = dataframe.groupby('Identifiers').mean(numeric_only=True).reset_index()
-    # group by unique identifiers and take the first row of the object items
-    tmp2 = dataframe.select_dtypes(include='object').groupby('Identifiers').first().reset_index()
-    # merge both the numeric and object dataframes together
-    df = tmp.merge(tmp2, on='Identifiers')
-
-    return df
 
 
 def smote(y_train, X_train):
@@ -263,6 +247,8 @@ def smote(y_train, X_train):
         df_smote (pd dataframe)
     """
     from imblearn.over_sampling import SMOTE, RandomOverSampler
+    import pandas as pd
+    import numpy as np
 
     # try SMOTE and if it throws an error, try RandomOverSampler to oversample the minority class
     try:
@@ -278,3 +264,50 @@ def smote(y_train, X_train):
     return df_smote
 
 
+def preprocess(
+        dataframe,
+        clf_info=None,
+        cols_to_ignore=None,
+        cols_to_drop=None,
+        threshold=False,
+        upsample=True,
+        target_column=None
+        ):
+
+    """Preprocess the features (data cleaning, scaling, imputation, standarization, one-hot encoding)
+
+    Args:
+        dataframe (pd dataframe): pandas dataframe to preprocess, should include X features and y target var, output from `get_features`
+        clf_info (dict of lists of scikit-learn classifiers or None): (optional) see `base_specs.features` for an example.
+        cols_to_ignore (list of str or None): (optional) columns to ignore in preprocessing. Default is None.
+        cols_to_drop (list of str or None): (optional) columns to drop in preprocessing. Default is None.
+        threshold (bool): threshold dataframe based on some fixed criterion. We are using 50% for columns and 20% for rows. If threshold is False, then only NaN entries are removed (no thresholding applied)
+        upsample (bool): upsample minority class using SMOTE. default is True
+        target_column (str): target column name. default is None
+    """
+
+    if threshold:
+        # drop by threshold of NaN rows and columns 
+        limitPerCols = dataframe.shape[1] * .50
+        limitPerRows = dataframe.shape[0] * .20
+        dataframe = dataframe.dropna(thresh=limitPerCols, axis='columns')
+        dataframe = dataframe.dropna(thresh=limitPerRows, axis='index')
+
+    # preprocessing: column transformation
+    if clf_info is not None:
+        dataframe = column_transform(
+            dataframe=dataframe, 
+            clf_info=clf_info, 
+            cols_to_ignore=cols_to_ignore
+            )
+    
+    # optionally drop features
+    for col in cols_to_drop:
+        dataframe = dataframe.loc[:, ~dataframe.columns.str.contains(col)]
+
+    # upsample minority target class using smote 
+    if upsample and target_column:
+        x_cols = [col for col in dataframe.columns if target_column not in col]
+        dataframe = smote(y_train=dataframe[[target_column]], X_train=dataframe[x_cols])
+
+    return dataframe
