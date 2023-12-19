@@ -5,8 +5,8 @@ import os
 import ast
 import random
 
-from src import io
-from src.features import build_features
+from hbn import io
+from hbn.features import build_features
 
 class PythonLiteralOption(click.Option):
 
@@ -17,7 +17,7 @@ class PythonLiteralOption(click.Option):
             raise click.BadParameter(value)
 
 
-def _load_specs(feature_spec, target_spec, participant_spec):
+def load_specs(feature_spec, target_spec, participant_spec):
     """ Load in `feature_spec`, `target_spec`, and `participant_spec` 
 
     Args: 
@@ -35,7 +35,7 @@ def _load_specs(feature_spec, target_spec, participant_spec):
     return feature_info, target_info, participant_info
 
 
-def _get_data(feature_info, target_info, participant_info, dirn):
+def get_data(feature_info, target_info, participant_info, dirn):
     """ Get features, targets, and participant dataframes using parametesr from `feature_spec`, `target_spec`, and `participant_spec`
 
     Args: 
@@ -53,7 +53,7 @@ def _get_data(feature_info, target_info, participant_info, dirn):
     return df_features, df_target, df_participants
 
 
-def _check_participant_id(participant_id, df_features, df_target, df_participants):
+def check_participant_id(participant_id, df_features, df_target, df_participants):
     """check that `participant_id` column is in `df_features`, `df_target`, and `df_participants`
 
     Args: 
@@ -73,7 +73,7 @@ def _check_participant_id(participant_id, df_features, df_target, df_participant
         return check_id
 
     
-def _chain_dicts(dicts):
+def chain_dicts(dicts):
     """
     Chains together multiple dictionaries into a single dictionary.
 
@@ -107,33 +107,42 @@ def make_features(
     """
 
     # get features, targets, and participants dataframes
-    df_features, df_target, df_participants = _get_data(feature_info, target_info, participant_info, dirn=data_dir)
+    df_features, df_target, df_participants = get_data(feature_info, target_info, participant_info, dirn=data_dir)
+    print(f'loaded data from {data_dir}', flush=True)
 
     # get participant id from `participant_spec` - this column will be ignored in the preprocessing routine
     participant_id = participant_info['participant_id']
     
     # check if `participant_id` is present in all dataframes (raises error if not)
-    _check_participant_id(participant_id, df_features, df_target, df_participants)
+    check_participant_id(participant_id, df_features, df_target, df_participants)
 
-    # combine features and targets, and filter dataframe by participants
-    df_combined = build_features.combine_features_and_targets(
+    # combine features and targets
+    combined_df = build_features.combine_features_and_targets(
         features=df_features, 
         targets=df_target,
-        participant_id=participant_id,
-        participants=df_participants,
+        merge_on=participant_id,
         )
+    print(f'combined features and targets', flush=True)
 
-    # columns we want to ignore in the preprocessing routines: participant id, target
-    cols_to_ignore = [participant_id, target_info['target_column']]
-    
+    # filter participants
+    merge_cols = [participant_id, target_info['target_column']]
+    df_merged = build_features.merge_with_participants(
+        dataframe=combined_df, 
+        participants=df_participants, 
+        participant_id=participant_id, 
+        merge_cols=merge_cols
+        )
+    print(f'filtered participants', flush=True)
+
     # preprocess combined dataframe and drop participant id
     features_preprocessed = build_features.preprocess(
-                    dataframe=df_combined,  
+                    dataframe=df_merged,  
                     clf_info=feature_info['clf_info'],
-                    cols_to_ignore=cols_to_ignore,
+                    cols_to_ignore=merge_cols, # ignore participant id and target
                     cols_to_drop=feature_info['cols_to_drop'],
                     threshold=feature_info['threshold'],
-                    target_column=target_info['target_column']
+                    target_column=target_info['target_column'],
+                    binarize_target=target_info['binarize']
                     ).drop(participant_id, axis=1)
 
     # get x indices (all features except target) and target vars
@@ -170,6 +179,14 @@ def make_model_spec(
     return pydraml_info
 
 
+@click.command()
+@click.option("--feature_spec", required=True)
+@click.option("--target_spec", required=True)
+@click.option("--participant_spec", required=True)
+@click.option("--pydraml_spec", required=True)
+@click.option("--data_dir", required=True)
+@click.option("--out_dir", required=True)
+
 def run(
     feature_spec,
     target_spec,
@@ -190,7 +207,7 @@ def run(
     """
 
     # load parameters from spec files
-    feature_info, target_info, participant_info = _load_specs(feature_spec, target_spec, participant_spec)
+    feature_info, target_info, participant_info = load_specs(feature_spec, target_spec, participant_spec)
 
     # get features
     features, x_indices, target_vars = make_features(feature_info,
@@ -215,7 +232,7 @@ def run(
                                     )
         
         # update model info with features, targets, participants
-        model_info_updated = _chain_dicts([model_info, {'feature_info': feature_info}, {'target_info': target_info}, {'participant_info': participant_info}])
+        model_info_updated = chain_dicts([model_info, {'feature_info': feature_info}, {'target_info': target_info}, {'participant_info': participant_info}])
 
         # save out model features and spec 
         io.make_dirs(out_dir) # create directory if it doesn't exist 

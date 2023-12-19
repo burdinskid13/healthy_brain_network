@@ -22,7 +22,7 @@ def load_results(results, spec_file):
         results (list of dict)
     """
     import pickle as pk
-    from src import io
+    from hbn import io
 
     with open(results, "rb") as fp:
         results = pk.load(fp)
@@ -42,7 +42,7 @@ def get_model_metrics(results, spec_info):
     Returns:
         df_all (pd dataframe)
     """
-    from src import io
+    from hbn import io
     from pathlib import Path
     import pandas as pd
     import numpy as np
@@ -61,7 +61,6 @@ def get_model_metrics(results, spec_info):
         df['data'] = data
         df['splits'] = df.index
         df['clf'] = res[0]['ml_wf.clf_info'][-1][1] # get classifier name (should always be the last list element in list)
-        df = _add_model_parameters(df, spec_info=spec_info)
 
         df_all = pd.concat([df_all, df])
     
@@ -222,11 +221,12 @@ def _sum_feature_weights(feature_splits, feature_names):
 
 def save_to_existing_file(dataframe, fpath):
     import pandas as pd
+    import os
 
     df = pd.DataFrame()
     if os.path.exists(fpath):
         try:
-            df = pd.read_csv(fpath)
+            df = pd.read_csv(fpath, engine='python')
         except:
             pass
     df_out = pd.concat([df, dataframe])

@@ -1,9 +1,8 @@
-
 import glob
 import os
 from pathlib import Path
-from src import io
-from src.models import train_model
+from hbn import io
+from hbn.models import train_model
 
 def run(
     results,
@@ -11,7 +10,7 @@ def run(
     out_dir=None,
     methods=['feature'] 
     ):
-    """Makes model and feature summary files from results output from `src.scripts.run_model`
+    """Makes model and feature summary files from results output from `hbn.scripts.run_model`
 
     Args:
         results (str): fullpath to results file (.pkl)

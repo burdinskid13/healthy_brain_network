@@ -21,8 +21,14 @@
 #SBATCH --mail-user=maedbh@mit.edu
 #SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE,STAGE_OUT
 
-# username
-username=maedbh
+### SET DIRECTORIES ###
+source ~/.bash_profile # set paths
+source ~/.bashrc # set paths
+base_dir=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
+python_scripts=$base_dir/hbn/scripts
+
+# activate virtual environment
+source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
 
 # delete pydra-ml cache from openmind (takes up to omuch space)
-python3 delete_cache.py --cachedir=/om2/user/${username}/bin/.cache/pydra-ml/cache-wf/
+python3 $python_scripts/delete_cache.py --cachedir=/om2/user/$(whoami)/bin/.cache/pydra-ml/cache-wf/

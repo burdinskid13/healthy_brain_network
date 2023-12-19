@@ -7,8 +7,8 @@ import shutil
 import glob
 import pandas as pd
 
-from src import io
-from src.features import build_features
+from hbn import io
+from hbn.features import build_features
 
 def make_secondlevel_spec(model_spec, model_features, feature_importances):
     """make secondlevel model using firstlevel model
@@ -22,8 +22,8 @@ def make_secondlevel_spec(model_spec, model_features, feature_importances):
     """
 
     # load files
-    model_features = pd.read_csv(model_features)
-    feature_importances = pd.read_csv(feature_importances)
+    model_features = pd.read_csv(model_features, engine='python')
+    feature_importances = pd.read_csv(feature_importances, engine='python')
 
     # loop over classifiers (if there are more than one)
     classifiers = feature_importances['clf'].unique()

@@ -115,7 +115,7 @@ def run(
     random_state = 42
 
     # read in dataframe from path
-    df = pd.read_csv(fpath)
+    df = pd.read_csv(fpath, engine='python')
 
     # get unique dataset 
     df_unique = get_unique_dataset(df, 

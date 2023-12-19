@@ -1,25 +1,31 @@
-from src.constants import Defaults
+from hbn.constants import Defaults
 import os
+import click
 import glob
 
 import warnings
 warnings.filterwarnings("ignore")
 
-def model_train_summary(model_dir='../bhs_demos', cache_dir=None):
-    """ train model and get model summary of results
+@click.command()
+@click.option("--model_dir", required=True)
+@click.option("--cache_dir", required=True)
+
+def run(model_dir, cache_dir=None):
+    """ run model train and model summary
 
     Args:
-        model_dir (str): full path to model directory. The following files should be in `model_dir`: `model_spec-{model_name}.json`, `features-{model_spec}.json`.
-        There should only be one model_spec file and one features file.
+        model_dir (str): full path to model directory (where `model_spec` and `features` are).
         cache_dir (str or None): fullpath to cache directory for pydra-ml intermediary outputs. Default is home directory.
     """
-    from src.scripts import train_model, make_model_summary
+    from hbn.scripts import train_model, make_model_summary
+
+    print(f'model dir is :{model_dir}')
 
     # fullpath to features
-    features = glob.glob(f'{model_dir}/*features*')[0]
+    features = glob.glob(f'{model_dir}/*features*')[0] # should only be one feature file
 
     # fullpath to model spec
-    model_spec = glob.glob(f'{model_dir}/*model_spec*')[0]
+    model_spec = glob.glob(f'{model_dir}/*model_spec*')[0] # should only be one spec file
 
     # define directory where model results will be saved
     if cache_dir is None:
@@ -43,29 +49,6 @@ def model_train_summary(model_dir='../bhs_demos', cache_dir=None):
                     out_dir=model_dir,
                     methods=['feature'] # feature interpretability based on feature or permuation importances
                     )
-
-
-def run(model_dir=Dirs.model_dir, models=[], cache_dir=None):
-    """ run model train and model summary
-
-    Args:
-        model_dir (str): full path to parent model directory (`../processed/models/`)
-        models (list of str): list of model names to run. Default is all models in `model_dir`
-        cache_dir (str or None): fullpath to cache directory for pydra-ml intermediary outputs. Default is home directory.
-    """
-
-    # grab all models if list of models is empty
-    if len(models)==0:
-        models = os.listdir(model_dir)
-    
-    # loop over models
-    for model in models:
-        # get fullpath to model directory
-        # model spec file and model features should also be in `model_path`
-        model_path = os.path.join(model_dir, model)
-
-        # train model and get model summary
-        model_train_summary(model_dir=model_path, cache_dir=cache_dir)
 
 
 if __name__ == "__main__":

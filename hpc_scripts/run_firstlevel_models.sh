@@ -25,22 +25,23 @@
 args=($@)
 specs=(${args[@]:1})
 base_dir=$1
-out_dir=(${args[-4]})
+model_dir=(${args[-5]})
+data_dir=(${args[-4]})
 target=(${args[-3]})
 feature=(${args[-2]})
-model=(${args[-1]})
+pydraml=(${args[-1]})
 
-echo "models will be saved to: ${out_dir}"
-
-### SET DIRECTORIES - YOU MAY HAVE TO CHANGE VIRTUAL ENVIRONMENT PATH###
-source ~/.bash_profile # set paths
-source ~/.bashrc # set paths
-source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
+# ### SET DIRECTORIES - YOU MAY HAVE TO CHANGE VIRTUAL ENVIRONMENT PATH###
+# source ~/.bash_profile # set paths
+# source ~/.bashrc # set paths
+# source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
 
 set -eu # Stop on errors
 
 # index slurm array to grab participant specs
-participant_spec=${specs[${SLURM_ARRAY_TASK_ID}]}
+participant=${specs[${SLURM_ARRAY_TASK_ID}]}
+
+echo "${feature}, ${target}, ${pydraml}, ${participant}will be saved to: ${model_dir}"
 
 # Define scratch directory
 scratch=/om2/scratch/tmp/$(whoami)/HBN_Models/ # assign working directory
@@ -54,26 +55,26 @@ echo $"run phenotypic models"
 # make timestamp for this workflow
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 RANDOM_NUMBER=$((1 + $RANDOM % 100))
-spec_dir=$scratch/$TIMESTAMP-$RANDOM_NUMBER
+scratch_dir=$scratch/$TIMESTAMP-$RANDOM_NUMBER
 
 # make model specs
-python3 $python_scripts/make_firstleve_model.py \
---feature_spec=$base_dir/model_specs/$feature \
---target_spec=$base_dir/model_specs/$target \
---participant_spec=$base_dir/model_specs/$participant \
---pydraml_spec=$base_dir/model_specs/$model \
+python3 $python_scripts/make_firstlevel_model.py \
+--feature_spec=$feature \
+--target_spec=$target \
+--participant_spec=$participant \
+--pydraml_spec=$pydraml \
 --data_dir=$data_dir \
---out_dir=$spec_dir
+--out_dir=$scratch_dir
 
 # run workflow
-cmd="python3 $python_scripts/run_model.py --spec_dir=$spec_dir --cachedir=$scratch/.cache/pydra-ml/cache-wf/"
+cmd="python3 $python_scripts/run_model.py --model_dir=$scratch_dir --cache_dir=$scratch/.cache/pydra-ml/cache-wf/"
 
 # Run the command
-echo "Submitted job for: ${participant_spec}"
+echo "Submitted job for: ${participant}"
 echo "$'Command :\n'${cmd}"
 ${cmd}
 
 # copy files back
-cp -nr $spec_dir $out_dir
+cp -nr $scratch_dir $model_dir
 
-echo "$'Copied data from ${spec_dir} to ${out_dir}"
+echo "$'Copied data from ${scratch_dir} to ${model_dir}"

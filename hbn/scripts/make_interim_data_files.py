@@ -63,7 +63,7 @@ def remove_redundant_identifiers_from_assessments(assessment, data_dir=Defaults.
     fpaths = glob.glob(f'{fdir}/*/*.csv')
     # loop over files
     for fpath in fpaths:
-        df = pd.read_csv(fpath)
+        df = pd.read_csv(fpath, engine='python')
         df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|').str.extract(r'(\w+)', expand=False)
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
         df = df[~df['Identifiers'].isna()]
@@ -88,7 +88,7 @@ def make_clinical_summary_file(
     from pathlib import Path
     
     # READ CLINICAL CONSENSUS
-    dx = pd.read_csv(os.path.join(data_dir, filename))
+    dx = pd.read_csv(os.path.join(data_dir, filename), engine='python')
 
     # do some clean up
     dx.columns = dx.columns.str.replace('Diagnosis_ClinicianConsensus,', '')
@@ -138,21 +138,21 @@ def make_clinical_summary_file(
 
 
 def get_all_participant_diagnoses(
-    filename='Clinical_Diagnosis_Demographics.csv', 
+    fpath, 
     outname='all_participant_diagnoses.csv',
-    data_dir=os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures')
+    data_dir=Defaults.INTERIM_FEATURES_DIR
     ):
     """ restructure `Clinical_Diagnosis_Demographics.csv` to get all participant diagnoses in one column (`all_dx`) - useful for generating train/test splits
 
     Args:
-        filename (str): fullpath to `Clinical_Diagnosis_Demographics.csv`
+        fpath (str): fullpath to `Clinical_Diagnosis_Demographics.csv`
         outname (str or None): filename to save out to disk. default is `all_participant_diagnoses.csv`
         data_dir (str or None): directory where data are stored and `all_participant_diagnoses.csv` will be saved. If None, no files are saved out.
     Returns: 
         dx_concat (pd dataframe)
     """
     # read in clnical diagnosis file
-    df = pd.read_csv(os.path.join(data_dir, filename))
+    df = pd.read_csv(fpath, engine='python')
 
     cols_to_keep = ['Identifiers', 'PreInt_Demos_Fam,Child_Race_cat', 'Sex', 'Age_round']
 
@@ -301,7 +301,7 @@ def make_items_file(
         data_dir (str): directory where `item-names.csv` `Free_Assessments_HBN_new.csv` are located
     """
     # load item names filename
-    dataframe = pd.read_csv(os.path.join(data_dir, filename))
+    dataframe = pd.read_csv(os.path.join(data_dir, filename), engine='python')
 
     # add new assessment, domain, measures info to item names
     df = _match_datadic_to_data(dataframe=df)
@@ -351,7 +351,7 @@ def add_demographics(
     import itertools
 
     # read in clinical diagnosis demographics
-    df = pd.read_csv(fpath)
+    df = pd.read_csv(fpath, engine='python')
 
     cols_to_merge = [[participant_id], demos_to_add]
     cols_to_merge = list(itertools.chain(*cols_to_merge))
@@ -360,6 +360,44 @@ def add_demographics(
     df_out = df[cols_to_merge].merge(dataframe, on='Identifiers')
 
     return df_out
+
+
+def remove_mixed_type_columns(dataframe):
+    """ remove mixed type columns from dataframes - helps significantly with fitting models down the line...
+
+    Args: 
+        df (pd.DataFrame): dataframe to clean
+    Returns: 
+        df (pd.DataFrame): cleaned dataframe
+    """
+    import numpy as np
+
+    def is_mixed_type_column(dataframe, col):
+        """
+        Returns a boolean indicating whether the specified column contains mixed data types (e.g., 'str', 'float') except for NaN.
+
+        Args:
+            df (pandas.DataFrame): The DataFrame containing the column to check.
+            col (str): The column name to check for mixed data types.
+
+        Returns:
+            bool: True if the column contains mixed data types except for NaN, False otherwise.
+        """
+        if dataframe[col].dtype in [np.dtype("O")]:  # Check if the column is of string type
+            for val in dataframe[col].dropna():  # Exclude NaN values
+                if not isinstance(val, str) or val.startswith(("(", "{", "[")):  # Check if any value in the column is not of string type (except NaN) or starts with { ( [
+                    return True
+                else:
+                    return False # If all values are of string type except NaN, the column is not mixed
+
+    # remove mixed type columns
+    cols = []
+    for col in dataframe.columns:
+        if is_mixed_type_column(dataframe, col):
+            cols.append(col)
+    df_out = dataframe.drop(cols, axis=1)
+
+    return df_out, cols
 
 
 def merge_measures(
@@ -404,7 +442,7 @@ def merge_measures(
         domain_dir = [1]
 
     # load in participants
-    identifiers = pd.read_csv(participants)['Identifiers']
+    identifiers = pd.read_csv(participants, engine='python')['Identifiers']
 
     # loop over domains
     df_all = pd.DataFrame({'Identifiers': identifiers})
@@ -422,8 +460,9 @@ def merge_measures(
             
             # only read in files that exist
             if os.path.isfile(measure):
-                df = pd.read_csv(measure)
-                df = drop_duplicates(dataframe=df) # drop columns and rows
+                df = pd.read_csv(measure, engine='python')
+                df = df.loc[:,~df.columns.duplicated()].copy() # drop duplicate columns
+                df = df.drop_duplicates() # drop duplicate rows
                 # no min participants required
                 df_all = df_all.merge(df, on="Identifiers", how='outer')
 
@@ -469,16 +508,19 @@ def make_data_files(
                 )
 
         # add demographic information
-        df = add_demographics(dataframe=df, fpath=clinical_fpath)
+        df_demos = add_demographics(dataframe=df, fpath=clinical_fpath)
+
+        # do some additional cleaning
+        df_clean, cols = remove_mixed_type_columns(dataframe=df_demos)
 
         # save assessment data to file
-        df.to_csv(os.path.join(out_dir, f'{assessment}-features-raw.csv'), index=False)
+        df_clean.to_csv(os.path.join(out_dir, f'{assessment}-features-raw.csv'), index=False)
 
         # concatenate dataframes
-        df_all = pd.concat([df_all, df])
+        df_all = pd.concat([df_all, df_clean])
 
         # load `item-names-cleaned.csv`
-        df_items = pd.read_csv(items_fpath)
+        df_items = pd.read_csv(items_fpath, engine='python')
         
         # optionally filter datafiles
         filter_cols = ['Total_Scores', 'Free_Assessments', 'Proprietary_Assessments', 'Not_Total_Scores'] 
@@ -496,7 +538,7 @@ def make_data_files(
 
             # loop over columns to filter
             for col in list_of_cols:
-                if col in df.columns:
+                if col in df_clean.columns:
                     features_filtered.loc[:, col] = df[col]
         
             # save filtered data to file
@@ -523,9 +565,9 @@ def run():
 
     # get all participant diagnoses
     get_all_participant_diagnoses(
-        filename='Clinical_Diagnosis_Demographics.csv',
+        fpath=os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'),
         outname='all_participant_diagnoses.csv',
-        data_dir=os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures')
+        data_dir=Defaults.INTERIM_FEATURES_DIR
         )
     print('created participant diagnosis file', flush=True)
 

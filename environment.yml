@@ -21,5 +21,6 @@ dependencies:
   - dcor
   - hdbscan
   - bertopic
+  - click
   - pip:
     - pydra-ml

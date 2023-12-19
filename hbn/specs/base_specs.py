@@ -55,7 +55,7 @@ def pydraml():
         {'clf_info': 
         [
         [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]], # classifier has to be last list
+            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 10}]], # classifier has to be last list
         ],
         },
         }
@@ -157,7 +157,8 @@ def features():
                             "sklearn.impute",
                             "SimpleImputer",
                             {
-                                "strategy": "mean"
+                                "strategy": "constant",
+                                "fill_value": None
                             }
                         ],
                         [
@@ -172,7 +173,8 @@ def features():
                             "SimpleImputer",
                             {
                                 "strategy": "constant", # most_frequent,
-                                "fill_value": "missing"
+                                "fill_value": None,
+                                "add_indicator": True
                             }
                         ],
                         [
@@ -194,32 +196,32 @@ def features():
             'features-Child':
             {
             "filename": 'Child-features-raw.csv', 
-            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
             }, 
             'features-Parent':
             {
             "filename": 'Parent-features-raw.csv', 
-            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
             },
             'features-Teacher':
             {
             "filename": 'Teacher-features-raw.csv', 
-            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
             },
             'features-Child-remove-total-scores':
             {
-            "filename": 'Child-features-Not_Total_Scores-raw.csv ', 
-            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
+            "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID',  'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
             }, 
             'features-Parent-remove-total-scores':
             {
-            "filename": 'Parent-features-Not_Total_Scores-raw.csv ', 
-            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
+            "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season',  'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
             },
             'features-Teacher-remove-total-scores':
             {
-            "filename": 'Teacher-features-Not_Total_Scores-raw.csv ', 
-            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'START_DATE', 'Study', 'Days_Baseline', 'Year'], # cols to drop from dataframe
+            "filename": 'Teacher-features-Not_Total_Scores-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season',  'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
             },
     }
 

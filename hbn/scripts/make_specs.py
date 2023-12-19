@@ -3,6 +3,7 @@ warnings.filterwarnings("ignore")
 
 import os
 import numpy as np
+import click
 from pathlib import Path
 from hbn.specs import base_specs
 from hbn import io
@@ -23,7 +24,8 @@ def _save_dict_to_json(spec_info, base_info, out_dir):
     
     return v
 
-
+@click.command()
+@click.option("--out_dir", required=True)
 def run(out_dir):
     """
     Runs the main function of the program.

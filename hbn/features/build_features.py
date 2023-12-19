@@ -1,7 +1,8 @@
-from src import io
 import pandas as pd 
 import numpy as np
 import os
+
+from hbn import io
 
 def get_features(info, dirn):
     """Create features from parameters set in `feature_spec`, do some basic preprocessing (removing superfluous columns)
@@ -14,7 +15,7 @@ def get_features(info, dirn):
     """
 
     # load in csv file
-    df = pd.read_csv(os.path.join(dirn, info['filename']))
+    df = pd.read_csv(os.path.join(dirn, info['filename']), engine='python')
 
     # do some scrubbing (e.g., remove superfluous columns)
     df_drop = pd.DataFrame()
@@ -23,7 +24,7 @@ def get_features(info, dirn):
         df_drop = pd.concat([df_drop, df_filter], axis=1)
     df.drop(df_drop.columns, axis=1, inplace=True)
 
-    return df
+    return df.reset_index(drop=True)
 
 
 def get_targets(info, dirn):
@@ -37,7 +38,7 @@ def get_targets(info, dirn):
     """
 
     # load in csv file
-    df = pd.read_csv(os.path.join(dirn, info['filename']))
+    df = pd.read_csv(os.path.join(dirn, info['filename']), engine='python')
 
     # which column is the target
     target = info['target_column']
@@ -46,13 +47,7 @@ def get_targets(info, dirn):
     if len(info['cols_to_keep']) > 0:
         df = df[info['cols_to_keep']]
 
-    # binarize `target_column`
-    if info['binarize']:
-        df[target] = df[target].factorize()[0]
-        # remove -1 (corresponds to "NaN")
-        df = df[df[target]!=-1]
-
-    return df
+    return df.reset_index(drop=True)
 
 
 def get_participants(info, dirn):
@@ -66,7 +61,7 @@ def get_participants(info, dirn):
     """
 
     # load in csv file
-    df = pd.read_csv(os.path.join(dirn, info['filename']))
+    df = pd.read_csv(os.path.join(dirn, info['filename']), engine='python')
 
     # get columns and values from variables set in `participant_spec`
     columns = list(info.keys())
@@ -78,18 +73,16 @@ def get_participants(info, dirn):
                                     values_list=values
                                     )
 
-    return df
+    return df.reset_index(drop=True)
 
 
-def combine_features_and_targets(features, targets, participant_id, participants=None):
+def combine_features_and_targets(features, targets, merge_on):
     """Combine features and targets into a single dataframe merging on `participant_id`. 
-    Optionally index by `participant_id` present in `participants`
 
     Args:
         features (pandas.DataFrame): The features dataframe.
         targets (pandas.DataFrame): The targets dataframe.
-        participant_id (str): The column name of the participant identifier. Should be present in `features`, `targets`, and `participants`.
-        participants (pandas.DataFrame or None): The participants dataframe. Default is None.
+        merge_on (str): The column name of the merge key (e.g., 'Identifiers' or 'participant_id') Should be present in `features`, `targets`, and `participants`.
     Returns:
         pandas.DataFrame: The combined and filtered dataframe.
     """
@@ -100,23 +93,41 @@ def combine_features_and_targets(features, targets, participant_id, participants
 
     # get the intersection of columns between dataframes and remove `participant_id`
     common_cols = list(features.columns.intersection(targets.columns))
-    common_cols = [c for c in common_cols if participant_id!=c]
+    common_cols = [c for c in common_cols if merge_on!=c]
 
-    # make sure the target column is not included in features dataframe
-    features = features.drop(common_cols, axis=1)
+    # make sure common cols are not included in features dataframe
+    features_drop_common_cols = features.drop(common_cols, axis=1)
 
     # Combine the features and targets dataframes into a single dataframe.
-    combined_df = features.merge(targets)
+    combined_df = features_drop_common_cols.merge(targets, on=merge_on)
 
     # drop duplicates
-    combined_df = combined_df.drop_duplicates().reset_index(drop=True)
-
-    # Index the combined dataframe by `participant_id` in participants dataframe (if provided).
-    if participants is not None:
-        participants_list = participants[participant_id].tolist()
-        combined_df = combined_df[combined_df[participant_id].isin(participants_list)]
+    #combined_df_drop = combined_df.drop_duplicates().reset_index(drop=True) ## taking too long on large dataframes
 
     return combined_df
+
+
+def merge_with_participants(dataframe, participants, participant_id, merge_cols=['Identifiers', 'DX_Cat_Name']):
+    """ filter `dataframe` with participants dataframe on `participant_id` and `merge_cols`
+
+    Args:
+        dataframe (pandas.DataFrame): The dataframe to filter.
+        participants (pandas.DataFrame): The participants dataframe.
+        participant_id (str): The column name of the participant identifier.
+        merge_cols (list): The columns to merge on.
+    Returns:
+        df_merged (pandas.DataFrame): The filtered dataframe.
+    """
+    # list out all participants
+    participants_list = participants[participant_id].tolist()
+
+    # filter dataframe on those participants
+    df_filter_participants = dataframe[dataframe[participant_id].isin(participants_list)].reset_index(drop=True)
+
+    # combine features, targets, and new participant dataframe
+    df_merged = participants[merge_cols].merge(df_filter_participants, on=merge_cols)
+
+    return df_merged
 
 
 def _index_dataframe_by_columns_values(dataframe, columns, values_list):
@@ -139,12 +150,12 @@ def _index_dataframe_by_columns_values(dataframe, columns, values_list):
     row_matches = []
     for i, column in enumerate(columns):
         if column in dataframe.columns:
-            row_matches.append(dataframe[column].isin(values_list[i]))
+            row_matches.append(list(dataframe[column].isin(values_list[i])))
 
     # if there are multiple columns, combine the boolean values into a single boolean value
     if len(row_matches)>0:
         if len(row_matches)>1:
-            row_matches = np.logical_and(*row_matches)
+            row_matches = np.all(row_matches, axis=0)
         else:
             row_matches = row_matches[0]
 
@@ -264,6 +275,27 @@ def smote(y_train, X_train):
     return df_smote
 
 
+def _drop_long_string_columns(df):
+    """
+    Checks the string length of each column in a pandas dataframe and drops columns that have string lengths longer than 259 characters.
+
+    Args:
+        df (pandas.DataFrame): The pandas dataframe to be processed.
+
+    Returns:
+        pandas.DataFrame: The pandas dataframe with columns that have string lengths longer than 259 characters dropped.
+    """
+    import pandas as pd
+
+    long_str_cols = []
+    for col in df.columns:
+        if len(col)>259:
+            long_str_cols.append(col)
+
+    df = df.drop(columns=long_str_cols)
+    return df
+
+
 def preprocess(
         dataframe,
         clf_info=None,
@@ -271,7 +303,8 @@ def preprocess(
         cols_to_drop=None,
         threshold=False,
         upsample=True,
-        target_column=None
+        target_column=None,
+        binarize_target=True
         ):
 
     """Preprocess the features (data cleaning, scaling, imputation, standarization, one-hot encoding)
@@ -284,6 +317,7 @@ def preprocess(
         threshold (bool): threshold dataframe based on some fixed criterion. We are using 50% for columns and 20% for rows. If threshold is False, then only NaN entries are removed (no thresholding applied)
         upsample (bool): upsample minority class using SMOTE. default is True
         target_column (str): target column name. default is None
+        binarize_target (bool): binarize target column if target_column is not None. default is True
     """
 
     if threshold:
@@ -293,17 +327,26 @@ def preprocess(
         dataframe = dataframe.dropna(thresh=limitPerCols, axis='columns')
         dataframe = dataframe.dropna(thresh=limitPerRows, axis='index')
 
-    # preprocessing: column transformation
+    # preprocessing on features: column transformation
     if clf_info is not None:
         dataframe = column_transform(
             dataframe=dataframe, 
             clf_info=clf_info, 
             cols_to_ignore=cols_to_ignore
             )
+
+    # preprocessing on target: binarize `target`
+    if binarize_target:
+        dataframe[target_column] = dataframe[target_column].factorize()[0]
+        # remove -1 (corresponds to "NaN")
+        dataframe = dataframe[dataframe[target_column]!=-1]
     
     # optionally drop features
     for col in cols_to_drop:
         dataframe = dataframe.loc[:, ~dataframe.columns.str.contains(col)]
+
+    # drop features that are too long (longer than 259 characters) - causes errors when we run pydraml
+    dataframe = _drop_long_string_columns(df=dataframe)
 
     # upsample minority target class using smote 
     if upsample and target_column:
