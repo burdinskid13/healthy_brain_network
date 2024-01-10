@@ -588,14 +588,13 @@ def run():
     )
     print('created new item names file', flush=True)
 
-    # make data files
+    # make parent files
     make_data_files(
         items_fpath=os.path.join(Defaults.PHENO_DIR, 'item-names-cleaned.csv'),
         clinical_fpath=os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'Clinical_Diagnosis_Demographics.csv'),
         out_dir=Defaults.INTERIM_FEATURES_DIR
         )
     print('created new data files', flush=True)
-
 
 if __name__ == "__main__":
     run()

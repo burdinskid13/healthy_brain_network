@@ -1,7 +1,7 @@
 
-feature_spec = '/om2/user/maedbh/healthy_brain_network/model_specs/features-Child-spec.json'
+feature_spec = '/om2/user/maedbh/healthy_brain_network/model_specs/features-Child-externalizing-spec.json'
 target_spec = '/om2/user/maedbh/healthy_brain_network/model_specs/target-Diagnosis-spec.json'
-participant_spec ='/om2/user/maedbh/healthy_brain_network/model_specs/participants-Reading-all-spec.json'
+participant_spec ='/om2/user/maedbh/healthy_brain_network/model_specs/participants-Reading-fluent-readers-female-spec.json'
 pydraml_spec='/om2/user/maedbh/healthy_brain_network/model_specs/pydraml3-spec.json'
 data_dir='/om2/user/maedbh/hbn_data/interim/phenotypes/'
 out_dir='/om2/user/maedbh/hbn_data/interim/models/test'

@@ -1,12 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Job name:
 #SBATCH --job-name=preprocess_models
 #
 # Partition:
-#SBATCH --partition=gablab
+#SBATCH --partition=normal
 #
 # Nodes:
 #SBATCH -N 1 # one node
+#SBATCH --exclude=node[041]
 #
 # Tasks:
 #SBATCH -c 16 # 16 hyperthreaded cores 
@@ -24,11 +25,11 @@
 ### SET DIRECTORIES ###
 source ~/.bash_profile # set paths
 source ~/.bashrc # set paths
+source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network 
+
+## SET DIRECTORIES
 base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
 out_dir=$base/model_specs
-
-# activate virtual environment
-source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network 
 
 # preprocess phenotypes and make specs
 python3 $base/hbn/scripts/make_specs.py --out_dir=$out_dir

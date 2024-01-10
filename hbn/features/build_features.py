@@ -22,9 +22,19 @@ def get_features(info, dirn):
     for filter in info['cols_to_drop']:
         df_filter = df.filter(like=filter)
         df_drop = pd.concat([df_drop, df_filter], axis=1)
+
     df.drop(df_drop.columns, axis=1, inplace=True)
 
-    return df.reset_index(drop=True)
+    # filter columns if that is specified
+    if info['cols_to_filter'] is not None:
+        df_all = pd.DataFrame()
+        for col in info['cols_to_filter']:
+            df_filter = df.loc[:, df.columns.str.contains(col)]
+            df_all = pd.concat([df_filter, df_all], axis=1)
+
+        return df_all.reset_index(drop=True)
+    else:
+        return df.reset_index(drop=True)
 
 
 def get_targets(info, dirn):

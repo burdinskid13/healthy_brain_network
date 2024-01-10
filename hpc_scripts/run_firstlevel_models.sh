@@ -1,12 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 # Job name:
 #SBATCH --job-name=run_phenotypic_models
 #
 # Partition:
-#SBATCH --partition=gablab
+#SBATCH --partition=normal
 #
 # Nodes:
 #SBATCH -N 1 # one node
+#SBATCH --exclude=node[041]
 #
 # Tasks:
 #SBATCH -c 16 # 16 hyperthreaded cores 
@@ -31,10 +33,14 @@ target=(${args[-3]})
 feature=(${args[-2]})
 pydraml=(${args[-1]})
 
-# ### SET DIRECTORIES - YOU MAY HAVE TO CHANGE VIRTUAL ENVIRONMENT PATH###
-# source ~/.bash_profile # set paths
-# source ~/.bashrc # set paths
-# source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
+### SET DIRECTORIES - YOU MAY HAVE TO CHANGE VIRTUAL ENVIRONMENT PATH###
+source ~/.bash_profile # set paths
+source ~/.bashrc # set paths
+source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
+
+# test -- write out output
+# set -x
+# env | sort
 
 set -eu # Stop on errors
 

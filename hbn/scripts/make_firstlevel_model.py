@@ -4,6 +4,7 @@ import click
 import os
 import ast
 import random
+from pathlib import Path
 
 from hbn import io
 from hbn.features import build_features
@@ -214,10 +215,10 @@ def run(
                                                     target_info,
                                                     participant_info,
                                                     data_dir
-                                                    )                                
+                                                    )                
 
     # only save out features + spec if not empty
-    if not features.empty:
+    if (features.shape[0]>5) and (features.shape[1]>1):
 
         # get model name
         randm = random.randint(10000,1000000)
@@ -232,6 +233,9 @@ def run(
                                     )
         
         # update model info with features, targets, participants
+        feature_info['spec_name'] = Path(feature_spec).stem
+        target_info['spec_name'] = Path(target_spec).stem
+        participant_info['spec_name'] = Path(participant_spec).stem
         model_info_updated = chain_dicts([model_info, {'feature_info': feature_info}, {'target_info': target_info}, {'participant_info': participant_info}])
 
         # save out model features and spec 
@@ -239,6 +243,8 @@ def run(
         features.to_csv(os.path.join(out_dir, filename), index=False)
         io.save_json(os.path.join(out_dir, f'model_spec-{randm}.json'), model_info_updated)
         print(f'created new file: {filename} and model spec file: model_spec-{randm}.json in {out_dir}')
+    else:
+        print(f'features dataframe is empty. No model created.')
 
 
 if __name__ == "__main__":

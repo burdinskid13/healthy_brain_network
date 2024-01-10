@@ -92,12 +92,67 @@ def participants():
          'Sex': ['female'],
          'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
         },
-        'participants-Reading-White':
+        'participants-Reading-early-readers':
         {
          'split': ['train'],
-         'Age_round': [int(t) for t in np.arange(5,22)],
+         'Age_round': [6,7,8],
          'Sex': ['male', 'female'],
-         'PreInt_Demos_Fam,Child_Race_cat': ['White/Caucasian'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
+        },
+        'participants-Reading-emerging-readers':
+        {
+         'split': ['train'],
+         'Age_round': [9,10],
+         'Sex': ['male', 'female'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
+        },
+        'participants-Reading-fluent-readers':
+        {
+         'split': ['train'],
+         'Age_round': [11,12,13,14,15,16,17,18],
+         'Sex': ['male', 'female'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
+        },
+        'participants-Reading-early-readers-female':
+        {
+         'split': ['train'],
+         'Age_round': [6,7,8],
+         'Sex': ['female'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
+        },
+        'participants-Reading-emerging-readers-female':
+        {
+         'split': ['train'],
+         'Age_round': [9,10],
+         'Sex': ['female'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
+        },
+        'participants-Reading-fluent-readers-female':
+        {
+         'split': ['train'],
+         'Age_round': [11,12,13,14,15,16,17,18],
+         'Sex': ['female'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
+        },
+        'participants-Reading-early-readers-male':
+        {
+         'split': ['train'],
+         'Age_round': [6,7,8],
+         'Sex': ['male'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
+        },
+        'participants-Reading-emerging-readers-male':
+        {
+         'split': ['train'],
+         'Age_round': [9,10],
+         'Sex': ['male'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
+        },
+        'participants-Reading-fluent-readers-male':
+        {
+         'split': ['train'],
+         'Age_round': [11,12,13,14,15,16,17,18],
+         'Sex': ['male'],
          'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
         },
         'participants-Reading-Black':
@@ -197,32 +252,111 @@ def features():
             {
             "filename": 'Child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": None
             }, 
             'features-Parent':
             {
             "filename": 'Parent-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
+            "cols_to_filter": None
             },
             'features-Teacher':
             {
             "filename": 'Teacher-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
+            "cols_to_filter": None
             },
             'features-Child-remove-total-scores':
             {
             "filename": 'Child-features-Not_Total_Scores-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID',  'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
+            "cols_to_filter": None
             }, 
             'features-Parent-remove-total-scores':
             {
             "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season',  'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
+            "cols_to_filter": None
             },
             'features-Teacher-remove-total-scores':
             {
             "filename": 'Teacher-features-Not_Total_Scores-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season',  'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
+            "cols_to_filter": None
             },
+            'features-Child-language':
+            {
+            "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'CELF', 'PPVT', 'EVT', 'TOWRE']
+            }, 
+            'features-Child-phonological':
+            {
+            "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'CTOPP', 'GFTA']
+            },
+            'features-Child-executive-function':
+            {
+            "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'NIH']
+            }, 
+            'features-Child-intelligence':
+            {
+            "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'WISC', 'WAIS', 'KBIT']
+            }, 
+            'features-Child-achievement':
+            {
+            "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'WIAT']
+            }, 
+            'features-Child-emotional-status':
+            {
+            "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'YSR', 'C3SR', 'SCARED_SR', 'CIS_SR', 'WHODAS_SR', 'PANAS']
+            }, 
+            'features-Child-internalizing':
+            {
+            "filename": 'Child-features-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'YSR_Int']
+            }, 
+            'features-Child-externalizing':
+            {
+            "filename": 'Child-features-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'YSR_Ext']
+            }, 
+            'features-Parent-internalizing':
+            {
+            "filename": 'Parent-features-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'CBCL_Int', 'Internalising']
+            }, 
+            'features-Parent-externalizing':
+            {
+            "filename": 'Parent-features-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'CBCL_Ext', 'Externalising']
+            }, 
+            'features-Teacher-internalizing':
+            {
+            "filename": 'Teacher-features-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'TRF_Int']
+            }, 
+            'features-Teacher-externalizing':
+            {
+            "filename": 'Teacher-features-raw.csv', 
+            "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+            "cols_to_filter": ['Identifiers', 'TRF_Ext']
+            }, 
+            
     }
 
     return base_info, spec_info

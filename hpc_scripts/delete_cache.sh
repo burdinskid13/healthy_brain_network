@@ -31,4 +31,6 @@ python_scripts=$base_dir/hbn/scripts
 source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
 
 # delete pydra-ml cache from openmind (takes up to omuch space)
-python3 $python_scripts/delete_cache.py --cachedir=/om2/user/$(whoami)/bin/.cache/pydra-ml/cache-wf/
+#python3 $python_scripts/delete_cache.py --cachedir=/om2/user/$(whoami)/bin/.cache/pydra-ml/cache-wf/
+python3 $python_scripts/delete_cache.py --cachedir=/om2/scratch/tmp/$(whoami)/HBN_Models/.cache/pydra-ml/cache-wf/
+
