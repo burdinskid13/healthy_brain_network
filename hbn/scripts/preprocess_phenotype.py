@@ -11,7 +11,7 @@ def run(parse=False):
     import pandas as pd
     from hbn.constants import Defaults
     from hbn.data import make_dataset
-    from hbn.scripts import make_files
+    from hbn.scripts import make_interim_data_files, make_train_test_split
 
     print('preprocessing phenotype data', flush=True)
     if parse:
@@ -32,20 +32,13 @@ def run(parse=False):
                 df = df[~df['Identifiers'].isna()]
                 df.to_csv(fpath, index=False)
 
-    # creates new clinical diagnosis file
-    df = make_dataset.make_summary()
-    print('created new clinical diagnosis file', flush=True)
-
     # make interim data files (Child, Parent, Teacher measures - preprocessed + raw)
-    make_dataset.make_interim_data_files()
+    make_interim_data_files.run()
     print('created new interm data files', flush=True)
 
-    # make item names
-    make_dataset.make_items()
-    print('created new item names file', flush=True)
-
     # makes test/train splits
-    make_dataset.make_train_test_splits(out_dir=Defaults.MODEL_SPEC_DIR)
+    make_train_test_split.run(inpath=os.path.join(Defaults.INTERIM_FEATURES_DIR, 'all_participant_diagnoses.csv'), 
+                              outpath=os.path.join(Defaults.INTERIM_FEATURES_DIR, 'participant_train_test.csv'))
     print('created train/test participant files', flush=True)
 
 

@@ -72,18 +72,25 @@ def run(
 
     # load model summary from all directories in `model_dir`
     df_summary_all = pd.DataFrame(); df_feature_all = pd.DataFrame()
+    df_pred_all = pd.DataFrame(); df_eval_all = pd.DataFrame()
     for model_path in models:
 
         # get model summary and feature importance
         df_summary = model_summary(model_path)
         df_feature = feature_importance(model_path)
+        df_pred = model_predictions(model_path)
+        df_eval = model_evaluation(model_path)
 
         df_summary_all = pd.concat([df_summary_all, df_summary])
         df_feature_all = pd.concat([df_feature_all, df_feature])
+        df_pred_all = pd.concat([df_pred_all, df_pred])
+        df_eval_all = pd.concat([df_eval_all, df_eval])
 
     # save out dataframes
     df_summary_all.to_csv(os.path.join(model_dir, 'overall_model_summary.csv'), index=False)
     df_feature_all.to_csv(os.path.join(model_dir, 'overall_feature_importance.csv'), index=False)
+    df_pred_all.to_csv(os.path.join(model_dir, 'overall_predictions.csv'), index=False)
+    df_eval_all.to_csv(os.path.join(model_dir, 'overall_evaluation.csv'), index=False)
 
 if __name__ == "__main__":
     run()

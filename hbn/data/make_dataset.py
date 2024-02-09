@@ -48,7 +48,7 @@ def get_domains(assessment='Child Measures'):
     fpath = os.path.join(Defaults.PHENO_DIR, f'Assessment_List_Jan2019_{fname}.csv')
 
     if not os.path.isfile(fpath):
-        make_dataset.assessment_list(assessment=assessment)
+        assessment_list(assessment=assessment)
     
     # read in corrected assessment list
     info = pd.read_csv(fpath)
@@ -76,7 +76,7 @@ def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
     fpath = os.path.join(Defaults.PHENO_DIR, f'Assessment_List_Jan2019_{fname}.csv')
 
     if not os.path.isfile(fpath):
-        make_dataset.assessment_list(assessment=assessment)
+        assessment_list(assessment=assessment)
     
     # read in corrected assessment list
     info = pd.read_csv(fpath)
@@ -135,7 +135,7 @@ def get_abbrevs(assessment='Child Measures', measure='Grooved Pegboard'):
     fpath = os.path.join(Defaults.PHENO_DIR, f'Assessment_List_Jan2019_{assessment}.csv')
 
     if not os.path.isfile(fpath):
-        make_dataset.assessment_list(assessment=assessment)
+        assessment_list(assessment=assessment)
     
     # read in corrected assessment list
     info = pd.read_csv(fpath)
@@ -300,7 +300,7 @@ def assessment_list(assessment, save=True):
     return info, domain
 
 
-def _match_datadic_to_data(dataframe):
+def match_datadic_to_data(dataframe):
     """add new columns to item names dataframe
     """
     import os
@@ -344,7 +344,7 @@ def _match_datadic_to_data(dataframe):
     return dataframe
 
 
-def _fix_domain(dataframe):
+def fix_domain(dataframe):
     measures_to_change = ['SympChck', 'ICU_P', 'ARI_P', 'SRS_Pre', 'SRS', 'RBS', 'SDQ', 'WHODAS_P', 'SAS', 
                 'CIS_P', 'SCQ', 'ASSQ', 'SWAN','ESWAN','SCARED_P','MFQ_P', 'CBCL', 'CBCL_Pre']
     for abbrev in dataframe['datadic'].unique():
@@ -354,7 +354,7 @@ def _fix_domain(dataframe):
     return dataframe
 
 
-def _identify_total_scores(dataframe):
+def identify_total_scores(dataframe):
 
     overall_scores = ['Total', 'Raw Score', 'T-Score', 'T Score', 'Standard']
 
@@ -368,7 +368,7 @@ def _identify_total_scores(dataframe):
     return dataframe
 
 
-def _identify_preamble(dataframe):
+def identify_preamble(dataframe):
 
     # anything is a preamble if 'keys' is empty and is not a subheading
     conditional = (dataframe['keys'].isna()) & (dataframe['Subheadings']==False) 
@@ -388,7 +388,7 @@ def _identify_preamble(dataframe):
     return dataframe
 
 
-def _identify_subheadings(dataframe):
+def identify_subheadings(dataframe):
 
     # find keys with exact match: "Scores", "Scale Score", "Scoring"
     # and find keys that contain "Scales"
@@ -403,7 +403,7 @@ def _identify_subheadings(dataframe):
     return dataframe
 
 
-def _add_demographics(dataframe):
+def add_demographics(dataframe):
     """add demographics to existing dataframe, merging on participant id `Identifiers`
 
     Args: 
@@ -421,7 +421,7 @@ def _add_demographics(dataframe):
     return df_merged
 
 
-def _add_race_ethnicity(dataframe):
+def add_race_ethnicity(dataframe):
     """add race and ethnicity to existing dataframe, merging on participant id `Identifiers`
 
     Args: 

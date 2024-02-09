@@ -135,7 +135,7 @@ def merge_with_participants(dataframe, participants, participant_id, merge_cols=
     df_filter_participants = dataframe[dataframe[participant_id].isin(participants_list)].reset_index(drop=True)
 
     # combine features, targets, and new participant dataframe
-    df_merged = participants[merge_cols].merge(df_filter_participants, on=merge_cols)
+    df_merged = participants.merge(df_filter_participants, on=merge_cols)
 
     return df_merged
 

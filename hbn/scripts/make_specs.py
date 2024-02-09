@@ -5,6 +5,7 @@ import os
 import numpy as np
 import click
 from pathlib import Path
+from hbn.constants import Defaults
 from hbn.specs import base_specs
 from hbn import io
 
@@ -25,8 +26,8 @@ def _save_dict_to_json(spec_info, base_info, out_dir):
     return v
 
 @click.command()
-@click.option("--out_dir", required=True)
-def run(out_dir):
+@click.option("--out_dir", required=False)
+def run(out_dir=None):
     """
     Runs the main function of the program.
 
@@ -40,25 +41,28 @@ def run(out_dir):
     Returns:
     None
     """
+    # set out_dir if None is given
+    if out_dir is None:
+        out_dir = Defaults.MODEL_SPECS_DIR
 
     # make base specs
     base_info, spec_info = base_specs.pydraml()
-    pydraml_info = _save_dict_to_json(spec_info, base_info, out_dir)
+    _save_dict_to_json(spec_info, base_info, out_dir)
     print(f'created pydraml specs, saved to {out_dir}', flush=True)
 
     # make participant specs
     base_info, spec_info = base_specs.participants()
-    participants_info = _save_dict_to_json(spec_info, base_info, out_dir)
+    _save_dict_to_json(spec_info, base_info, out_dir)
     print(f'created participant specs, saved to {out_dir}', flush=True)
 
     # make feature specs
     base_info, spec_info = base_specs.features()
-    feature_info = _save_dict_to_json(spec_info, base_info, out_dir)
+    _save_dict_to_json(spec_info, base_info, out_dir)
     print(f'created feature specs, saved to {out_dir}', flush=True)
 
     # make target specs
     base_info, spec_info = base_specs.targets()
-    target_info = _save_dict_to_json(spec_info, base_info, out_dir)
+    _save_dict_to_json(spec_info, base_info, out_dir)
     print(f'created target specs, saved to {out_dir}', flush=True)
 
 

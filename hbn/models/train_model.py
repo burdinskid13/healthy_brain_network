@@ -2,12 +2,23 @@
 
 def feature_interpretability(results, spec_info, method='feature'):
     import pandas as pd
+    import numpy as np
 
-    df1 = order_across_splits(results=results, method=method)
-    df2 = model_based_importance(results=results)
+    # also get model featuers directly from the source
+    feature_names = np.array(results.output.feature_names)
+    feature_importances = results.output.model.steps[-1][1].feature_importances_
+
+    # 
+    df1 = pd.DataFrame()
+    df1['feature_importances'] = feature_importances
+    df1['feature_importances_names'] = feature_names
+
+
+    df2 = order_across_splits(results=results, method=method)
+    df3 = model_based_importance(results=results)
 
     # concat into features dataframe
-    df_features = pd.concat([df1, df2], axis=1)
+    df_features = pd.concat([df1, df2, df3], axis=1)
 
     return df_features
 
@@ -42,8 +53,6 @@ def get_model_metrics(results, spec_info):
     Returns:
         df_all (pd dataframe)
     """
-    from hbn import io
-    from pathlib import Path
     import pandas as pd
     import numpy as np
 
@@ -52,9 +61,9 @@ def get_model_metrics(results, spec_info):
 
         # scores
         permute = res[0]['ml_wf.permute']
-        data = 'model-null'
+        data = 'model-data'
         if permute:
-            data = 'model-data'
+            data = 'model-null'
 
         # make dataframe
         df = pd.DataFrame(np.array(res[1].output.score), columns=spec_info['metrics'])

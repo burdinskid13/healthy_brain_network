@@ -1,31 +1,22 @@
-from hbn.constants import Defaults
 import os
-import click
 import glob
 
 import warnings
 warnings.filterwarnings("ignore")
 
-@click.command()
-@click.option("--model_dir", required=True)
-@click.option("--cache_dir", required=True)
 
-def run(model_dir, cache_dir=None):
+def run(features, model_spec, model_dir, cache_dir=None):
     """ run model train and model summary
 
     Args:
+        features (str): full path to features file
+        model_spec (str): full path to model spec
         model_dir (str): full path to model directory (where `model_spec` and `features` are).
         cache_dir (str or None): fullpath to cache directory for pydra-ml intermediary outputs. Default is home directory.
     """
     from hbn.scripts import train_model, make_model_summary
 
-    print(f'model dir is :{model_dir}')
-
-    # fullpath to features
-    features = glob.glob(f'{model_dir}/*features*')[0] # should only be one feature file
-
-    # fullpath to model spec
-    model_spec = glob.glob(f'{model_dir}/*model_spec*')[0] # should only be one spec file
+    print(f'model dir is :{model_dir}', flush=True)
 
     # define directory where model results will be saved
     if cache_dir is None:

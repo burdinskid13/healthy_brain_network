@@ -91,6 +91,46 @@ def chain_dicts(dicts):
     return chained_dict
 
 
+def remove_mixed_nan_zero_columns(df):
+    import numpy as np
+    import pandas as pd
+    def is_mixed_nan_zero(col):
+        if all(isinstance(val, (float, np.float64)) and val==0 for val in col):
+            return True
+        elif all(pd.isna(val) for val in col):
+            return True
+        else:
+            return False
+        
+    # identify cols to remove
+    cols_to_remove = [col for col in df.columns if is_mixed_nan_zero(df[col])]
+
+    # remove the identified cols
+    df = df.drop(cols_to_remove, axis=1)
+    return df
+
+
+def train_test_split(features, info): 
+    """split `features` into train and test sets based on info given in `info`
+    Args:
+        features (pd.DataFrame): dataframe of features
+        info (dict): dictionary of info for splitting. dict loaded from `../model_specs/participant-<name>-spec.json`
+    Returns:
+        df_train (pd.DataFrame), df_test (pd.DataFrame)
+    """
+    split_col = info['train_test_split']['split_col']
+    train = info['train_test_split']['train']
+    test = info['train_test_split']['test']
+
+    df_train = features[features[split_col]==train]
+    df_test = features[features[split_col]==test]
+
+    df_train = df_train.reset_index(drop=True).drop(split_col, axis=1)
+    df_test = df_test.reset_index(drop=True).drop(split_col, axis=1)
+
+    return df_train, df_test
+
+
 def make_features(
     feature_info,
     target_info,
@@ -126,10 +166,12 @@ def make_features(
     print(f'combined features and targets', flush=True)
 
     # filter participants
+    filter_cols = [participant_id, target_info['target_column'], participant_info['train_test_split']['split_col']]
     merge_cols = [participant_id, target_info['target_column']]
+
     df_merged = build_features.merge_with_participants(
         dataframe=combined_df, 
-        participants=df_participants, 
+        participants=df_participants[filter_cols], 
         participant_id=participant_id, 
         merge_cols=merge_cols
         )
@@ -139,18 +181,27 @@ def make_features(
     features_preprocessed = build_features.preprocess(
                     dataframe=df_merged,  
                     clf_info=feature_info['clf_info'],
-                    cols_to_ignore=merge_cols, # ignore participant id and target
+                    cols_to_ignore=filter_cols, 
                     cols_to_drop=feature_info['cols_to_drop'],
                     threshold=feature_info['threshold'],
                     target_column=target_info['target_column'],
                     binarize_target=target_info['binarize']
-                    ).drop(participant_id, axis=1)
+                    )
+
+    # delete participant id from dataframe
+    features_preprocessed_drop = features_preprocessed.drop(participant_id, axis=1)
+
+    # delete columns that are all NaN or zero
+    features_preprocessed_drop = remove_mixed_nan_zero_columns(df=features_preprocessed_drop)
+
+    # split into train/test
+    df_train, df_test = train_test_split(features=features_preprocessed_drop, info=participant_info)
 
     # get x indices (all features except target) and target vars
-    x_indices = [i for i, string in enumerate(features_preprocessed.columns) if string != target_info['target_column']]
-    target_vars = target_info['target_column']
+    x_indices = [i for i, string in enumerate(df_train.columns) if string != target_info['target_column']]
+    target_vars = [target_info['target_column']]
 
-    return features_preprocessed, x_indices, target_vars
+    return df_train, df_test, x_indices, target_vars, features_preprocessed[filter_cols].reset_index(drop=True)
 
 
 def make_model_spec(
@@ -180,14 +231,6 @@ def make_model_spec(
     return pydraml_info
 
 
-@click.command()
-@click.option("--feature_spec", required=True)
-@click.option("--target_spec", required=True)
-@click.option("--participant_spec", required=True)
-@click.option("--pydraml_spec", required=True)
-@click.option("--data_dir", required=True)
-@click.option("--out_dir", required=True)
-
 def run(
     feature_spec,
     target_spec,
@@ -211,18 +254,21 @@ def run(
     feature_info, target_info, participant_info = load_specs(feature_spec, target_spec, participant_spec)
 
     # get features
-    features, x_indices, target_vars = make_features(feature_info,
-                                                    target_info,
-                                                    participant_info,
-                                                    data_dir
-                                                    )                
+    df_train, df_test, x_indices, target_vars, df_index = make_features(feature_info,   
+                                                                        target_info,
+                                                                        participant_info,
+                                                                        data_dir
+                                                                        )
+    
+    # name of train and test
+    train = participant_info['train_test_split']['train']
+    test = participant_info['train_test_split']['test']
 
     # only save out features + spec if not empty
-    if (features.shape[0]>5) and (features.shape[1]>1):
+    for (features, fname) in zip([df_train, df_test], [train, test]):
 
         # get model name
-        randm = random.randint(10000,1000000)
-        filename = f'features-{randm}.csv'
+        filename = f'features-{fname}.csv'
 
         # get model spec
         model_info = make_model_spec(
@@ -236,15 +282,24 @@ def run(
         feature_info['spec_name'] = Path(feature_spec).stem
         target_info['spec_name'] = Path(target_spec).stem
         participant_info['spec_name'] = Path(participant_spec).stem
-        model_info_updated = chain_dicts([model_info, {'feature_info': feature_info}, {'target_info': target_info}, {'participant_info': participant_info}])
+        model_info_updated = chain_dicts([model_info, 
+                                          {'feature_info': feature_info}, 
+                                          {'target_info': target_info}, 
+                                          {'participant_info': participant_info}]
+                                          )
 
         # save out model features and spec 
         io.make_dirs(out_dir) # create directory if it doesn't exist 
-        features.to_csv(os.path.join(out_dir, filename), index=False)
-        io.save_json(os.path.join(out_dir, f'model_spec-{randm}.json'), model_info_updated)
-        print(f'created new file: {filename} and model spec file: model_spec-{randm}.json in {out_dir}')
-    else:
-        print(f'features dataframe is empty. No model created.')
+        feature_path = os.path.join(out_dir, filename)
+        features.to_csv(feature_path, index=False)
+        spec_path = os.path.join(out_dir, f'model_spec-{fname}.json')
+        io.save_json(spec_path, model_info_updated)
+        print(f'created new file: {filename} and model spec file: model_spec-{fname}.json in {out_dir}')
+    
+    # save out index for train and test
+    df_index.to_csv(os.path.join(out_dir, 'participant_index.csv'), index=False)
+    
+    return feature_path, spec_path
 
 
 if __name__ == "__main__":

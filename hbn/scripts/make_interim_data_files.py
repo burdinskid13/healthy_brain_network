@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import glob
+from pathlib import Path
 
 from hbn.data.make_dataset import *
 from hbn.features.build_features import *
@@ -107,7 +108,7 @@ def make_clinical_summary_file(
     dx['comorbidities'] = dx[diagnoses].count(axis=1)-1
 
     # add demographics
-    dx = _add_demographics(dataframe=dx)
+    dx = add_demographics(dataframe=dx)
 
     # bucket ages: early, emerging, and fluent readers
     dx.loc[dx['Age']>=10, 'Age_bracket'] = "over10"
@@ -123,7 +124,7 @@ def make_clinical_summary_file(
     dx = define_new_categories(dataframe=dx)
 
     # add ethnicity
-    dx = _add_race_ethnicity(dataframe=dx)
+    dx = add_race_ethnicity(dataframe=dx)
 
     # participants
     dx = dx.loc[:, ~dx.columns.str.contains('^Unnamed')]
@@ -304,7 +305,7 @@ def make_items_file(
     dataframe = pd.read_csv(os.path.join(data_dir, filename), engine='python')
 
     # add new assessment, domain, measures info to item names
-    df = _match_datadic_to_data(dataframe=df)
+    df = match_datadic_to_data(dataframe=df)
 
     # add proprietry/free questionnaires to item names
     df_proprietary = pd.read_csv(os.path.join(data_dir, proprietary_filename))
@@ -317,16 +318,16 @@ def make_items_file(
     df = df[~conditional]
 
     # fix domain name (missing domain in `Assessment_List_Jan2019.xlsx`)
-    df = _fix_domain(dataframe=df)
+    df = fix_domain(dataframe=df)
 
     # identify questions that contain total scores
-    df = _identify_total_scores(dataframe=df)
+    df = identify_total_scores(dataframe=df)
 
     # identify questions that are subheadings
-    df = _identify_subheadings(dataframe=df)
+    df = identify_subheadings(dataframe=df)
 
     # identify questions that are preambles
-    df = _identify_preamble(dataframe=df)
+    df = identify_preamble(dataframe=df)
 
     # save out new file
     df.to_csv(os.path.join(data_dir, outname), index=False)
@@ -418,6 +419,7 @@ def merge_measures(
     Returns:
         df_all (pd dataframe)
     """
+    import re
 
     # check input args - `domains` and `measures` must be list or None
     if (isinstance(domains, str)) and ('all' in domains):

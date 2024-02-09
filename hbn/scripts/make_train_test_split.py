@@ -76,6 +76,8 @@ def index_into_original_dataframe(df_original, df_stratify):
     Returns:
         df_out (pd dataframe): A dataframe containing the train and test sets.
     """
+    import pandas as pd
+
     # index test and train participants into original dataframe
     train_participants = df_stratify[df_stratify['split']=='train']['Identifiers'].tolist()
     test_participants = df_stratify[df_stratify['split']=='test']['Identifiers'].tolist()
@@ -93,32 +95,32 @@ def index_into_original_dataframe(df_original, df_stratify):
 
 
 def run(
-    fpath, 
+    inpath, 
     outpath,
     ):
     """Splits a Pandas DataFrame into train and test sets using stratified sampling, handling the case where some of the groups in the columns_to_stratify list have only 1 value.
 
     Args:
-        fpath (str): Fullpath to dataframe to split, should be `all_participant_diagnoses.csv`
-        outpath (str): Fullpath to file where the train/test sets will be saved. 
+        inpath (str): Fullpath to dataframe to split, should be `all_participant_diagnoses.csv`
+        outpath (str): Fullpath to file where the train/validate/test sets will be saved. 
     Returns:
-        df_out (pd dataframe): A dataframe containing the train and test sets.
+        df_out (pd dataframe): A dataframe containing the train, validate, and test sets.
     """
     import itertools
-    import os
     import pandas as pd
     from hbn.data.data_utils import remove_small_groups
 
-    columns_to_keep=['Sex', 'Age_round', 'PreInt_Demos_Fam,Child_Race_cat']
+    columns_to_keep = ['Sex', 'Age_round', 'PreInt_Demos_Fam,Child_Race_cat']
     columns_to_stratify = list(itertools.chain(*[columns_to_keep, ['DX_Index']]))
     test_size = 0.2
     random_state = 42
 
     # read in dataframe from path
-    df = pd.read_csv(fpath, engine='python')
+    df = pd.read_csv(inpath, engine='python')
 
     # get unique dataset 
-    df_unique = get_unique_dataset(df, 
+    df_unique = get_unique_dataset(
+        df, 
         participant_col='Identifiers', 
         col_to_group='DX_Cat_Name', 
         cols_to_keep=columns_to_keep, 

@@ -25,10 +25,11 @@
 
 # Import arguments from job submission script
 args=($@)
-specs=(${args[@]:1})
+participants=(${args[@]:1})
 base_dir=$1
-model_dir=(${args[-5]})
-data_dir=(${args[-4]})
+model_dir=(${args[-6]})
+data_dir=(${args[-5]})
+spec_dir=(${args[-4]})
 target=(${args[-3]})
 feature=(${args[-2]})
 pydraml=(${args[-1]})
@@ -45,9 +46,13 @@ source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
 set -eu # Stop on errors
 
 # index slurm array to grab participant specs
-participant=${specs[${SLURM_ARRAY_TASK_ID}]}
+participant=${participants[${SLURM_ARRAY_TASK_ID}]}
 
-echo "${feature}, ${target}, ${pydraml}, ${participant}will be saved to: ${model_dir}"
+echo "${feature}, ${target}, ${pydraml}, ${participant},will be saved to: ${model_dir}"
+
+echo "specs are saved in ${spec_dir}, data are saved in ${data_dir}"
+
+echo "base directory is: ${base_dir}"
 
 # Define scratch directory
 scratch=/om2/scratch/tmp/$(whoami)/HBN_Models/ # assign working directory
@@ -63,22 +68,29 @@ TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 RANDOM_NUMBER=$((1 + $RANDOM % 100))
 scratch_dir=$scratch/$TIMESTAMP-$RANDOM_NUMBER
 
-# make model specs
-python3 $python_scripts/make_firstlevel_model.py \
+# make model spec
+python3 $python_scripts/firstlevel_model.py \
+--participant_spec=$participant \
 --feature_spec=$feature \
 --target_spec=$target \
---participant_spec=$participant \
 --pydraml_spec=$pydraml \
 --data_dir=$data_dir \
---out_dir=$scratch_dir
+--spec_dir=$spec_dir \
+--model_dir=$scratch_dir \
+--cache_dir=$scratch/.cache/pydra-ml/cache-wf/
 
-# run workflow
-cmd="python3 $python_scripts/run_model.py --model_dir=$scratch_dir --cache_dir=$scratch/.cache/pydra-ml/cache-wf/"
+# run secondlevel model
+python3 $python_scripts/secondlevel_model.py \
+--model_dir=$scratch_dir \
+--cache_dir=$scratch/.cache/pydra-ml/cache-wf/
+
+# test model
+python3 $python_scripts/test_model.py \
+--model_dir=$scratch_dir \
+--model_spec=$scratch_dir/model_spec-test.json 
 
 # Run the command
 echo "Submitted job for: ${participant}"
-echo "$'Command :\n'${cmd}"
-${cmd}
 
 # copy files back
 cp -nr $scratch_dir $model_dir
