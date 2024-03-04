@@ -4,6 +4,35 @@ from pathlib import Path
 from hbn import io
 from hbn.models import train_model
 
+
+def add_columns(df, info):
+    """add informative columns to dataframe
+
+    Args:
+        df (pd.DataFrame):
+        info (dict): model spec info
+    """
+
+    # add feature info
+    df['features'] = info['feature_info']['filename'].replace('.csv', '')
+    df['feat_spec_name'] = info['feature_info']['spec_name'].replace('-spec', '')
+    df['model_type'] = info['feature_info']['model_type']
+
+    # add info from model spec (VARIABLES ARE SUBJECT TO CHANGE)
+    vars_to_include = ['Age_round', 'Sex', 'DX_Cat_Name', 'PreInt_Demos_Fam,Child_Race_cat', 'spec_name']
+    for var in vars_to_include:
+        if var in info['participant_info']:
+            data = info['participant_info'][var]
+        else:
+            data = 'all' # use 'all' if not in info
+        if not isinstance(data, list):
+            data = [data]
+        data = [str(d) for d in data]
+        df[var] = '_'.join(data)
+    
+    return df
+
+
 def run(
     results,
     model_spec,
@@ -36,6 +65,7 @@ def run(
                 df = train_model.feature_interpretability(results=res[1], spec_info=spec_info, method=method)
                 if not df.empty: # only save if dataframe is not empty
                     df['model'] = model_name
+                    df = add_columns(df, info=spec_info)
                     train_model.save_to_existing_file(dataframe=df, fpath=os.path.join(out_dir, f'{method}_importance.csv'))
                     print('feature summary saved to disk')
 
@@ -44,6 +74,7 @@ def run(
     
     if not model_dataframe.empty: # only save if dataframe is not empty
         model_dataframe['model'] = model_name
+        model_dataframe = add_columns(df=model_dataframe, info=spec_info)
         train_model.save_to_existing_file(dataframe=model_dataframe, fpath=os.path.join(out_dir, 'model-summary.csv'))
         print('model summary saved to disk')
 

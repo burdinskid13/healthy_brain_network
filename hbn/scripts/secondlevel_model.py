@@ -8,7 +8,7 @@ import click
 from hbn import io
 from hbn.scripts import run_model
 
-def _get_best_classifier(firstlevel_model, metric='f1_score'):
+def _get_best_classifier(firstlevel_model, metric='roc_auc_score'):
     """get best model classifier from `firstlevel_model`
 
     Args:
@@ -29,7 +29,7 @@ def _get_best_classifier(firstlevel_model, metric='f1_score'):
                                         ).sort_values(by='score', ascending=False)
 
     # get best classifier
-    best_classifier = group_clf['clf'].head(1)[0]
+    best_classifier = group_clf['clf'].iloc[0]
 
     return best_classifier
 
@@ -52,6 +52,7 @@ def _get_specs(clf, model_spec, model_features, feature_importances):
 
     # load model spec info
     info = io.load_json(model_spec)
+    info_filter = info.copy()
 
     for clf_info in info['clf_info']:
 
@@ -64,15 +65,12 @@ def _get_specs(clf, model_spec, model_features, feature_importances):
             top_features =  df_clf[df_clf['top_features']==True]['feature_names'].tolist()
 
             # assign new features to spec file
-            info['x_indices'] = top_features
+            info_filter['x_indices'] = top_features
 
             # update classifier
-            info['clf_info'] = [clf_info]
-
-        else:
-            info = {}
+            info_filter['clf_info'] = [clf_info]
     
-    return info
+    return info_filter
 
 
 def make_model_spec(clf, firstlevel_model_dir, secondlevel_model_dir, splits):
@@ -99,7 +97,8 @@ def make_model_spec(clf, firstlevel_model_dir, secondlevel_model_dir, splits):
         features = f'{firstlevel_model_dir}/features-{data}.csv'
 
         # get specs
-        spec_info = _get_specs(clf, model_spec=spec, model_features=features, feature_importances=feature_importances)  
+        spec_info = _get_specs(clf, model_spec=spec, model_features=features, feature_importances=feature_importances) 
+        spec_info['feature_info']['model_type'] = 'secondlevel' 
         spec_name = f'model_spec-{data}.json'
 
         # copy model features to secondlevel directory

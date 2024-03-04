@@ -23,18 +23,18 @@ def get_features(info, dirn):
         df_filter = df.filter(like=filter)
         df_drop = pd.concat([df_drop, df_filter], axis=1)
 
-    df.drop(df_drop.columns, axis=1, inplace=True)
+    df_out = df.drop(df_drop.columns, axis=1)
 
     # filter columns if that is specified
     if info['cols_to_filter'] is not None:
         df_all = pd.DataFrame()
         for col in info['cols_to_filter']:
-            df_filter = df.loc[:, df.columns.str.contains(col)]
+            df_filter = df_out.loc[:, df_out.columns.str.contains(col)]
             df_all = pd.concat([df_filter, df_all], axis=1)
 
-        return df_all.reset_index(drop=True)
+        return df_all.drop_duplicates().reset_index(drop=True)
     else:
-        return df.reset_index(drop=True)
+        return df_out.drop_duplicates().reset_index(drop=True)
 
 
 def get_targets(info, dirn):
@@ -110,9 +110,6 @@ def combine_features_and_targets(features, targets, merge_on):
 
     # Combine the features and targets dataframes into a single dataframe.
     combined_df = features_drop_common_cols.merge(targets, on=merge_on)
-
-    # drop duplicates
-    #combined_df_drop = combined_df.drop_duplicates().reset_index(drop=True) ## taking too long on large dataframes
 
     return combined_df
 
@@ -306,6 +303,25 @@ def _drop_long_string_columns(df):
     return df
 
 
+def remove_mixed_nan_zero_columns(df):
+    import numpy as np
+    import pandas as pd
+    def is_mixed_nan_zero(col):
+        if all(isinstance(val, (float, np.float64)) and val==0 for val in col):
+            return True
+        elif all(pd.isna(val) for val in col):
+            return True
+        else:
+            return False
+        
+    # identify cols to remove
+    cols_to_remove = [col for col in df.columns if is_mixed_nan_zero(df[col])]
+
+    # remove the identified cols
+    df = df.drop(cols_to_remove, axis=1)
+    return df
+
+
 def preprocess(
         dataframe,
         clf_info=None,
@@ -357,6 +373,9 @@ def preprocess(
 
     # drop features that are too long (longer than 259 characters) - causes errors when we run pydraml
     dataframe = _drop_long_string_columns(df=dataframe)
+
+    # delete columns that are all NaN or 0
+    dataframe = remove_mixed_nan_zero_columns(df=dataframe)
 
     # upsample minority target class using smote 
     if upsample and target_column:

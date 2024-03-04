@@ -4,15 +4,24 @@ def feature_interpretability(results, spec_info, method='feature'):
     import pandas as pd
     import numpy as np
 
+    # get clf
+    clf = results.output.model.steps[1][0]
+
     # also get model featuers directly from the source
     feature_names = np.array(results.output.feature_names)
-    feature_importances = results.output.model.steps[-1][1].feature_importances_
 
-    # 
+    if clf in ['RandomForestClassifier', 'DecisionTreeClassifier', 'ExtraTreesClassifier']:
+        feature_importances = results.output.model.steps[-1][1].feature_importances_
+    elif clf in ['LogisticRegressionCV', 'LinearSVC']:
+        feature_importances = results.output.model.steps[-1][1].coef_
+        feature_importances = feature_importances.reshape(1,-1).squeeze()
+    else:
+        feature_importances = None
+
+    # make pandas dataframe
     df1 = pd.DataFrame()
     df1['feature_importances'] = feature_importances
     df1['feature_importances_names'] = feature_names
-
 
     df2 = order_across_splits(results=results, method=method)
     df3 = model_based_importance(results=results)

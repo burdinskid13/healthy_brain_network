@@ -160,3 +160,20 @@ def predictive_modeling_group(df, x='participant_group', y='roc_auc_score', titl
                   'paper_bgcolor': 'rgba(0,0,0,0)'})
 
     fig.show()
+
+
+def violinplot(x, data, y='f1_score', ylim=[0.3, 1], hue=None, title=''):
+    split = False
+    if hue is not None:
+        split = True
+    plt.figure(figsize=(3,3))
+    ax = sns.violinplot(data=data, x=x, y=y, hue=hue, split=split);
+    plt.ylabel(y)
+    plt.xlabel('')
+    plt.title('')
+    plt.xticks(rotation=45, ha='right')
+    plt.ylim(ylim)
+    if hue is not None:
+        ax.legend(loc='best', fontsize=10, bbox_to_anchor=(1.5, 1.05));
+    sns.despine(bottom=False, left=False)
+    plt.show()

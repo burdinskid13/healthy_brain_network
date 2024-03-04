@@ -91,25 +91,6 @@ def chain_dicts(dicts):
     return chained_dict
 
 
-def remove_mixed_nan_zero_columns(df):
-    import numpy as np
-    import pandas as pd
-    def is_mixed_nan_zero(col):
-        if all(isinstance(val, (float, np.float64)) and val==0 for val in col):
-            return True
-        elif all(pd.isna(val) for val in col):
-            return True
-        else:
-            return False
-        
-    # identify cols to remove
-    cols_to_remove = [col for col in df.columns if is_mixed_nan_zero(df[col])]
-
-    # remove the identified cols
-    df = df.drop(cols_to_remove, axis=1)
-    return df
-
-
 def train_test_split(features, info): 
     """split `features` into train and test sets based on info given in `info`
     Args:
@@ -125,10 +106,10 @@ def train_test_split(features, info):
     df_train = features[features[split_col]==train]
     df_test = features[features[split_col]==test]
 
-    df_train = df_train.reset_index(drop=True).drop(split_col, axis=1)
-    df_test = df_test.reset_index(drop=True).drop(split_col, axis=1)
+    df_train_drop = df_train.drop(split_col, axis=1).reset_index(drop=True)
+    df_test_drop = df_test.drop(split_col, axis=1).reset_index(drop=True)
 
-    return df_train, df_test
+    return df_train_drop, df_test_drop
 
 
 def make_features(
@@ -177,6 +158,9 @@ def make_features(
         )
     print(f'filtered participants', flush=True)
 
+    # drop duplicates 
+    df_merged = df_merged.drop_duplicates().dropna(how='all', axis=1)
+
     # preprocess combined dataframe and drop participant id
     features_preprocessed = build_features.preprocess(
                     dataframe=df_merged,  
@@ -188,14 +172,8 @@ def make_features(
                     binarize_target=target_info['binarize']
                     )
 
-    # delete participant id from dataframe
-    features_preprocessed_drop = features_preprocessed.drop(participant_id, axis=1)
-
-    # delete columns that are all NaN or zero
-    features_preprocessed_drop = remove_mixed_nan_zero_columns(df=features_preprocessed_drop)
-
     # split into train/test
-    df_train, df_test = train_test_split(features=features_preprocessed_drop, info=participant_info)
+    df_train, df_test = train_test_split(features=features_preprocessed.drop(participant_id, axis=1), info=participant_info)
 
     # get x indices (all features except target) and target vars
     x_indices = [i for i, string in enumerate(df_train.columns) if string != target_info['target_column']]
@@ -280,6 +258,7 @@ def run(
         
         # update model info with features, targets, participants
         feature_info['spec_name'] = Path(feature_spec).stem
+        feature_info['model_type'] = 'firstlevel'
         target_info['spec_name'] = Path(target_spec).stem
         participant_info['spec_name'] = Path(participant_spec).stem
         model_info_updated = chain_dicts([model_info, 
@@ -298,6 +277,10 @@ def run(
     
     # save out index for train and test
     df_index.to_csv(os.path.join(out_dir, 'participant_index.csv'), index=False)
+
+    # return specs for training data
+    feature_path = os.path.join(out_dir, f'features-{train}.csv')
+    spec_path = os.path.join(out_dir, f'model_spec-{train}.json')
     
     return feature_path, spec_path
 

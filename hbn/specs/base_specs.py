@@ -44,11 +44,13 @@ def pydraml():
         {'clf_info': 
         [
         [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}]], # classifier has to be last list
+            ["sklearn.ensemble", "ExtraTreesClassifier", {"n_estimators": 10, "class_weight": "balanced"}]], # classifier has to be last list
         [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.linear_model", "LogisticRegressionCV", {"solver": "saga", "penalty": "l1", "max_iter": 5000}]], # classifier has to be last list
+            ["sklearn.linear_model", "LogisticRegressionCV", {"solver": "saga", "penalty": "l1", "max_iter": 100}]], # classifier has to be last list
         [["sklearn.preprocessing", "StandardScaler"],
             ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]] # classifier has to be last list
+        [["sklearn.preprocessing", "StandardScaler"],
+            ["sklearn.svm", "LinearSVC"]], # classifier has to be last list
         ],
         },
         'pydraml3':
