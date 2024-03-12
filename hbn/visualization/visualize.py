@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import os
 import seaborn as sns
 
 def plotting_style():
@@ -162,18 +163,141 @@ def predictive_modeling_group(df, x='participant_group', y='roc_auc_score', titl
     fig.show()
 
 
-def violinplot(x, data, y='f1_score', ylim=[0.3, 1], hue=None, title=''):
+def violinplot(x, 
+               data, 
+               y='f1_score', 
+               ylim=[0.3, 1], 
+               hue=None, 
+               fig_title='', 
+               legend_title='',
+               xlabel='', 
+               ylabel='', 
+               x_order=None,
+               figsize=(3,3)
+               ):
     split = False
     if hue is not None:
         split = True
-    plt.figure(figsize=(3,3))
-    ax = sns.violinplot(data=data, x=x, y=y, hue=hue, split=split);
-    plt.ylabel(y)
-    plt.xlabel('')
-    plt.title('')
+    plt.figure(figsize=figsize)
+    ax = sns.violinplot(data=data, x=x, y=y, hue=hue, split=split, order=x_order);
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    else:
+        ax.set_ylabel(y)
+    ax.set_xlabel(xlabel)
+    ax.set_title(fig_title)
     plt.xticks(rotation=45, ha='right')
-    plt.ylim(ylim)
+    ax.set_ylim(ylim)
     if hue is not None:
-        ax.legend(loc='best', fontsize=10, bbox_to_anchor=(1.5, 1.05));
+        plt.legend(loc='best', fontsize=10, bbox_to_anchor=(1.3, 1.05), title=legend_title);
     sns.despine(bottom=False, left=False)
-    plt.show()
+    plt.tight_layout()
+
+    return ax
+
+def lineplot(x, 
+             data, 
+             y='f1_score', 
+             ylim=[0.3, 1], 
+             hue=None, 
+             style=None,  
+             fig_title='', 
+             legend_title='Model', 
+             xlabel='', 
+             ylabel='', 
+             palette=None, 
+             figsize=(3,3)
+             ):
+    plt.figure(figsize=figsize)
+    ax = sns.lineplot(data=data, x=x, y=y, hue=hue, style=style, err_style='bars', palette=palette);
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    else:
+        ax.set_ylabel(y)
+    ax.set_xlabel(xlabel)
+    ax.set_title(fig_title)
+    plt.xticks(rotation=45, ha='right')
+    ax.set_ylim(ylim)
+    if hue is not None:
+        plt.legend(loc='best', fontsize=10, bbox_to_anchor=(1.5, 1.05), title=legend_title);
+    plt.tight_layout()
+
+    sns.despine(bottom=False, left=False)
+    return ax
+
+def barplot(data, 
+            y='feature_names', 
+            x='feature_importances', 
+            hue=None, 
+            title='', 
+            xlabel='Feature Importance', 
+            ylabel=None, 
+            top_features=20, 
+            figsize=(3,3)
+            ):
+    plt.figure(figsize=figsize)
+    if y=='feature_names':
+        data['feature_names'] = data['feature_names'].str.replace('numeric__', '')
+        ax = sns.barplot(y=y, x=x, hue=hue,data=data.head(top_features))
+    else:
+        ax = sns.barplot(y=y, x=x, hue=hue, data=data)
+
+    if ylabel is None:
+        ax.set_ylabel(ylabel)
+    else:
+        ax.set_ylabel(y)
+    if xlabel is None:
+        ax.set_xlabel(xlabel)
+    else:
+        ax.set_xlabel(x)
+    ax.set_title(title)
+    sns.despine(bottom=False, left=False)
+    plt.tight_layout()
+    return ax
+
+def pointplot(
+            data, 
+            y='feature_names', 
+            x='feature_importances', 
+            hue=None,
+            fig_title='', 
+            legend_title='Model', 
+            ylim=[0.3, 1], 
+            xlabel='ROC AUC', 
+            ylabel=None, 
+            markers="o",
+            linestyles="--",
+            join_lines=True,
+            scale=0.5,
+            dodge=.4,
+            alpha=.2,
+            figsize=(3,3)
+            ):
+    plt.figure(figsize=figsize)
+    ax = sns.stripplot(
+        data=data, x=x, y=y, hue=hue,
+        dodge=True, alpha=alpha, legend=False,
+        )
+    sns.pointplot(
+        data=data, x=x, y=y, hue=hue,
+        join=join_lines, dodge=dodge, errorbar=None,
+        markers=markers, scale=scale,
+        linestyles=linestyles, 
+    )
+
+    # customize hue
+    if hue is not None:
+        plt.legend(loc='best', fontsize=10, bbox_to_anchor=(1.1, 1.05), title=legend_title);
+
+    # Customize the plot further (optional)
+    ax.set_xlabel(xlabel)
+    ax.set_ylim(ylim)
+    ax.set_ylabel(ylabel)
+    ax.set_title(fig_title)
+    plt.xticks(ha='right', rotation=45)
+    sns.despine(bottom=False, left=False)
+    plt.tight_layout()
+    
+    return ax
+
+    

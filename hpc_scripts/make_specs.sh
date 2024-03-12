@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Job name:
-#SBATCH --job-name=preprocess_models
+#SBATCH --job-name=make_specs
 #
 # Partition:
 #SBATCH --partition=normal
@@ -31,5 +31,5 @@ source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
 base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
 out_dir=$base/model_specs
 
-# preprocess phenotypes and make specs
+# make specs
 python3 $base/hbn/scripts/make_specs.py --out_dir=$out_dir

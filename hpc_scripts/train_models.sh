@@ -84,20 +84,13 @@ python3 $python_scripts/secondlevel_model.py \
 --model_dir=$scratch_dir \
 --cache_dir=$scratch/.cache/pydra-ml/cache-wf/
 
-# # test model (on firstlevel)
-# python3 $python_scripts/test_model.py \
-# --model_dir=$scratch_dir \
-# --model_spec=$scratch_dir/model_spec-test.json 
-
-# # test model (on secondlevel)
-# python3 $python_scripts/test_model.py \
-# --model_dir=$scratch_dir_secondlevel \
-# --model_spec=$scratch_dir/model_spec-test.json 
-
 # Run the command
 echo "Submitted job for: ${participant}"
 
 # copy firstlevel model files back
 cp -nr $scratch_dir $model_dir
 
-echo "$'Copied data from ${scratch_dir} to ${model_dir}"
+# copy secondlevel model files back
+cp -nr "${scratch_dir}_secondlevel" $model_dir
+
+echo "$'Copied data from ${scratch_dir} and ${scratch_dir}_secondlevel to ${model_dir}"

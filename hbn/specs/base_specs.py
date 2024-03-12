@@ -48,7 +48,7 @@ def pydraml():
         [["sklearn.preprocessing", "StandardScaler"],
             ["sklearn.linear_model", "LogisticRegressionCV", {"solver": "saga", "penalty": "l1", "max_iter": 100}]], # classifier has to be last list
         [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]] # classifier has to be last list
+            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]], # classifier has to be last list
         [["sklearn.preprocessing", "StandardScaler"],
             ["sklearn.svm", "LinearSVC"]], # classifier has to be last list
         ],
@@ -476,6 +476,12 @@ def features():
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR', 'C3SR', 'SCARED_SR', 'CIS_SR', 'WHODAS_SR', 'PANAS']
+                },
+                'features-Reading-all':
+                {
+                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 'YSR', 'C3SR', 'SCARED_SR', 'CIS_SR', 'WHODAS_SR', 'PANAS', 'WIAT', 'TOWRE', 'WISC', 'WAIS', 'KBIT', 'NIH', 'GFTA', 'CTOPP', 'CELF', 'PPVT', 'EVT']
                 }
                 }
 
@@ -526,7 +532,7 @@ def features():
                 {
                 "filename": 'all-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'TRF_Int', 'CBCL_Int', 'Internalising', 'YSR_Int']
+                "cols_to_filter": ['Identifiers', 'TRF_Int', 'CBCL_Int', 'Internalising', 'YSR_Int'],
                 } 
                 }
 
