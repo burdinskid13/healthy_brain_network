@@ -2,7 +2,7 @@
 participants=($@)
 
 # Model outname
-model_outname=reading_march/
+model_outname=reading_april/
 
 ### SET DIRECTORIES ###
 base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
@@ -15,10 +15,8 @@ model_dir=/om2/user/$(whoami)/hbn_data/interim/models/$model_outname # MODEL OUT
 pydraml=pydraml3-spec.json # pydraml base
 target=target-Diagnosis-spec.json # target spec
 
-features=("features-Teacher-remove-total-scores-spec.json")
-# participants=("participants-Reading-all-spec.json" "participants-Reading-male-spec.json" "participants-Reading-female-spec.json" "participants-Reading-early-readers-spec.json" "participants-Reading-fluent-readers-spec.json" "participants-Reading-emerging-readers-spec.json" "participants-Reading-early-readers-female-spec.json" "participants-Reading-fluent-readers-female-spec.json" "participants-Reading-emerging-readers-female-spec.json" "participants-Reading-early-readers-male-spec.json" "participants-Reading-fluent-readers-male-spec.json" "participants-Reading-emerging-readers-male-spec.json" "participants-Reading-Black-spec.json" "participants-Reading-White-spec.json")
-participants=("participants-Reading-female-spec.json")
-
+features=("features-Teacher-remove-total-scores-spec.json" "features-Parent-remove-total-scores-spec.json" "features-Child-remove-total-scores-spec.json" "features-Parent-SES-spec.json" "features-all-demos-spec.json" "features-Child-achievement-spec.json" "features-child-anxiety-spec.json" "features-child-cbcl-spec.json" "features-Child-emotional-status-spec.json" "features-Child-executive-function-spec.json" "features-Child-intelligence-spec.json" "features-Child-phonological-spec.json" "features-Child-production-spec.json" "features-Child-reading-spec.json" "features-Child-reading-spec.json")
+participants=("participants-Reading-all-spec.json" "participants-Reading-male-spec.json" "participants-Reading-female-spec.json" "participants-Reading-early-readers-spec.json" "participants-Reading-fluent-readers-spec.json" "participants-Reading-emerging-readers-spec.json" "participants-Reading-early-readers-female-spec.json" "participants-Reading-fluent-readers-female-spec.json" "participants-Reading-emerging-readers-female-spec.json" "participants-Reading-early-readers-male-spec.json" "participants-Reading-fluent-readers-male-spec.json" "participants-Reading-emerging-readers-male-spec.json")
 
 mkdir -p $model_dir
 
@@ -35,6 +33,3 @@ for feature in "${features[@]}"
 do
     sbatch --array=0-$len $bash_scripts/train_models.sh $base ${participants[@]} $model_dir $data_dir $spec_dir $target $feature $pydraml
 done;
-
-# get overall summary of models
-# sbatch $bash_scripts/summarize_models.sh $base $model_dir

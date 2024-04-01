@@ -255,7 +255,7 @@ def column_transform(
     return df_transformed
 
 
-def smote(y_train, X_train):
+def upsample_data(y_train, X_train):
     """oversamples `y_train` and `X_train` for minority samples
 
     Args: 
@@ -328,7 +328,6 @@ def preprocess(
         cols_to_ignore=None,
         cols_to_drop=None,
         threshold=False,
-        upsample=True,
         target_column=None,
         binarize_target=True
         ):
@@ -341,7 +340,6 @@ def preprocess(
         cols_to_ignore (list of str or None): (optional) columns to ignore in preprocessing. Default is None.
         cols_to_drop (list of str or None): (optional) columns to drop in preprocessing. Default is None.
         threshold (bool): threshold dataframe based on some fixed criterion. We are using 50% for columns and 20% for rows. If threshold is False, then only NaN entries are removed (no thresholding applied)
-        upsample (bool): upsample minority class using SMOTE. default is True
         target_column (str): target column name. default is None
         binarize_target (bool): binarize target column if target_column is not None. default is True
     """
@@ -377,9 +375,9 @@ def preprocess(
     # delete columns that are all NaN or 0
     dataframe = remove_mixed_nan_zero_columns(df=dataframe)
 
-    # upsample minority target class using smote 
-    if upsample and target_column:
-        x_cols = [col for col in dataframe.columns if target_column not in col]
-        dataframe = smote(y_train=dataframe[[target_column]], X_train=dataframe[x_cols])
+    # # upsample minority target class using smote 
+    # if upsample and target_column:
+    #     x_cols = [col for col in dataframe.columns if target_column not in col]
+    #     dataframe = smote(y_train=dataframe[[target_column]], X_train=dataframe[x_cols])
 
     return dataframe
