@@ -487,7 +487,7 @@ def features():
                 {
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'YSR', 'C3SR', 'SCARED_SR', 'CIS_SR', 'WHODAS_SR', 'PANAS', 'WIAT', 'TOWRE', 'WISC', 'WAIS', 'KBIT', 'NIH', 'GFTA', 'CTOPP', 'CELF', 'PPVT', 'EVT']
+                "cols_to_filter": ['Identifiers', 'Barratt', 'FSQ', 'YSR', 'C3SR', 'SCARED_SR', 'CIS_SR', 'WHODAS_SR', 'PANAS', 'WIAT', 'TOWRE', 'WISC', 'WAIS', 'KBIT', 'NIH', 'GFTA', 'CTOPP', 'CELF', 'PPVT', 'EVT']
                 }
                 }
 
