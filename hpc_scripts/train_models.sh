@@ -11,10 +11,10 @@
 #SBATCH --exclude=node[041]
 #
 # Tasks:
-#SBATCH -c 16 # 16 hyperthreaded cores 
+#SBATCH -c 1 # was 16 hyperthreaded cores 
 #
 # Memory:
-#SBATCH --mem=10G
+#SBATCH --mem=5G
 #
 # Wall clock limit:
 #SBATCH --time=2-00:00:00

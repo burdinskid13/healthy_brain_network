@@ -175,10 +175,10 @@ def make_features(
     # split into train/test
     df_train, df_test = train_test_split(features=features_preprocessed.drop(participant_id, axis=1), info=participant_info)
 
-    # upsample training data (leave test intact)
+    # return features
     target_col = target_info['target_column']
     x_indices = [col for col in df_train.columns if target_col not in col]
-    df_train = build_features.upsample_data(y_train=df_train[[target_col]], X_train=df_train[x_indices])
+    # df_train = build_features.upsample_data(y_train=df_train[[target_col]], X_train=df_train[x_indices])
 
     return df_train, df_test, x_indices, [target_col], features_preprocessed[filter_cols].reset_index(drop=True)
 

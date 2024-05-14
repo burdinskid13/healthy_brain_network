@@ -14,6 +14,7 @@ def pydraml():
         "n_splits" : 5,
         "test_size" : .2,
         "permute" : [True, False],
+        "oversample": True,
         "gen_feature_importance" : True,
         "gen_permutation_importance" : True,
         "permutation_importance_n_repeats" : 5,
@@ -142,6 +143,38 @@ def participants():
          'Sex': ['female'],
          'DX_Cat_Name': ['ADHD', 'No Diagnosis Given'],
          'PreInt_Demos_Fam,Child_Race_cat': ['White/Causasian'],
+        },
+        }
+    spec_info_adhd_multiclass = {
+        'participants-adhd-all-subtypes':
+        {
+         'Age_round': [int(t) for t in np.arange(5,22)],
+         'Sex': ['male', 'female'],
+         'DX_Subtype_Name': ['ADHD-Combined Type', 'ADHD-Inattentive Type', 
+                             'Other Specified Attention-Deficit/Hyperactivity Disorder', 
+                             'ADHD-Hyperactive/Impulsive Type',
+                             'No Diagnosis Given'
+                             ]
+        },
+        'participants-adhd-male-all-subtypes':
+        {
+         'Age_round': [int(t) for t in np.arange(5,22)],
+         'Sex': ['male'],
+         'DX_Subtype_Name': ['ADHD-Combined Type', 'ADHD-Inattentive Type', 
+                    'Other Specified Attention-Deficit/Hyperactivity Disorder', 
+                    'ADHD-Hyperactive/Impulsive Type',
+                    'No Diagnosis Given'
+                    ]
+        },
+        'participants-adhd-female-all-subtypes':
+        {
+         'Age_round': [int(t) for t in np.arange(5,22)],
+         'Sex': ['female'],
+         'DX_Subtype_Name': ['ADHD-Combined Type', 'ADHD-Inattentive Type', 
+                    'Other Specified Attention-Deficit/Hyperactivity Disorder', 
+                    'ADHD-Hyperactive/Impulsive Type',
+                    'No Diagnosis Given'
+                    ]
         },
         }
     spec_info_asd = {
@@ -310,7 +343,7 @@ def participants():
         }
 
     # concat dicts
-    spec_info = _concat_dicts(spec_info_adhd, spec_info_asd, spec_info_reading)
+    spec_info = _concat_dicts(spec_info_adhd, spec_info_adhd_multiclass, spec_info_asd, spec_info_reading)
 
 
     return base_info, spec_info
@@ -358,11 +391,11 @@ def features():
                                 "add_indicator": True
                             }
                         ],
-                        [
-                            "sklearn.preprocessing",
-                            "StandardScaler",
-                            {}
-                        ]
+                        # [
+                        #     "sklearn.preprocessing",
+                        #     "StandardScaler",
+                        #     {}
+                        # ]
                     ],
                     "category": [
                         [
@@ -483,11 +516,11 @@ def features():
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'Barratt', 'FSQ'] # cols related to SES
                 },
-                'features-Child-reading-all':
+                'features-Child-reading-all-CORRECT':
                 {
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'Barratt', 'FSQ', 'YSR', 'C3SR', 'SCARED_SR', 'CIS_SR', 'WHODAS_SR', 'PANAS', 'WIAT', 'TOWRE', 'WISC', 'WAIS', 'KBIT', 'NIH', 'GFTA', 'CTOPP', 'CELF', 'PPVT', 'EVT']
+                "cols_to_filter": ['Identifiers', 'CELF', 'PPVT', 'EVT', 'CTOPP', 'WIAT', 'TOWRE']
                 }
                 }
 
@@ -585,17 +618,29 @@ def features():
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL', 'CBCL_Pre']
                 }, 
+                'features-teacher-cbcl':
+                {
+                "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 'TRF', 'TRF_Pre']
+                }, 
                 'features-parent-anxiety':
                 {
                 "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'SCARED_P']
                 }, 
-                'features-parent-strengths-weaknesses-adhd':
+                'features-parent-strengths-weaknesses-adhd-all':
                 {
                 "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'SWAN', 'ESWAN', 'SDQ']
+                }, 
+                'features-parent-strengths-weaknesses-adhd':
+                {
+                "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 'SWAN']
                 }, 
                 }
     

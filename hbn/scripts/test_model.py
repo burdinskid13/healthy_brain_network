@@ -3,6 +3,7 @@ warnings.filterwarnings("ignore")
 import os
 import glob
 import click
+import pandas as pd
 
 from hbn.models import predict_model
 from hbn import io
@@ -38,6 +39,7 @@ def add_columns(df, info):
 @click.command()
 @click.option("--model_dir", required=True)
 @click.option("--model_spec", required=True)
+
 def run(model_dir, model_spec):
     """run evaluation on new test data
 
@@ -55,15 +57,21 @@ def run(model_dir, model_spec):
     model_info = io.load_json(fpath=model_spec)
     X_test, y_test = predict_model.get_test_data(model_dir=model_dir, model_spec=model_info)
 
-    # index test data using model spec
-    try:
-        X_test = X_test[model_info['x_indices']]
-    except:
-        X_test = X_test[X_test.columns[model_info['x_indices']]]
+    if X_test.shape[1]!=len(feature_names):
+        X_test_df = pd.DataFrame(np.zeros((X_test.shape[0], len(feature_names))), columns=feature_names)
+        for col in X_test_df.columns:
+            if col in X_test.columns:
+                X_test_df.loc[:, col] = X_test[col]
+    else:
+        X_test_df = X_test
+
+    # how many features?
+    num_features = len(model_info['x_indices'])
 
     # make predictions
     df_eval, df_pred = predict_model.evaluation(fitted_model, X_test, y_test, feature_names)
     df_eval['model'] = model_name; df_pred['model'] = model_name
+    df_eval['number_of_features'] = num_features; df_pred['number_of_features'] = num_features
     df_eval = add_columns(df=df_eval, info=model_info); df_pred = add_columns(df=df_pred, info=model_info)
     
     # save model evaluation and predictions to disk

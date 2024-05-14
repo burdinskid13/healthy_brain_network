@@ -6,11 +6,12 @@ import seaborn as sns
 
 def plotting_style():
     plt.style.use('seaborn-poster') # ggplot
-    params = {'axes.labelsize': 30,
+    params = {'axes.labelsize': 20,
             'axes.titlesize': 25,
-            'legend.fontsize': 25,
-            'xtick.labelsize': 25,
-            'ytick.labelsize': 25,
+            'legend.fontsize': 20,
+            'xtick.labelsize': 20,
+            'ytick.labelsize': 20,
+            'legend.title_fontsize': 20,
             # 'figure.figsize': (10,5),
             'font.weight': 'regular',
             # 'font.size': 'regular',

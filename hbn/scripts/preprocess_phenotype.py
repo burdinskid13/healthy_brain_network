@@ -38,7 +38,8 @@ def run(parse=False):
 
     # makes test/train splits
     make_train_test_split.run(inpath=os.path.join(Defaults.INTERIM_FEATURES_DIR, 'all_participant_diagnoses.csv'), 
-                              outpath=os.path.join(Defaults.INTERIM_FEATURES_DIR, 'participant_train_test.csv'))
+                              outpath=os.path.join(Defaults.INTERIM_FEATURES_DIR, 'participant_train_test.csv')
+                              )
     print('created train/test participant files', flush=True)
 
 

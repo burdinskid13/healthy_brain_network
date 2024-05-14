@@ -19,8 +19,10 @@ class Defaults:
     PHENO_DIR = RAW_DIR / "phenotype"
     MODEL_DIR = INTERIM_DIR / "models"
     INTERIM_FEATURES_DIR = INTERIM_DIR / "phenotypes"
+    PROCESSED_FIG_DIR = PROCESSED_DIR / "figures"
 
-    dirs = [RAW_DIR, INTERIM_DIR, PROCESSED_DIR, FIG_DIR, MODEL_SPECS_DIR, MODEL_DIR, INTERIM_FEATURES_DIR]
+
+    dirs = [RAW_DIR, INTERIM_DIR, PROCESSED_DIR, FIG_DIR, MODEL_SPECS_DIR, MODEL_DIR, INTERIM_FEATURES_DIR, PROCESSED_FIG_DIR]
     for dirn in dirs:
         if not os.path.isdir(dirn):
             try:

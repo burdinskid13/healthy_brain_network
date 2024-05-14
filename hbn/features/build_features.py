@@ -375,9 +375,4 @@ def preprocess(
     # delete columns that are all NaN or 0
     dataframe = remove_mixed_nan_zero_columns(df=dataframe)
 
-    # # upsample minority target class using smote 
-    # if upsample and target_column:
-    #     x_cols = [col for col in dataframe.columns if target_column not in col]
-    #     dataframe = smote(y_train=dataframe[[target_column]], X_train=dataframe[x_cols])
-
     return dataframe
