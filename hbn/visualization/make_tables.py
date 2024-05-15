@@ -1,5 +1,5 @@
-def remap():
-    return {'female': 'Female sex assigned at birth, n (%)',
+def remap(vals):
+    map = {'female': 'Female sex assigned at birth, n (%)',
             'White/Caucasian': 'White race, n (%)',
             'Hispanic': 'Hispanic ethnicity, n (%)',
             'Black/African American': 'Black race, n (%)',
@@ -9,53 +9,76 @@ def remap():
             'Age': 'Age, years, mean (SD)',
             'number_of_comorbidites': 'Comorbidities, mean (SD)'
             }
+    # programmatically reformat diagnosis
+    data_dict = {}
+    for val in vals:
+        if val in map.keys():
+            data_dict.update({val: map[val]})
+        else:
+            data_dict.update({val: f'{val}, n (%)'})
 
-def count_perc_diagnosis(df, overall_count,
-                        diagnosis1='No Diagnosis Given', diagnosis2='Reading Impairment'):
-    # get filtered numbers
-    no_diagnosis_count = sum(df['Diagnosis']==diagnosis1)
-    diagnosis_count = sum(df['Diagnosis']==diagnosis2)
-    all_count = no_diagnosis_count + diagnosis_count
-
-    # percent of overall
-    no_diagnosis_perc = no_diagnosis_count / (all_count)*100
-    diagnosis_perc = diagnosis_count / (all_count)*100
-    all_perc = all_count / (overall_count)*100
-
-    data_dict = {
-                'Overall': f'{round(all_count, 1)} ({round(all_perc, 1)})',
-                f'{diagnosis1}': f'{round(no_diagnosis_count, 1)} ({round(no_diagnosis_perc, 1)})',
-                f'{diagnosis2}': f'{round(diagnosis_count, 1)} ({round(diagnosis_perc, 1)})'
-                 }
-    
     return data_dict
 
+def count_perc_vals(df, overall_count, col='Diagnosis', vals=['No Diagnosis Given', 'Reading Impairment']):
 
-def overall_numbers_diagnosis(df, diagnosis1='No Diagnosis Given', diagnosis2='Reading Impairment'):
-    # get overall numbers
+    # get counts
+    counts = []
+    for val in vals:
+        count = sum(df[col]==val)
+        counts.append(count)
+    all_count = sum(counts)
+
+    # get percentages
+    percs = []
+    for v in counts:
+        percs.append(v / (all_count)*100)
+    all_perc = all_count/ (overall_count)*100
+
+    out_dict = {'Overall': f'{round(all_count, 1)} ({round(all_perc, 1)})'}
+    for name, count, perc in zip(vals, counts, percs):
+        out_dict.update({f'{name}': f'{round(count, 1)} ({round(perc, 1)})'})
+
+    return out_dict
+
+
+def overall_numbers(df, col, vals=['No Diagnosis Given', 'Reading Impairment']):
+    # get overall numbers for `overall`
     overall_count = df.shape[0]
-    overall_no_diagnosis = sum(df['Diagnosis']==diagnosis1)
-    overall_diagnosis = sum(df['Diagnosis']==diagnosis2)
+    # loop over vals
+    counts = []
+    for val in vals:
+        counts.append(sum(df[col]==val))
 
-    return overall_count, overall_no_diagnosis, overall_diagnosis
+    out_list = [overall_count] + counts
+
+    return out_list
 
 
 def make_table_count(df,
                     cols,
                     vals,
-                    diagnosis1='No Diagnosis Given', 
-                    diagnosis2='Reading Impairment'
+                    split='Diagnosis',
+                    split_vals=['No Diagnosis Given', 'Reading Impairment'],
+                    overall={'DX_Cat_Name': 'Reading Impairment'}
                     ):
     from collections import defaultdict
     import pandas as pd
 
-    # get patient count
-    df_count = df.groupby('Identifiers').head(1)
+    if 'Identifiers' in df.columns:
+        # get patient count
+        df_count = df.groupby('Identifiers').head(1)
+    else:
+        df_count = df
 
     # get overall count
-    overall_count, overall_no_diagnosis, overall_diagnosis = overall_numbers_diagnosis(df, diagnosis1, diagnosis2)
+    if overall is not None:
+        col = list(overall.keys())[0]
+        val = list(overall.values())[0]
+        overall_counts = overall_numbers(df=df_count[df_count[col]==val], col=split, vals=split_vals)
+    else:
+        overall_counts = overall_numbers(df=df_count, col=split, vals=split_vals)
 
-    # loop over races and ethnicities
+    # loop over cols + corresponding vals
     out_dict = defaultdict(list)
     for (col, val) in zip(cols, vals): 
 
@@ -63,11 +86,11 @@ def make_table_count(df,
         df_filter = df_count[df_count[col]==val].reset_index(drop=True)
 
         # get patient count and % of overall
-        data_dict = count_perc_diagnosis(df=df_filter,
-                                         overall_count=overall_count,
-                                         diagnosis1=diagnosis1,
-                                         diagnosis2=diagnosis2
-                                         )
+        data_dict = count_perc_vals(df=df_filter,
+                                    overall_count=overall_counts[0], # first item in overall counts should be `overall_count``
+                                    col=split, 
+                                    vals=split_vals
+                                    )
         
         for k,v in data_dict.items():
             out_dict[k].append(v)
@@ -75,8 +98,9 @@ def make_table_count(df,
     # make dataframe and clean up
     df_out = pd.DataFrame.from_dict(out_dict)
     df_out['Demographics'] = vals
-    df_out['Demographics'] = df_out['Demographics'].map(remap())
-    df_out.loc[len(df_out)] = [overall_count, overall_no_diagnosis, overall_diagnosis, 'n']
+    df_out['Demographics'] = df_out['Demographics'].map(remap(vals))
+    first_row = pd.DataFrame([pd.Series(overall_counts + ['n'], index=df_out.columns)])
+    df_out = pd.concat([first_row, df_out], ignore_index=True)
 
     return df_out
     
@@ -84,8 +108,8 @@ def make_table_count(df,
 def make_table_mean_std(df, 
                         cols=['Age'], 
                         cols_new=['Age, years (mean, SD)'],
-                        diagnosis1='No Diagnosis Given',
-                        diagnosis2='Reading Impairment'
+                        split='Diagnosis',
+                        split_vals=['No Diagnosis Given', 'Reading Impairment']
                         ):
     import pandas as pd
     from collections import defaultdict
@@ -97,14 +121,15 @@ def make_table_mean_std(df,
         mean_overall = df[col].mean().round(2)
         std_overall = df[col].std().round(2)
 
-        no_diagnosis = df[df['Diagnosis']==diagnosis1][col]
-        diagnosis = df[df['Diagnosis']==diagnosis2][col]
-
-        data_dict = {'Overall': f'{mean_overall} ({std_overall})',
-                    f'{diagnosis1}': f'{no_diagnosis.mean().round(2)} ({no_diagnosis.std().round(2)})',
-                    f'{diagnosis2}': f'{diagnosis.mean().round(2)} ({diagnosis.std().round(2)})',
+        # loop over vals
+        data_dict = {}
+        for val in split_vals:
+            df_filter = df[df[split]==val][col]
+            data_dict.update({val: f'{df_filter.mean().round(2)} ({ df_filter.std().round(2)})'})
+        
+        data_dict.update({'Overall': f'{round(mean_overall, 1)} ({round(std_overall, 1)})',
                     'Demographics': col_new
-                    }
+                    })
         
         for k, v in data_dict.items():
             out_dict[k].append(v)

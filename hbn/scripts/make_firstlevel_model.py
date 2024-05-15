@@ -178,7 +178,6 @@ def make_features(
     # return features
     target_col = target_info['target_column']
     x_indices = [col for col in df_train.columns if target_col not in col]
-    # df_train = build_features.upsample_data(y_train=df_train[[target_col]], X_train=df_train[x_indices])
 
     return df_train, df_test, x_indices, [target_col], features_preprocessed[filter_cols].reset_index(drop=True)
 
