@@ -24,6 +24,7 @@ def plotting_style():
             'axes.spines.right': False}
     plt.rcParams.update(params)
     sns.set_context(rc={'lines.markeredgewidth': 0.1})
+    sns.set_palette('Paired')
     np.set_printoptions(formatter={'float_kind':'{:f}'.format})
 
 
