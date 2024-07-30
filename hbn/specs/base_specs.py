@@ -11,10 +11,12 @@ def pydraml():
         "target_vars" : None,
         "permute" : [True, False],
         "group_var" : None,
-        "n_splits" : 5,
+        "n_splits" : 10,
         "test_size" : .2,
         "permute" : [True, False],
         "oversample": True,
+        "feature_selection": True,
+        "feature_selection_strategy": 'intersection', # 'intersection or 'union'
         "gen_feature_importance" : True,
         "gen_permutation_importance" : True,
         "permutation_importance_n_repeats" : 5,
@@ -23,7 +25,7 @@ def pydraml():
         "nsamples" : "auto",
         "l1_reg" : "aic",
         "plot_top_n_shap": 10,
-        "metrics" : ['roc_auc_score', 'f1_score', 'precision_score', 'recall_score']
+        "metrics" : ['roc_auc_score'] #'f1_score', 'precision_score', 'recall_score'
         }
 
     spec_info = {
@@ -58,7 +60,7 @@ def pydraml():
         {'clf_info': 
         [
         [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 10}]], # classifier has to be last list
+            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]], # classifier has to be last list
         ],
         },
         }
@@ -79,7 +81,6 @@ def participants():
     base_info = {'filename': 'participant_train_test.csv',
                 'participant_id': 'Identifiers', # should be string (e.g., 'Identifiers', 'pat_id') and it's assumed that the `participant_id` column is in the features and targets dataframes (code checks this)
                 'split': ['train', 'test'],
-                'train_test_split': {'split_col': 'split', 'train': 'train', 'test': 'test'}
                 }
 
     # spec files
@@ -239,7 +240,7 @@ def participants():
          'PreInt_Demos_Fam,Child_Race_cat': ['White/Causasian'],
         },
         }
-    spec_info_reading = {
+    spec_info_reading_no_diagnosis = {
         'participants-Reading-all':
         {
          'Age_round': [int(t) for t in np.arange(6,22)],
@@ -341,9 +342,43 @@ def participants():
          'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading', 'No Diagnosis Given']
         },
         }
+    spec_info_gender = {
+        'participants-Reading-Only':
+        {
+         'Age_round': [int(t) for t in np.arange(6,22)],
+         'Sex': ['male', 'female'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading']
+        },
+        'participants-No-Diagnosis-Only':
+        {
+         'Age_round': [int(t) for t in np.arange(6,22)],
+         'Sex': ['male', 'female'],
+         'DX_Cat_Name': ['No Diagnosis Given']
+        },
+        'participants-Reading-Only-early':
+        {
+         'Age_round': [6,7,8],
+         'Sex': ['male', 'female'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading']
+        },
+        'participants-Reading-Only-emerging':
+        {
+         'Age_round': [9,10],
+         'Sex': ['male', 'female'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading']
+        },
+        'participants-Reading-Only-fluent':
+        {
+         'Age_round': [11,12,13,14,15,16,17,18],
+         'Sex': ['male', 'female'],
+         'DX_Cat_Name': ['Specific Learning Disorder with Impairment in Reading']
+        },
+    }
 
     # concat dicts
-    spec_info = _concat_dicts(spec_info_adhd, spec_info_adhd_multiclass, spec_info_asd, spec_info_reading)
+    spec_info = _concat_dicts(spec_info_adhd, spec_info_adhd_multiclass, 
+                              spec_info_asd, spec_info_reading_no_diagnosis, spec_info_gender
+                              )
 
 
     return base_info, spec_info
@@ -353,15 +388,20 @@ def targets():
     """hardcode target features
     """
 
-    base_info = {
-        'upsample': True, # upsample minority target class using SMOTE
-                    }
+    base_info = {}
     spec_info = {'target-Diagnosis':
                     {
-                    'filename': 'all_participant_diagnoses.csv',
+                    'filename': 'participant_train_test.csv',
                     'target_column': 'DX_Cat_Name', # should be string (e.g., 'age', 'diagnosis')
                     'binarize': True,
                     'cols_to_keep': ['Identifiers', 'DX_Cat_Name'], # columns we want in the final dataframe
+                    },
+                'target-Gender': 
+                    {
+                    'filename': 'participant_train_test.csv',
+                    'target_column': 'Sex', # should be string (e.g., 'DX_Cat_Name', 'Sex')
+                    'binarize': True,
+                    'cols_to_keep': ['Identifiers', 'Sex'], # columns we want in the final dataframe
                     },
                 }
 
@@ -378,24 +418,17 @@ def features():
         return new_dict
     
     base_info = {
-                "threshold": False, # threshold dataframe based on some fixed criterion. We are using 50% for columns and 20% for rows. If threshold is False, then only NaN entries are removed (no thresholding applied)
+                "threshold": True, # threshold dataframe based on some fixed criterion - remove featuers that are missing more than 10% of values
                 "clf_info": {
                     "numeric": [
                         [
                             "sklearn.impute",
                             "SimpleImputer",
                             {
-                                # "strategy": "constant",
-                                # "fill_value": None
                                 "strategy": "mean",
                                 "add_indicator": True
                             }
                         ],
-                        # [
-                        #     "sklearn.preprocessing",
-                        #     "StandardScaler",
-                        #     {}
-                        # ]
                     ],
                     "category": [
                         [
@@ -412,7 +445,7 @@ def features():
                             "OneHotEncoder",
                             {
                                 "handle_unknown": "ignore",
-                                "sparse": False, # sparse_output
+                                "sparse_output": False, 
                                 "categories": 'auto',
                                 "drop": 'if_binary',
                                 "max_categories": 5
@@ -504,6 +537,12 @@ def features():
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'WIAT', 'TOWRE']
                 }, 
+                'features-Child-reading-minimal':
+                {
+                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 'TOWRE']
+                }, 
                 'features-Child-emotional-status':
                 {
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
@@ -516,7 +555,31 @@ def features():
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'Barratt', 'FSQ'] # cols related to SES
                 },
-                'features-Child-reading-all-CORRECT':
+                'features-Parent-Stress':
+                {
+                "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 'PSI', 'DTS', 'APQ_P', 'PCIAT']
+                },
+                'features-Parent-Psychological-Function':
+                {
+                "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 'NLES_P', 'PreInt_FamHx_RDC', 'Vineland', 'PreInt_Demos_Fam', 'PreInt_Demos_Home', 'PreInt_DevHx', 'PreInt_EduHx',  'PreInt_Lang', 'PreInt_TxHx']
+                },
+                'features-Parent-Intake-Interview':
+                {
+                "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers',  'PreInt_Demos_Fam', 'PreInt_Demos_Home', 'PreInt_DevHx', 'PreInt_EduHx',  'PreInt_Lang', 'PreInt_TxHx']
+                },
+                'features-Parent-Family-History':
+                {
+                "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 'PreInt_FamHx_RDC']
+                },
+                'features-Child-reading-all':
                 {
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
@@ -572,6 +635,12 @@ def features():
                 "filename": 'all-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF_Int', 'CBCL_Int', 'Internalising', 'YSR_Int'],
+                },
+                'features-all-internalizing-externalizing':
+                {
+                "filename": 'all-features-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 'TRF_Int', 'CBCL_Int', 'Internalising', 'YSR_Int', 'TRF_Ext', 'CBCL_Ext', 'Externalising', 'YSR_Ext'],
                 } 
                 }
 
@@ -669,9 +738,30 @@ def features():
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'MFQ_P']
                 }
-    }
+            }
+    
+    other = {
+            'features-Child-CBCL':
+                {
+                "filename": 'Child-features-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 'YSR']
+                },
+            'features-Parent-CBCL':
+                {
+                "filename": 'Parent-features-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 'CBCL', 'CBCL_Pre']
+                },
+            'features-Teacher-CBCL':
+                {
+                "filename": 'Teacher-features-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 'TRF', 'TRF_P']
+                },
+                }
 
-    spec_info = _concat_dicts(all_info, reading_info, adhd_info, asd_info, internalizing_externalizing)
+    spec_info = _concat_dicts(all_info, reading_info, adhd_info, asd_info, internalizing_externalizing, other)
     
     return base_info, spec_info
 

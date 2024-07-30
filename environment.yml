@@ -22,5 +22,8 @@ dependencies:
   - hdbscan
   - bertopic
   - click
+  - nbformat
+  - Openai
+  - gensim
   - pip:
     - pydra-ml

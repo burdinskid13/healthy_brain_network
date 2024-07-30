@@ -16,7 +16,6 @@ def add_columns(df, info):
     # add feature info
     df['features'] = info['feature_info']['filename'].replace('.csv', '')
     df['feat_spec_name'] = info['feature_info']['spec_name'].replace('-spec', '')
-    df['model_type'] = info['feature_info']['model_type']
 
     # add info from model spec (VARIABLES ARE SUBJECT TO CHANGE)
     vars_to_include = ['Age_round', 'Sex', 'DX_Cat_Name', 'PreInt_Demos_Fam,Child_Race_cat', 'spec_name']
@@ -44,7 +43,7 @@ def run(
     Args:
         results (str): fullpath to results file (.pkl)
         model_spec (str): fullpath to model_spec file (.json)
-        out_dir (str): directory where second level modeling summary will be saved
+        out_dir (str): directory where modeling summary will be saved
         methods (list of str): feature interpretability based on feature or permuation importances. default is ['feature']
     Returns:
         Saves summary in `out_dir`

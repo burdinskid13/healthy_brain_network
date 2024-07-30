@@ -22,21 +22,31 @@ def load_specs(feature_spec, target_spec, participant_spec):
     """ Load in `feature_spec`, `target_spec`, and `participant_spec` 
 
     Args: 
-        feature_spec (str): full path to feature spec
-        target_spec (str): full path to target spec
-        participant_spec (str): full path to participant spec
+        feature_spec (str): full path to feature spec 
+        target_spec (str): full path to target spec 
+        participant_spec (str): full path to participant spec 
     Returns:
         feature_info (dict), target_info (dict), participant_info (dict)
     """
-    # load spec files
-    feature_info = io.load_json(feature_spec)
-    target_info = io.load_json(target_spec)
-    participant_info = io.load_json(participant_spec)
+    # check if feature_spec, target_spec, and participant_spec are dicts
+    if isinstance(participant_spec, dict):
+        participant_info = participant_spec
+    else:
+        participant_info = io.load_json(participant_spec)
+    if isinstance(feature_spec, dict):
+        feature_info = participant_spec
+    else:
+        feature_info = io.load_json(feature_spec)
+    if isinstance(target_spec, dict):
+        target_info = participant_spec
+    else:
+        target_info = io.load_json(target_spec)
+
 
     return feature_info, target_info, participant_info
 
 
-def get_data(feature_info, target_info, participant_info, dirn):
+def _get_data(feature_info, target_info, participant_info, dirn):
     """ Get features, targets, and participant dataframes using parametesr from `feature_spec`, `target_spec`, and `participant_spec`
 
     Args: 
@@ -54,7 +64,7 @@ def get_data(feature_info, target_info, participant_info, dirn):
     return df_features, df_target, df_participants
 
 
-def check_participant_id(participant_id, df_features, df_target, df_participants):
+def _check_participant_id(participant_id, df_features, df_target, df_participants):
     """check that `participant_id` column is in `df_features`, `df_target`, and `df_participants`
 
     Args: 
@@ -99,44 +109,43 @@ def train_test_split(features, info):
     Returns:
         df_train (pd.DataFrame), df_test (pd.DataFrame)
     """
-    split_col = info['train_test_split']['split_col']
-    train = info['train_test_split']['train']
-    test = info['train_test_split']['test']
+    # parcellate out datasets
+    dict_out = {}
+    for sp in info['split']:
+        df_out = features[features['split']==sp]
+        df_out = df_out.drop('split', axis=1).reset_index(drop=True)
 
-    df_train = features[features[split_col]==train]
-    df_test = features[features[split_col]==test]
+        dict_out.update({sp: df_out})
 
-    df_train_drop = df_train.drop(split_col, axis=1).reset_index(drop=True)
-    df_test_drop = df_test.drop(split_col, axis=1).reset_index(drop=True)
-
-    return df_train_drop, df_test_drop
+    return dict_out
 
 
 def make_features(
     feature_info,
     target_info,
     participant_info,
-    data_dir
+    data_dir,
+    drop_identifiers=True
     ):
     """Make model to be input to pydra-ml using the following: `feature_info`, `target_info`, `participant_info`
     Saves model spec to `out_dir`
 
     Args:
-        feature_info (dict): dictionary loaded from `feature_spec`
-        target_info (dict): dictionary loaded from `target_spec`
-        participant_info (dict): dictionary loaded from `participant_spec`
+        feature_info (dict or str): dictionary loaded from `feature_spec` or fullpath to dict
+        target_info (dict or str): dictionary loaded from `target_spec` or fullpath to dict
+        participant_info (dict or str): dictionary loaded from `participant_spec` or fullpath to dict
         data_dir (str): directory where `filename` stored in `feature_spec`, `target_spec`, and `participant_spec` are saved. these files should all be saved in the same directory. 
+        drop_identifiers (bool): default is True
     """
 
-    # get features, targets, and participants dataframes
-    df_features, df_target, df_participants = get_data(feature_info, target_info, participant_info, dirn=data_dir)
-    print(f'loaded data from {data_dir}', flush=True)
+    # get data
+    df_features, df_target, df_participants = _get_data(feature_info, target_info, participant_info, dirn=data_dir)
 
     # get participant id from `participant_spec` - this column will be ignored in the preprocessing routine
     participant_id = participant_info['participant_id']
     
     # check if `participant_id` is present in all dataframes (raises error if not)
-    check_participant_id(participant_id, df_features, df_target, df_participants)
+    _check_participant_id(participant_id, df_features, df_target, df_participants)
 
     # combine features and targets
     combined_df = build_features.combine_features_and_targets(
@@ -147,9 +156,13 @@ def make_features(
     print(f'combined features and targets', flush=True)
 
     # filter participants
-    filter_cols = [participant_id, target_info['target_column'], participant_info['train_test_split']['split_col']]
+    filter_cols = [participant_id, target_info['target_column'], 'split']
     merge_cols = [participant_id, target_info['target_column']]
 
+    if 'split' in combined_df:
+        merge_cols = filter_cols
+
+    # merge with participants
     df_merged = build_features.merge_with_participants(
         dataframe=combined_df, 
         participants=df_participants[filter_cols], 
@@ -171,15 +184,18 @@ def make_features(
                     target_column=target_info['target_column'],
                     binarize_target=target_info['binarize']
                     )
+    
+    features = features_preprocessed
+    if drop_identifiers:
+        features = features_preprocessed.drop(participant_id, axis=1)
 
     # split into train/test
-    df_train, df_test = train_test_split(features=features_preprocessed.drop(participant_id, axis=1), info=participant_info)
+    df_dict = train_test_split(features=features, info=participant_info)
 
-    # return features
-    target_col = target_info['target_column']
-    x_indices = [col for col in df_train.columns if target_col not in col]
+    # get target vars
+    target_vars = [target_info['target_column']]
 
-    return df_train, df_test, x_indices, [target_col], features_preprocessed[filter_cols].reset_index(drop=True)
+    return df_dict, target_vars, features_preprocessed[filter_cols].reset_index(drop=True)
 
 
 def make_model_spec(
@@ -198,8 +214,11 @@ def make_model_spec(
     Returns:
         pydraml_info (dict):
     """
-    # load pydra-ml spec
-    pydraml_info = io.load_json(pydraml_spec)
+    if isinstance(pydraml_spec, str):
+        # load pydra-ml spec
+        pydraml_info = io.load_json(pydraml_spec)
+    elif isinstance(pydraml_spec, dict):
+        pydraml_info = pydraml_spec
 
     # update pydraml info
     pydraml_info['filename'] = filename
@@ -227,26 +246,26 @@ def run(
         data_dir (str): directory where `filename` in `feature_spec`, `target_spec`, and `participant_spec` are saved. These files should all be saved in the same directory.
         out_dir (str): directory where model features and spec should be saved.
     """
-
     # load parameters from spec files
     feature_info, target_info, participant_info = load_specs(feature_spec, target_spec, participant_spec)
 
     # get features
-    df_train, df_test, x_indices, target_vars, df_index = make_features(feature_info,   
-                                                                        target_info,
-                                                                        participant_info,
-                                                                        data_dir
-                                                                        )
-    
-    # name of train and test
-    train = participant_info['train_test_split']['train']
-    test = participant_info['train_test_split']['test']
+    df_dict, target_vars, df_index = make_features(feature_info,   
+                                                    target_info,
+                                                    participant_info,
+                                                    data_dir
+                                                    )
 
     # only save out features + spec if not empty
-    for (features, fname) in zip([df_train, df_test], [train, test]):
+    for (fname, features) in df_dict.items():
 
         # get model name
         filename = f'features-{fname}.csv'
+
+        x_indices = [i for i, string in enumerate(features.columns) if string != target_info['target_column']]
+
+        # get feature names
+        x_indices = list(features.columns[x_indices])
 
         # get model spec
         model_info = make_model_spec(
@@ -258,9 +277,10 @@ def run(
         
         # update model info with features, targets, participants
         feature_info['spec_name'] = Path(feature_spec).stem
-        feature_info['model_type'] = 'firstlevel'
         target_info['spec_name'] = Path(target_spec).stem
         participant_info['spec_name'] = Path(participant_spec).stem
+        
+        # update model info with features, targets, participants
         model_info_updated = chain_dicts([model_info, 
                                           {'feature_info': feature_info}, 
                                           {'target_info': target_info}, 
@@ -271,19 +291,13 @@ def run(
         io.make_dirs(out_dir) # create directory if it doesn't exist 
         feature_path = os.path.join(out_dir, filename)
         features.to_csv(feature_path, index=False)
+
         spec_path = os.path.join(out_dir, f'model_spec-{fname}.json')
         io.save_json(spec_path, model_info_updated)
-        print(f'created new file: {filename} and model spec file: model_spec-{fname}.json in {out_dir}')
+        print(f'created new file: {filename} and model spec file: model_spec-{fname}.json in {out_dir}', flush=True)
     
     # save out index for train and test
     df_index.to_csv(os.path.join(out_dir, 'participant_index.csv'), index=False)
-
-    # return specs for training data
-    feature_path = os.path.join(out_dir, f'features-{train}.csv')
-    spec_path = os.path.join(out_dir, f'model_spec-{train}.json')
-    
-    return feature_path, spec_path
-
 
 if __name__ == "__main__":
     run()

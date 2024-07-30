@@ -51,7 +51,6 @@ participant=${participants[${SLURM_ARRAY_TASK_ID}]}
 echo "${feature}, ${target}, ${pydraml}, ${participant},will be saved to: ${model_dir}"
 
 echo "specs are saved in ${spec_dir}, data are saved in ${data_dir}"
-
 echo "base directory is: ${base_dir}"
 
 # Define scratch directory
@@ -67,30 +66,21 @@ echo $"run phenotypic models"
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 RANDOM_NUMBER=$((1 + $RANDOM % 100))
 scratch_dir=$scratch/$TIMESTAMP-$RANDOM_NUMBER
+if [ ! -d $scratch_dir ]; then
+  mkdir -p $scratch_dir;
+fi
 
-# make model spec
-python3 $python_scripts/firstlevel_model.py \
---participant_spec=$participant \
---feature_spec=$feature \
---target_spec=$target \
---pydraml_spec=$pydraml \
+# train model
+python3 $python_scripts/train_model.py \
+--participant_spec=$spec_dir/$participant \
+--feature_spec=$spec_dir/$feature \
+--target_spec=$spec_dir/$target \
+--pydraml_spec=$spec_dir/$pydraml \
 --data_dir=$data_dir \
---spec_dir=$spec_dir \
 --model_dir=$scratch_dir \
---cache_dir=$scratch/.cache/pydra-ml/cache-wf/
+--cache_dir=$scratch/.cache/pydra-ml/cache-wf/ 
 
-# run secondlevel model
-python3 $python_scripts/secondlevel_model.py \
---model_dir=$scratch_dir \
---cache_dir=$scratch/.cache/pydra-ml/cache-wf/
-
-# Run the command
-echo "Submitted job for: ${participant}"
-
-# copy firstlevel model files back
+# copy model files back
 cp -nr $scratch_dir $model_dir
 
-# copy secondlevel model files back
-cp -nr "${scratch_dir}_secondlevel" $model_dir
-
-echo "$'Copied data from ${scratch_dir} and ${scratch_dir}_secondlevel to ${model_dir}"
+echo "Copied data from ${scratch_dir} to ${model_dir}"

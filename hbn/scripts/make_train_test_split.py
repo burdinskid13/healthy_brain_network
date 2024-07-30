@@ -39,15 +39,11 @@ def get_unique_dataset(
     participant_col='Identifiers',
     col_to_group='DX_Cat_Name',
     cols_to_keep=['Sex', 'Age', 'PreInt_Demos_Fam,Child_Race_cat'],
-    test_size=.2,
-    random_state=42
     ):
     """ stratify split on unique participants
 
     Args:
         df (pd dataframe): dataframe to stratify
-        test_size (float): The proportion of the data to be included in the test set. Defaults to 0.2.
-        random_state (int): The random seed to use for splitting the data. Defaults to 42.
     """
     import itertools
     import pandas as pd
@@ -91,12 +87,13 @@ def index_into_original_dataframe(df_original, df_stratify):
     # concat train and test
     df_out = pd.concat([df_train, df_test])
 
-    return df_out
+    return df_out.reset_index(drop=True)
 
 
 def run(
     inpath, 
     outpath,
+    remove_outliers=True,
     ):
     """Splits a Pandas DataFrame into train and test sets using stratified sampling, handling the case where some of the groups in the columns_to_stratify list have only 1 value.
 
@@ -118,18 +115,20 @@ def run(
     # read in dataframe from path
     df = pd.read_csv(inpath, engine='python')
 
+    # remove outliers
+    if remove_outliers:
+        df = df[df['outliers']==False].reset_index(drop=True)
+
     # get unique dataset 
     df_unique = get_unique_dataset(
         df, 
         participant_col='Identifiers', 
         col_to_group='DX_Cat_Name', 
         cols_to_keep=columns_to_keep, 
-        test_size=test_size, 
-        random_state=random_state
         )
     
     # remove small groups from dataframe (otherwise won't be able to stratify)
-    df_filtered = remove_small_groups(dataframe=df_unique, columns_to_stratify=columns_to_stratify)
+    df_filtered = remove_small_groups(dataframe=df_unique, columns_to_stratify=columns_to_stratify, min_group_size=3)
 
     # stratify dataframe into train and test participants
     df_stratified = stratify_split(df_filtered, columns_to_stratify, test_size, random_state)
@@ -138,7 +137,7 @@ def run(
     df_out = index_into_original_dataframe(df_original=df, df_stratify=df_stratified)
 
     # save dataframe to `out_dir`
-    df_out.reset_index(drop=True).to_csv(outpath, index=False)
+    df_out.to_csv(outpath, index=False)
     print(f'train/test splits saved to {outpath}', flush=True)
 
     return df_out

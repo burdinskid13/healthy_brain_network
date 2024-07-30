@@ -3,12 +3,13 @@ warnings.filterwarnings("ignore")
 import os
 import shutil
 import pandas as pd
+import glob
 import click
+from pathlib import Path
 
 from hbn import io
-from hbn.scripts import run_model
 
-def _get_best_classifier(firstlevel_model, metric='roc_auc_score'):
+def _get_best_classifier(firstlevel, metric='roc_auc_score'):
     """get best model classifier from `firstlevel_model`
 
     Args:
@@ -19,7 +20,7 @@ def _get_best_classifier(firstlevel_model, metric='roc_auc_score'):
     """
     # load model summary
 
-    df = pd.read_csv(os.path.join(firstlevel_model, 'model-summary.csv'), engine='python')
+    df = pd.read_csv(os.path.join(firstlevel, 'model-summary.csv'), engine='python')
 
     # groupby classifier
     group_clf = df.query('data=="model-data"'
@@ -34,7 +35,13 @@ def _get_best_classifier(firstlevel_model, metric='roc_auc_score'):
     return best_classifier
 
 
-def _get_specs(clf, model_spec, model_features, feature_importances):
+def _get_specs(
+        clf, 
+        model_spec, 
+        feature_importances, 
+        feat=10, 
+        which_features='top',
+        ):
     """ get model spec info
 
     Args:
@@ -42,12 +49,14 @@ def _get_specs(clf, model_spec, model_features, feature_importances):
         model_spec (str): fullpath to model spec
         model_features (str): fullpath to model features
         feature_importances (str): fullpath to feature importances
+        feat (int): number of features to keep
+        which_features (str): which features to keep
+        feature_strategy (str): intersection or union
     Returns:
         info (dict): model spec info
     """
     
     # load files
-    model_features = pd.read_csv(model_features, engine='python')
     df_feat = pd.read_csv(feature_importances, engine='python')
 
     # load model spec info
@@ -61,19 +70,32 @@ def _get_specs(clf, model_spec, model_features, feature_importances):
             # index by classifier
             df_clf = df_feat[df_feat['clf'] == clf]
 
-            # get top features
-            top_features =  df_clf[df_clf['top_features']==True]['feature_names'].tolist()
+            # get features
+            if feat is not None:
+                df_clf = df_clf.sort_values(by='feature_importances', ascending=False)
+                if which_features=='top':
+                    filtered_features = df_clf['feature_importances_names'].head(feat).tolist()
+                elif which_features=='bottom':
+                    filtered_features = df_clf['feature_importances_names'].tail(feat).tolist()
+                elif which_features=='all-minus-top':
+                    filtered_features = df_clf.loc[feat:, 'feature_importances_names'].tolist()
+            else:
+                filtered_features = df_clf['feature_importances_names'].tolist()
 
             # assign new features to spec file
-            info_filter['x_indices'] = top_features
+            info_filter['x_indices'] = filtered_features
 
             # update classifier
-            info_filter['clf_info'] = [clf_info]
+            info_filter['clf_info'] = [clf_info] 
+
+            # update feature selection (should never be doing within CV feature selection in secondlevel modeling)
+            info_filter['feature_selection'] = False
+            info_filter['feature_selection_strategy'] = None     
     
     return info_filter
 
 
-def make_model_spec(clf, firstlevel_model_dir, secondlevel_model_dir, splits):
+def make_model_spec(clf, firstlevel, secondlevel, splits, feat=10, which_features='top'):
     """ make secondlevel model spec
 
     Args:
@@ -84,69 +106,100 @@ def make_model_spec(clf, firstlevel_model_dir, secondlevel_model_dir, splits):
     """
 
     # check if secondlevel dir exists
-    io.make_dirs(secondlevel_model_dir)
+    io.make_dirs(secondlevel)
 
     # get features
-    feature_importances = f'{firstlevel_model_dir}/feature_importance.csv'
+    feature_importances = f'{firstlevel}/feature_importance.csv'
 
     # make model spec for secondlevel features
     for data in splits:
 
-        # get spec and features
-        spec = f'{firstlevel_model_dir}/model_spec-{data}.json'
-        features = f'{firstlevel_model_dir}/features-{data}.csv'
-
         # get specs
-        spec_info = _get_specs(clf, model_spec=spec, model_features=features, feature_importances=feature_importances) 
-        spec_info['feature_info']['model_type'] = 'secondlevel' 
-        spec_name = f'model_spec-{data}.json'
+        spec = f'{firstlevel}/model_spec-{data}.json'
+        spec_info = _get_specs(clf, spec, feature_importances, feat, which_features) 
 
         # copy model features to secondlevel directory
-        shutil.copy(features, secondlevel_model_dir)
+        shutil.copy(f'{firstlevel}/features-{data}.csv', secondlevel)
 
         # copy participant index to secondlevel directory
-        fpath = os.path.join(firstlevel_model_dir, 'participant_index.csv')
-        shutil.copy(fpath, secondlevel_model_dir)
+        shutil.copy(f'{firstlevel}/participant_index.csv', secondlevel)
 
         # save out secondlevel model specs to disk
-        outpath = os.path.join(secondlevel_model_dir, spec_name)
-        io.save_json(fpath=outpath, dict=spec_info)
-        print(f'created secondlevel model spec file: {spec_name} and saved to {secondlevel_model_dir}')
+        io.save_json(fpath=os.path.join(secondlevel, f'model_spec-{data}.json'), dict=spec_info)
+        print(f'created secondlevel model spec file: model_spec-{data}.json and saved to {secondlevel}')
 
-@click.command()
-@click.option("--model_dir", required=True)
-@click.option("--cache_dir", required=False)
-def run(model_dir, cache_dir=None):
+
+def run_model(features, model_spec, model_dir, cache_dir=None):
+    """ run model train and model summary
+
+    Args:
+        features (str): full path to features file
+        model_spec (str): full path to model spec or dict
+        model_dir (str): full path to model directory (where `model_spec` and `features` are).
+        cache_dir (str or None): fullpath to cache directory for pydra-ml intermediary outputs. Default is home directory.
+    """
+    from hbn.scripts import make_model_summary
+    from hbn.models import train_model
+
+    print(f'model dir is :{model_dir}', flush=True)
+
+    # define directory where model results will be saved
+    if cache_dir is None:
+        cache_dir = os.path.expanduser('~') + '/.cache/pydra-ml/cache-wf/'
+
+    # first level - run model
+    train_model.train(
+                    model_spec=model_spec,
+                    features=features,
+                    out_dir=model_dir,
+                    cache_dir=cache_dir
+                    )
+
+    # get results file
+    results = glob.glob(f'{model_dir}/*out*/*results*.pkl')[0] # should just be one file
+
+    # second level - make summary
+    make_model_summary.run(
+                    results, # fullpath to results (.pkl)
+                    model_spec,
+                    out_dir=model_dir,
+                    methods=['feature'] # feature interpretability based on feature or permuation importances
+                    )
+
+
+def run(firstlevel, secondlevel, cache_dir=None, feat=10, which_features='top'):
     """ run secondlevel model
 
     Args:
-        model_dir (str): full path to parent model directory
-        train (str): name of train split
-        test (str): name of test split
+        firslevel_dir (str): full path to firstlevel model directory
+        secondlevel_dir (str): full path to secondlevel model directory
         cache_dir (str or None): fullpath to cache directory for pydra-ml intermediary outputs. Default is home directory.
     """
     # define cache directory
     if cache_dir is None:
         cache_dir = os.path.expanduser('~') + '/.cache/pydra-ml/cache-wf/'
 
-    # define directories
-    firstlevel_model_dir = model_dir
-    secondlevel_model_dir = firstlevel_model_dir + '_secondlevel'
-
     # get best classifier from firstlevel (if there was more than one)
-    clf = _get_best_classifier(firstlevel_model_dir)
+    clf = _get_best_classifier(firstlevel)
 
-    # make secondlevel model (train and test)
-    make_model_spec(clf, firstlevel_model_dir, secondlevel_model_dir, splits=['train', 'test'])
+    # make secondlevel model (train and test) for best classifier
+    fnames = glob.glob(os.path.join(firstlevel, '*model_spec*'))
+    specs = [Path(s).name.replace('model_spec-', '').replace('.json', '') for s in fnames]
+
+    # try and make model spec but if it fails, just move on
+    make_model_spec(clf, 
+                    firstlevel, 
+                    secondlevel, 
+                    splits=specs, 
+                    feat=feat, 
+                    which_features=which_features
+                    )
 
     # run secondlevel model (train)
-    features = f'{secondlevel_model_dir}/features-train.csv'
-    spec = f'{secondlevel_model_dir}/model_spec-train.json'
-
-    run_model.run(
-        features=features,
-        model_spec=spec,
-        model_dir=secondlevel_model_dir,
+    run_model(
+        features=f'{secondlevel}/features-train.csv',
+        model_spec=f'{secondlevel}/model_spec-train.json',
+        model_dir=secondlevel,
         cache_dir=cache_dir
         )
 

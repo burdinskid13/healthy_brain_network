@@ -1,4 +1,52 @@
+def train(
+    model_spec,
+    features,
+    out_dir,
+    cache_dir=None
+    ):
+    """run predictive models using pydra-ml. must provide `model_spec` and `features`.
 
+    Args:
+        model_spec (str): full path to model spec file.
+        features (str): full path to features file.
+        out_dir (str): directory where model results will be saved. Default is home directory
+        cache_dir (str or None): fullpath to cache directory for pydra-ml intermediary outputs. Default is home directory.
+    Returns:
+        saves pickled model to `out_dir`
+    """
+    # load libraries
+    import os
+    from hbn import io
+    from pathlib import Path
+    from pydra_ml.classifier import gen_workflow, run_workflow
+
+    # make cache directory
+    if cache_dir is None:
+        cache_dir = os.path.expanduser('~') + '/.cache/pydra-ml/cache-wf/'
+
+    # make out_dir
+    if out_dir is None:
+        out_dir = os.path.expanduser('~')
+
+    # create `cache dir` and `out_dir` if they don't exist
+    io.make_dirs(cache_dir)
+    io.make_dirs(out_dir)
+
+    # load model spec
+    spec_info = io.load_json(model_spec)
+
+    # check if there are sufficient features for model to run
+
+    # assign fullpath to features csv
+    spec_info['filename'] = features
+
+    # change directory to `out_dir`
+    os.chdir(out_dir)
+    print(f'changing directory to {out_dir} and running {model_spec}', flush=True)
+
+    # run workflow
+    wf = gen_workflow(spec_info, cache_dir=cache_dir)
+    run_workflow(wf, "cf", {'n_procs': 1})
 
 def feature_interpretability(results, spec_info, method='feature'):
     import pandas as pd
@@ -22,14 +70,15 @@ def feature_interpretability(results, spec_info, method='feature'):
     df1 = pd.DataFrame()
     df1['feature_importances'] = feature_importances
     df1['feature_importances_names'] = feature_names
+    df1['clf'] = clf
 
-    df2 = order_across_splits(results=results, method=method)
-    df3 = model_based_importance(results=results)
+    # df2 = order_across_splits(results=results, method=method)
+    # df3 = model_based_importance(results=results)
 
-    # concat into features dataframe
-    df_features = pd.concat([df1, df2, df3], axis=1)
+    # # concat into features dataframe
+    # df_features = pd.concat([df1, df2, df3], axis=1)
 
-    return df_features
+    return df1
 
 
 def load_results(results, spec_file):
@@ -79,6 +128,14 @@ def get_model_metrics(results, spec_info):
         df['data'] = data
         df['splits'] = df.index
         df['clf'] = res[0]['ml_wf.clf_info'][-1][1] # get classifier name (should always be the last list element in list)
+
+        # check for feature selection
+        strategy = None
+        if spec_info['feature_selection']:
+            strategy = spec_info['feature_selection_strategy']
+        df['feature_selection_strategy'] = strategy
+        df['feature_selection'] = spec_info['feature_selection']
+        df['number_of_features'] = len(res[1].output.feature_names)
 
         df_all = pd.concat([df_all, df])
     

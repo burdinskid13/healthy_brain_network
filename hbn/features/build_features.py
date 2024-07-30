@@ -8,11 +8,13 @@ def get_features(info, dirn):
     """Create features from parameters set in `feature_spec`, do some basic preprocessing (removing superfluous columns)
 
     Args:
-        info (dict): dictionary loaded from `feature_spec`
+        info (dict or str): dictionary loaded from `feature_spec` or load dict from file
         dirn (str): directory where 'filename' from `feature_spec` is located
     Retunrs:
         df (pd dataframe): dataframe of features
     """
+    if isinstance(info, str):
+        info = io.load_json(info)
 
     # load in csv file
     df = pd.read_csv(os.path.join(dirn, info['filename']), engine='python')
@@ -41,11 +43,13 @@ def get_targets(info, dirn):
     """Create target(s) from parameters set in `target_spec`, do some basic preprocessing (binarize `target_column` and impute if there are NaN values)
 
     Args:
-        info (dict): dictionary loaded from `target_spec`
+        info (dict or str): dictionary loaded from `target_spec` or fullfpath to dict
         dirn (str): directory where 'filename' from `target_spec` is located
     Retunrs:
         df (pd dataframe): dataframe of targets. 
     """
+    if isinstance(info, str):
+        info = io.load_json(info)
 
     # load in csv file
     df = pd.read_csv(os.path.join(dirn, info['filename']), engine='python')
@@ -64,11 +68,13 @@ def get_participants(info, dirn):
     """Get participant identifiers from parameters set in `participant_spec`
 
     Args:
-        info (dict): dictionary loaded from `participant_spec`
+        info (dict or str): dictionary loaded from `participant_spec` or fullpath to dict
         dirn (str): directory where 'filename' from `participant_spec` is located
     Retunrs:
         df (pd dataframe): dataframe of participant identifiers 
     """
+    if isinstance(info, str):
+        info = io.load_json(info)
 
     # load in csv file
     df = pd.read_csv(os.path.join(dirn, info['filename']), engine='python')
@@ -111,7 +117,7 @@ def combine_features_and_targets(features, targets, merge_on):
     # Combine the features and targets dataframes into a single dataframe.
     combined_df = features_drop_common_cols.merge(targets, on=merge_on)
 
-    return combined_df
+    return combined_df.reset_index(drop=True)
 
 
 def merge_with_participants(dataframe, participants, participant_id, merge_cols=['Identifiers', 'DX_Cat_Name']):
@@ -255,33 +261,6 @@ def column_transform(
     return df_transformed
 
 
-def upsample_data(y_train, X_train):
-    """oversamples `y_train` and `X_train` for minority samples
-
-    Args: 
-        y_train (pd dataframe):
-        X_train (pd dataframe):
-    Returns:
-        df_smote (pd dataframe)
-    """
-    from imblearn.over_sampling import SMOTE, RandomOverSampler
-    import pandas as pd
-    import numpy as np
-
-    # try SMOTE and if it throws an error, try RandomOverSampler to oversample the minority class
-    try:
-        sm = SMOTE(random_state=42, sampling_strategy='auto') # was .5
-        X_train_oversampled, y_train_oversampled = sm.fit_resample(np.array(X_train), np.array(y_train))
-    except:
-        ros = RandomOverSampler(random_state=42, sampling_strategy='auto')
-        X_train_oversampled, y_train_oversampled = ros.fit_resample(np.array(X_train), np.array(y_train))
-
-    new_x = pd.DataFrame(X_train_oversampled, columns=X_train.columns)
-    new_y = pd.DataFrame(y_train_oversampled, columns=y_train.columns)
-    df_smote = pd.concat([new_x, new_y], axis=1)
-    return df_smote
-
-
 def _drop_long_string_columns(df):
     """
     Checks the string length of each column in a pandas dataframe and drops columns that have string lengths longer than 259 characters.
@@ -327,7 +306,7 @@ def preprocess(
         clf_info=None,
         cols_to_ignore=None,
         cols_to_drop=None,
-        threshold=False,
+        threshold=True,
         target_column=None,
         binarize_target=True
         ):
@@ -344,12 +323,9 @@ def preprocess(
         binarize_target (bool): binarize target column if target_column is not None. default is True
     """
 
+    # drop features that have more than 10% missing values
     if threshold:
-        # drop by threshold of NaN rows and columns 
-        limitPerCols = dataframe.shape[1] * .50
-        limitPerRows = dataframe.shape[0] * .20
-        dataframe = dataframe.dropna(thresh=limitPerCols, axis='columns')
-        dataframe = dataframe.dropna(thresh=limitPerRows, axis='index')
+        dataframe = dataframe.dropna(thresh=dataframe.shape[0] * .10, axis='columns')
 
     # preprocessing on features: column transformation
     if clf_info is not None:

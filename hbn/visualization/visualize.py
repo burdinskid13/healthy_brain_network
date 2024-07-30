@@ -4,7 +4,7 @@ import numpy as np
 import os
 import seaborn as sns
 
-def plotting_style():
+def plotting_style(palette='Paired'):
     plt.style.use('seaborn-poster') # ggplot
     params = {'axes.labelsize': 20,
             'axes.titlesize': 25,
@@ -24,7 +24,7 @@ def plotting_style():
             'axes.spines.right': False}
     plt.rcParams.update(params)
     sns.set_context(rc={'lines.markeredgewidth': 0.1})
-    sns.set_palette('Paired')
+    sns.set_palette(palette)
     np.set_printoptions(formatter={'float_kind':'{:f}'.format})
 
 
@@ -193,6 +193,7 @@ def violinplot(x,
     if hue is not None:
         plt.legend(loc='best', fontsize=10, bbox_to_anchor=(1.3, 1.05), title=legend_title);
     sns.despine(bottom=False, left=False)
+    # plt.axhline(y=0.5, color='black', linestyle='--')
     plt.tight_layout()
 
     return ax
@@ -235,6 +236,7 @@ def barplot(data,
             xlabel='Feature Importance', 
             ylabel=None, 
             top_features=20, 
+            ylim=[0.5,1],
             figsize=(3,3)
             ):
     plt.figure(figsize=figsize)
@@ -244,15 +246,18 @@ def barplot(data,
     else:
         ax = sns.barplot(y=y, x=x, hue=hue, data=data)
 
-    if ylabel is None:
+    if ylabel is not None:
         ax.set_ylabel(ylabel)
     else:
         ax.set_ylabel(y)
-    if xlabel is None:
+    if xlabel is not None:
         ax.set_xlabel(xlabel)
     else:
         ax.set_xlabel(x)
     ax.set_title(title)
+    if ylim is not None:
+        ax.set_ylim(ylim)
+    plt.xticks(rotation=45, ha='right')
     sns.despine(bottom=False, left=False)
     plt.tight_layout()
     return ax

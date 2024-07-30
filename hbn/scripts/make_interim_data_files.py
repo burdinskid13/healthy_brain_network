@@ -9,7 +9,7 @@ from hbn.constants import Defaults
 
 def separate_main_assessment_file_into_csvs(
         assessments=['Child_Measures', 'Parent_Measures', 'Clinical_Measures', 'Teacher_Measures'], 
-        fpath='../Assessment_List_Jan2019.xlsx', 
+        fpath=os.path.join(Defaults.PHENO_DIR, 'Assessment_List_Jan2019.xlsx'), 
         data_dir=Defaults.PHENO_DIR
         ):
     """correct assessment list, update `domain` for each `measure`
@@ -51,24 +51,28 @@ def separate_main_assessment_file_into_csvs(
         info.to_csv(os.path.join(data_dir, f'{fname}_{assessment_out}.csv'))
 
 
-def remove_redundant_identifiers_from_assessments(assessment, data_dir=Defaults.PHENO_DIR):
+def remove_redundant_identifiers_from_assessments(
+        assessments=['Child_Measures', 'Parent_Measures', 'Clinical_Measures', 'Teacher_Measures'], 
+        data_dir=Defaults.PHENO_DIR):
     """ some basic clean up on assessment files, remove redundant identifiers from assessment csvs
 
     Args:
         assessment (str): options: 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
         data_dir (str): directory where output will be saved. Default is `PHENO_DIR`
     """
-    # load assessment
-    fdir = os.path.join(data_dir, assessment)
-    # get all csv files within assessment directory
-    fpaths = glob.glob(f'{fdir}/*/*.csv')
-    # loop over files
-    for fpath in fpaths:
-        df = pd.read_csv(fpath, engine='python')
-        df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|').str.extract(r'(\w+)', expand=False)
-        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-        df = df[~df['Identifiers'].isna()]
-        df.to_csv(fpath, index=False)
+    # loop over assessments
+    for assessment in assessments:
+        # load assessment
+        fdir = os.path.join(data_dir, assessment)
+        # get all csv files within assessment directory
+        fpaths = glob.glob(f'{fdir}/*/*.csv')
+        # loop over files
+        for fpath in fpaths:
+            df = pd.read_csv(fpath, engine='python')
+            df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|').str.extract(r'(\w+)', expand=False)
+            df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+            df = df[~df['Identifiers'].isna()]
+            df.to_csv(fpath, index=False)
 
 
 def make_clinical_summary_file(
@@ -141,7 +145,8 @@ def make_clinical_summary_file(
 def get_all_participant_diagnoses(
     fpath, 
     outname='all_participant_diagnoses.csv',
-    data_dir=Defaults.INTERIM_FEATURES_DIR
+    data_dir=Defaults.INTERIM_FEATURES_DIR,
+    dx_to_exclude=['PRem', 'RC', 'Rem', 'RuleOut']
     ):
     """ restructure `Clinical_Diagnosis_Demographics.csv` to get all participant diagnoses in one column (`all_dx`) - useful for generating train/test splits
 
@@ -155,7 +160,22 @@ def get_all_participant_diagnoses(
     # read in clnical diagnosis file
     df = pd.read_csv(fpath, engine='python')
 
-    cols_to_keep = ['Identifiers', 'PreInt_Demos_Fam,Child_Race_cat', 'Sex', 'Age_round']
+    # participants to exclude
+    # we're excluding participants who have the following labels: RuleOut, Rem (remission), PRem (partial remission), RC (requires confirmation)
+    # see full list here: https://docs.google.com/spreadsheets/d/1si0JDiI0rELnyQAGAaoO3lbERRfcKQ5X/edit?usp=sharing&ouid=115304373382106482578&rtpof=true&sd=true
+    part_to_exclude = []
+    for dx in dx_to_exclude:
+        for num in np.arange(1,11):
+            part = df[df[f'DX_{num:02d}_{dx}'] == 1]['Identifiers']
+            part_to_exclude.extend(part)
+    # get unique list
+    part_to_exclude = list(set(part_to_exclude))
+
+    # filter out participants from dataframe
+    df.loc[df['Identifiers'].isin(part_to_exclude), 'outliers'] = True
+    df.loc[~df['Identifiers'].isin(part_to_exclude), 'outliers'] = False
+
+    cols_to_keep = ['Identifiers', 'PreInt_Demos_Fam,Child_Race_cat', 'Sex', 'Age_round', 'outliers']
 
     dx_cols = [f'DX_{num:02d}' for num in np.arange(1,11)]
     dx_subtype = pd.melt(df, id_vars=cols_to_keep, value_vars=dx_cols, var_name='DX_Subtype', value_name='DX_Subtype_Name')
@@ -163,9 +183,8 @@ def get_all_participant_diagnoses(
     dx_cols = [f'DX_{num:02d}_Cat_new' for num in np.arange(1,11)]
     dx_cat = pd.melt(df, id_vars=cols_to_keep, value_vars=dx_cols, var_name='DX_Cat', value_name='DX_Cat_Name')
 
-    # concat subtype and category
-    dx_concat = pd.concat([dx_cat, dx_subtype], axis=1)
-
+    dx_concat = pd.concat([dx_cat, dx_subtype[['DX_Subtype', 'DX_Subtype_Name']]], axis=1)
+    
     # remove duplicate columns
     dx_concat = dx_concat.loc[:, ~dx_concat.columns.duplicated()].copy()
 
@@ -173,6 +192,9 @@ def get_all_participant_diagnoses(
     if data_dir is not None:
         outpath = os.path.join(data_dir, outname)
         dx_concat.to_csv(outpath, index=False)
+
+        dx_to_exclude = pd.DataFrame(part_to_exclude, columns=['Identifiers'])
+        dx_to_exclude.to_csv(os.path.join(data_dir, 'outliers.csv'), index=False)
 
     return dx_concat
 
@@ -305,7 +327,7 @@ def make_items_file(
     dataframe = pd.read_csv(os.path.join(data_dir, filename), engine='python')
 
     # add new assessment, domain, measures info to item names
-    df = match_datadic_to_data(dataframe=df)
+    df = match_datadic_to_data(dataframe=dataframe)
 
     # add proprietry/free questionnaires to item names
     df_proprietary = pd.read_csv(os.path.join(data_dir, proprietary_filename))
