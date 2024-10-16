@@ -7,6 +7,48 @@ from hbn import io
 import click
 import glob
 
+def update_spec(spec, threshold='all'):
+    """update pydra-ml spec file with new model features
+    spec (str): full path to pydra-ml spec
+    threshold (str): 'all' or 'top' or 'bottom'
+    """
+    info = io.load_json(spec)
+    info['feature_threshold'] = threshold
+
+    # save out spec
+    io.save_json(spec, info)
+
+
+def firstlevel(model_dir, feature_spec, target_spec, participant_spec, pydraml_spec, data_dir, cache_dir):
+    print(f'running model with all features', flush=True)
+
+    make_firstlevel_model.run(
+        feature_spec=feature_spec,
+        target_spec=target_spec,
+        participant_spec=participant_spec,
+        pydraml_spec=pydraml_spec,
+        data_dir=data_dir, 
+        out_dir=model_dir
+    )
+
+    # train firstlevel model
+    features = os.path.join(model_dir, f'features-train.csv')
+    model_spec = os.path.join(model_dir, f'model_spec-train.json')
+
+    # update model spec
+    update_spec(spec=model_spec, threshold='selected_all')
+
+    try:
+        run_model(
+            features,
+            model_spec,
+            model_dir=model_dir,
+            cache_dir=cache_dir
+            )
+    except:
+        pass
+
+
 def run_model(features, model_spec, model_dir, cache_dir=None):
     """ run model train and model summary
 
@@ -65,60 +107,41 @@ def run(
 
 
     Args:
-        participant_spec (str): filename of participant spec
-        target_spec (str): filename of target spec
-        feature_spec (str): filename of feature spec
-        pydraml_spec (str): filename of pydra-ml spec
-        spec_dir (str): directory where `participant_spec`, `target_spec`, `feature_spec`, and `pydraml_spec` are saved
+        participant_spec (str): fullpath to participant spec
+        target_spec (str): fullpath to target spec
+        feature_spec (str): fullpath to feature spec
+        pydraml_spec (str): fullpath to pydra-ml spec
         data_dir (str): directory where `filename` in `feature_spec`, `target_spec`, and `participant_spec` are saved
         model_dir (str): directory where model results will be saved
         cache_dir (str or None): fullpath to cache directory for pydra-ml intermediary outputs. Default is home directory.
     """
-
-    print(f'running model with all features', flush=True)
-
-    # train firstlevel model
-    # define directories
-    selected_features = os.path.join(model_dir, 'selected_features')
-
-    make_firstlevel_model.run(
-        feature_spec=feature_spec,
-        target_spec=target_spec,
-        participant_spec=participant_spec,
-        pydraml_spec=pydraml_spec,
-        data_dir=data_dir, 
-        out_dir=selected_features
-    )
-
     # define cache directory
     if cache_dir is None:
         cache_dir = os.path.expanduser('~') + '/.cache/pydra-ml/cache-wf/'
-
-    # train firstlevel model
-    features = os.path.join(selected_features, f'features-train.csv')
-    model_spec = os.path.join(selected_features, f'model_spec-train.json')
-    try:
-        run_model(
-            features,
-            model_spec,
-            model_dir=selected_features,
-            cache_dir=cache_dir
-            )
-    except:
-        pass
+        
+    # run first level
+    firstlevel_dir = os.path.join(model_dir, 'selected_all')
+    firstlevel(firstlevel_dir, 
+                feature_spec, 
+                target_spec, 
+                participant_spec, 
+                pydraml_spec, 
+                data_dir,
+                cache_dir
+                )
 
     # train secondlevel model (with selected features from firstlevel model - within CV feature selection is NOT done, model spec is updated to reflect this)
     for feat in [5,10]:
-        for feat_type in ['top', 'bottom', 'all-minus-top']:
+        for feat_type in ['top', 'bottom']: # 'all-minus-top'
             
             print(f'running model again with {feat_type} {feat} features', flush=True)
 
             # define directories
-            secondlevel_model_dir = os.path.join(model_dir, f'{feat_type}_{feat}_selected_features')
+            secondlevel_dir = os.path.join(model_dir, f'{feat_type}_{feat}_selected_features')
             try:
                 secondlevel_model.run(
-                    firstlevel=selected_features,
-                    secondlevel=secondlevel_model_dir,
+                    firstlevel=firstlevel_dir,
+                    secondlevel=secondlevel_dir,
                     cache_dir=cache_dir,
                     feat=feat,
                     which_features=feat_type

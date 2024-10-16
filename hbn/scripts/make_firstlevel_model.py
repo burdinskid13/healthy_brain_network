@@ -137,6 +137,12 @@ def make_features(
         data_dir (str): directory where `filename` stored in `feature_spec`, `target_spec`, and `participant_spec` are saved. these files should all be saved in the same directory. 
         drop_identifiers (bool): default is True
     """
+    if isinstance(feature_info, str):
+        feature_info = io.load_json(feature_info)
+    if isinstance(target_info, str):
+        target_info = io.load_json(target_info)
+    if isinstance(participant_info, str):
+        participant_info = io.load_json(participant_info)
 
     # get data
     df_features, df_target, df_participants = _get_data(feature_info, target_info, participant_info, dirn=data_dir)

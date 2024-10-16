@@ -2,7 +2,7 @@
 participants=($@)
 
 # Model outname
-model_outname=reading_july/
+model_outname=reading_augustC/
 
 ### SET DIRECTORIES ###
 base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
@@ -13,14 +13,53 @@ model_dir=/om2/user/$(whoami)/hbn_data/interim/models/$model_outname # MODEL OUT
 
 ### SET VARIABLES ###
 pydraml=pydraml3-spec.json # pydraml base
-target=target-Diagnosis-spec.json # target spec
+target=target-Diagnosis-Reading-spec.json # target spec
 
-# features=("features-Teacher-remove-total-scores-spec.json" "features-Parent-remove-total-scores-spec.json" "features-Child-remove-total-scores-spec.json" "features-Parent-SES-spec.json" "features-all-demos-spec.json"  "features-child-anxiety-spec.json" "features-child-cbcl-spec.json" "features-Child-emotional-status-spec.json" "features-Child-executive-function-spec.json" "features-Child-intelligence-spec.json" "features-Child-phonological-spec.json" "features-Child-production-spec.json" "features-Child-reading-spec.json" "features-Child-reading-all-CORRECT-spec.json")
-# features=("features-Parent-Family-History-spec.json" "features-Parent-Intake-Interview-spec.json")
-# participants=("participants-Reading-all-spec.json" "participants-Reading-male-spec.json" "participants-Reading-female-spec.json" "participants-Reading-early-readers-spec.json" "participants-Reading-fluent-readers-spec.json" "participants-Reading-emerging-readers-spec.json" "participants-Reading-early-readers-female-spec.json" "participants-Reading-fluent-readers-female-spec.json" "participants-Reading-emerging-readers-female-spec.json" "participants-Reading-early-readers-male-spec.json" "participants-Reading-fluent-readers-male-spec.json" "participants-Reading-emerging-readers-male-spec.json")
+features=(
+        # "features-Child-language-spec.json" \
+        "features-Child-phonological-minimal-spec.json" \
+        # "features-Child-production-spec.json" \
+        # "features-Child-executive-function-spec.json" \
+        # "features-Child-intelligence-spec.json" \
+        # "features-Child-emotional-status-spec.json" \
+        # "features-Parent-SES-spec.json" \
+        # "features-Parent-Stress-spec.json" \
+        # "features-Parent-Psychological-Function-spec.json" \
+        # "features-Parent-Intake-Interview-spec.json" \
+        # "features-Parent-Family-History-spec.json" \
+        # "features-all-internalizing-spec.json" \
+        # "features-all-externalizing-spec.json" \
+        # "features-child-internalizing-spec.json" \
+        # "features-parent-internalizing-spec.json" \
+        # "features-parent-externalizing-spec.json" \
+        # "features-all-demos-spec.json" \
+        # "features-Child-reading-all-spec.json" \
+        # "features-Child-reading-spec.json" \
+        # "features-Child-reading-minimal-spec.json" \
+        # "features-Child-reading-TOWRE-spec.json" \
+        # "features-Child-reading-WIAT-spec.json" \
+        )
 
-features=("features-Child-reading-spec.json" "features-Child-reading-minimal-spec.json")
-participants=("participants-Reading-all-spec.json")
+participants=(
+    # 'participants-reading-only-Black-spec.json' \
+    # 'participants-reading-only-White-spec.json' \
+    # 'participants-reading-all-Black-spec.json' \
+    # 'participants-reading-all-White-spec.json' \
+    # 'participants-no-reading-spec.json' \
+    # 'participants-reading-all-early-readers-spec.json' \
+    # 'participants-reading-all-emerging-readers-spec.json' \
+    # 'participants-reading-all-fluent-readers-spec.json' \
+    # 'participants-reading-all-female-spec.json' \
+    'participants-reading-all-male-spec.json' \
+    'participants-reading-all-spec.json' \
+    'participants-reading-only-spec.json' \
+)
+
+# participants=(
+#              'participants-reading-all-early-readers-spec.json' \
+#              'participants-reading-all-emerging-readers-spec.json' \
+#              'participants-reading-all-fluent-readers-spec.json' \
+#             )
 
 mkdir -p $model_dir
 
@@ -28,9 +67,6 @@ mkdir -p $model_dir
 len=$(expr ${#participants[@]} - 1) 
 
 echo Spawning ${#participants[@]} spec-jobs.
-
-# make specs
-sbatch $bash_scripts/make_specs.sh
 
 # loop over features
 for feature in "${features[@]}"

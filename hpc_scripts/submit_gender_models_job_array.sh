@@ -2,7 +2,7 @@
 participants=($@)
 
 # Model outname
-model_outname=gender_mid_may/
+model_outname=reading_augustC/
 
 ### SET DIRECTORIES ###
 base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
@@ -15,12 +15,38 @@ model_dir=/om2/user/$(whoami)/hbn_data/interim/models/$model_outname # MODEL OUT
 pydraml=pydraml3-spec.json # pydraml base
 target=target-Gender-spec.json # target spec
 
-# features=("features-Child-language-spec.json" "features-Child-production-spec.json" "features-Child-intelligence-spec.json" "features-Child-reading-spec.json" "features-Child-emotional-status-spec.json" "features-Parent-Stress-spec.json" "features-all-internalizing-externalizing-spec.json")
-participants=("participants-Reading-Only-spec.json" "participants-Reading-Only-early-spec.json" "participants-Reading-Only-emerging-spec.json" "participants-Reading-Only-fluent-spec.json")
-features=("features-Child-internalizing-spec.json" "features-Child-externalizing-spec.json" "features-Parent-internalizing-spec.json" "features-Parent-externalizing-spec.json" "features-Teacher-internalizing-spec.json" "features-Teacher-externalizing-spec.json" "features-all-externalizing-spec.json" "features-all-internalizing-spec.json")
+features=(
+        "features-parent-internalizing-spec.json" \
+        "features-parent-externalizing-spec.json" \
+        # "features-child-internalizing-spec.json" \
+        # "features-child-externalizing-spec.json" \
+        # "features-teacher-internalizing-spec.json" \
+        # "features-teacher-externalizing-spec.json" \
+        # "features-Child-emotional-status-spec.json" \
+        # "features-Child-language-spec.json" \
+        # "features-Child-phonological-spec.json" \
+        # "features-Child-production-spec.json" \
+        # "features-Child-executive-function-spec.json" \
+        # "features-Child-intelligence-spec.json" \
+        # "features-Child-reading-spec.json" \
+        # "features-Child-reading-minimal-spec.json"
+        )
 
-participants=("participants-Reading-Only-early-spec.json" "participants-Reading-Only-emerging-spec.json" "participants-Reading-Only-fluent-spec.json")
-features=("features-Child-reading-spec.json")
+# participants=(
+#         "participants-reading-all-comorbidities-Black-spec.json" \
+#         "participants-reading-all-comorbidities-White-spec.json" \
+        # "participants-reading-adhd-only-spec.json" \
+        # "participants-reading-no-comorbidities-spec.json" \
+        # )
+
+participants=(
+#         "participants-reading-all-comorbidities-early-readers-spec.json" \
+#         "participants-reading-all-comorbidities-emerging-readers-spec.json" \
+        "participants-reading-all-comorbidities-fluent-readers-spec.json" \
+        # "participants-reading-no-comorbidities-early-readers-spec.json" \
+        # "participants-reading-no-comorbidities-emerging-readers-spec.json" \
+        # "participants-reading-no-comorbidities-fluent-readers-spec.json" \
+        )
 
 mkdir -p $model_dir
 
@@ -28,9 +54,6 @@ mkdir -p $model_dir
 len=$(expr ${#participants[@]} - 1) 
 
 echo Spawning ${#participants[@]} spec-jobs.
-
-# make specs
-sbatch $bash_scripts/make_specs.sh
 
 # loop over features
 for feature in "${features[@]}"

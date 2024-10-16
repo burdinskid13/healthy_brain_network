@@ -160,22 +160,20 @@ def get_all_participant_diagnoses(
     # read in clnical diagnosis file
     df = pd.read_csv(fpath, engine='python')
 
-    # participants to exclude
-    # we're excluding participants who have the following labels: RuleOut, Rem (remission), PRem (partial remission), RC (requires confirmation)
-    # see full list here: https://docs.google.com/spreadsheets/d/1si0JDiI0rELnyQAGAaoO3lbERRfcKQ5X/edit?usp=sharing&ouid=115304373382106482578&rtpof=true&sd=true
-    part_to_exclude = []
-    for dx in dx_to_exclude:
-        for num in np.arange(1,11):
-            part = df[df[f'DX_{num:02d}_{dx}'] == 1]['Identifiers']
-            part_to_exclude.extend(part)
-    # get unique list
-    part_to_exclude = list(set(part_to_exclude))
+    def exclude_diagnoses(df, dx_to_exclude):
+        # we're excluding diagnoses that have the following labels: RuleOut, Rem (remission), PRem (partial remission), RC (requires confirmation)
+        # see full list here: https://docs.google.com/spreadsheets/d/1si0JDiI0rELnyQAGAaoO3lbERRfcKQ5X/edit?usp=sharing&ouid=115304373382106482578&rtpof=true&sd=true
+        # we're doing this by setting these diagnoses to NaN
+        for dx in dx_to_exclude:
+            for num in np.arange(1,11):
+                for col in [f'DX_{num:02d}', f'DX_{num:02d}_Cat', f'DX_{num:02d}_Cat_new']:
+                    df.loc[df[f'DX_{num:02d}_{dx}']==1, col] = np.nan
+        return df
 
-    # filter out participants from dataframe
-    df.loc[df['Identifiers'].isin(part_to_exclude), 'outliers'] = True
-    df.loc[~df['Identifiers'].isin(part_to_exclude), 'outliers'] = False
+    # exclude diagnoses that have been ruled out, are in remission, or need confirmation
+    df = exclude_diagnoses(df, dx_to_exclude)
 
-    cols_to_keep = ['Identifiers', 'PreInt_Demos_Fam,Child_Race_cat', 'Sex', 'Age_round', 'outliers']
+    cols_to_keep = ['Identifiers', 'PreInt_Demos_Fam,Child_Race_cat', 'Sex', 'Age_round']
 
     dx_cols = [f'DX_{num:02d}' for num in np.arange(1,11)]
     dx_subtype = pd.melt(df, id_vars=cols_to_keep, value_vars=dx_cols, var_name='DX_Subtype', value_name='DX_Subtype_Name')
@@ -192,9 +190,6 @@ def get_all_participant_diagnoses(
     if data_dir is not None:
         outpath = os.path.join(data_dir, outname)
         dx_concat.to_csv(outpath, index=False)
-
-        dx_to_exclude = pd.DataFrame(part_to_exclude, columns=['Identifiers'])
-        dx_to_exclude.to_csv(os.path.join(data_dir, 'outliers.csv'), index=False)
 
     return dx_concat
 

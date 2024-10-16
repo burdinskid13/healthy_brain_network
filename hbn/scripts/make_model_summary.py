@@ -13,21 +13,32 @@ def add_columns(df, info):
         info (dict): model spec info
     """
 
+    def _add_data(df, vars_to_include, info):
+        for var in vars_to_include:
+            if var in info:
+                data =info[var]
+            else:
+                data = 'all' # use 'all' if not in info
+            if not isinstance(data, list):
+                data = [data]
+            data = [str(d) for d in data]
+            df[var] = '_'.join(data)
+        return df
+
     # add feature info
     df['features'] = info['feature_info']['filename'].replace('.csv', '')
     df['feat_spec_name'] = info['feature_info']['spec_name'].replace('-spec', '')
+    df['feature_filename'] = info['feature_info']['filename'].replace('.csv', '')
 
-    # add info from model spec (VARIABLES ARE SUBJECT TO CHANGE)
-    vars_to_include = ['Age_round', 'Sex', 'DX_Cat_Name', 'PreInt_Demos_Fam,Child_Race_cat', 'spec_name']
-    for var in vars_to_include:
-        if var in info['participant_info']:
-            data = info['participant_info'][var]
-        else:
-            data = 'all' # use 'all' if not in info
-        if not isinstance(data, list):
-            data = [data]
-        data = [str(d) for d in data]
-        df[var] = '_'.join(data)
+    # add info model spec for participant
+    all_vars = list(info['participant_info'].keys())
+    vars_to_exclude = ['filename', 'participant_id', 'split', 'spec_name']
+    vars_to_include = set(all_vars).difference(set(vars_to_exclude))
+    df = _add_data(df, vars_to_include, info=info['participant_info'])
+
+    # add info 
+    if 'feature_threshold' in info:
+        df['feature_threshold'] = info['feature_threshold']
     
     return df
 

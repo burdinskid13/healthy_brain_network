@@ -12,7 +12,7 @@ def _save_dict_to_json(spec_info, base_info, out_dir):
     io.make_dirs(out_dir)
     for k, v in spec_info.items():
 
-        # update dictionary with base info
+        # update dictionary with base info but don't overwrite keys already specified in `spec_info`
         if len(base_info)>0:
             v.update(base_info)
 

@@ -58,7 +58,8 @@ def get_unique_dataset(
     df_repdx = df_clean.groupby(participant_col)['DX_Index'].min().reset_index().drop_duplicates().set_index(participant_col)
     
     # get unique dataset
-    df_unique = df[cols_to_keep_with_part].drop_duplicates().set_index(participant_col).join(df_repdx).reset_index(drop=False)
+    df_drop = df[cols_to_keep_with_part].drop_duplicates()
+    df_unique = df_drop.set_index(participant_col).join(df_repdx).reset_index(drop=False)
 
     return df_unique
 
@@ -90,10 +91,69 @@ def index_into_original_dataframe(df_original, df_stratify):
     return df_out.reset_index(drop=True)
 
 
+def add_comorbidities(df):
+    # get comorbidities
+    dx_counts = df.groupby('Identifiers')['DX_Cat_Name'].apply(lambda x: x.nunique()-1).reset_index(name='comorbidities')
+    df = dx_counts.merge(df, on='Identifiers')
+
+    return df
+
+
+def add_development_stage(df):
+    df.loc[df['Age_round'].isin([6,7,8]), 'development_stage'] = 'Early'
+    df.loc[df['Age_round'].isin([9,10]), 'development_stage'] = 'Emerging'
+    df.loc[df['Age_round'].isin([11,12,13,14,15,16,17,18]), 'development_stage'] = 'Expert'
+
+    return df
+
+
+def add_cols_reading(df, reading='Specific Learning Disorder with Impairment in Reading'):
+    import pandas as pd
+    from scipy import stats as sp
+
+    # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
+    df_all = pd.DataFrame()
+    for _, group in df.groupby('Identifiers'):
+        dx = group['DX_Cat_Name'].values
+        if 'No Diagnosis Given' in dx:
+            group['DX_Reading'] = 'No Diagnosis Given'
+        elif (reading in dx) and (sum(group['comorbidities'])==0):
+            group['DX_Reading'] = 'reading_no_comorbidities'
+        elif ('ADHD' in dx) and (reading not in dx):
+            group['DX_Reading'] = 'adhd_no_reading' 
+        elif reading in dx and (sum(group['comorbidities'])>0):
+            group['DX_Reading'] = 'reading_all_comorbidities' 
+        else:
+            group['DX_Reading'] = 'other_diagnoses'
+        df_all = pd.concat([df_all, group]) 
+
+    return df_all
+
+
+def add_cols_adhd(df, adhd='ADHD'):
+    import pandas as pd
+    from scipy import stats as sp
+
+    # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
+    df_all = pd.DataFrame()
+    for _, group in df.groupby('Identifiers'):
+        dx = group['DX_Cat_Name'].values
+        if 'No Diagnosis Given' in dx:
+            group['DX_ADHD'] = 'No Diagnosis Given'
+        elif (adhd in dx) and (sum(group['comorbidities'])==0):
+            group['DX_ADHD'] = 'adhd_no_comorbidities'
+        elif ('ADHD' in dx) and (sum(group['comorbidities'])>0):
+            group['DX_ADHD'] = 'adhd_all_comorbidities' 
+        else:
+            group['DX_ADHD'] = 'other_diagnoses'
+        df_all = pd.concat([df_all, group]) 
+
+    return df_all
+
+
 def run(
     inpath, 
-    outpath,
-    remove_outliers=True,
+    outpath
     ):
     """Splits a Pandas DataFrame into train and test sets using stratified sampling, handling the case where some of the groups in the columns_to_stratify list have only 1 value.
 
@@ -115,10 +175,6 @@ def run(
     # read in dataframe from path
     df = pd.read_csv(inpath, engine='python')
 
-    # remove outliers
-    if remove_outliers:
-        df = df[df['outliers']==False].reset_index(drop=True)
-
     # get unique dataset 
     df_unique = get_unique_dataset(
         df, 
@@ -128,13 +184,25 @@ def run(
         )
     
     # remove small groups from dataframe (otherwise won't be able to stratify)
-    df_filtered = remove_small_groups(dataframe=df_unique, columns_to_stratify=columns_to_stratify, min_group_size=3)
+    df_filtered = remove_small_groups(dataframe=df_unique, columns_to_stratify=columns_to_stratify, min_group_size=2)
 
     # stratify dataframe into train and test participants
     df_stratified = stratify_split(df_filtered, columns_to_stratify, test_size, random_state)
 
     # index train and test participants into original dataframe
     df_out = index_into_original_dataframe(df_original=df, df_stratify=df_stratified)
+
+    # add comorbidities
+    df_out = add_comorbidities(df=df_out)
+
+    # add reading-specific cols
+    df_out = add_cols_reading(df=df_out, reading='Specific Learning Disorder with Impairment in Reading')
+
+    # add adhd-specific cols
+    df_out = add_cols_adhd(df=df_out, adhd='ADHD')
+
+    # add development stage
+    df_out = add_development_stage(df=df_out)
 
     # save dataframe to `out_dir`
     df_out.to_csv(outpath, index=False)

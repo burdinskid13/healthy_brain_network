@@ -17,7 +17,7 @@
 #SBATCH --mem=5G
 #
 # Wall clock limit:
-#SBATCH --time=2-00:00:00
+#SBATCH --time=02:00:00
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -59,6 +59,9 @@ export SUBJECT_SPEC_DIR=$scratch
 
 # Define python scripts
 python_scripts=$base_dir/hbn/scripts
+
+# make specs
+python3 $python_scripts/make_specs.py
 
 echo $"run phenotypic models"
 

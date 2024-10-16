@@ -154,6 +154,7 @@ def _index_dataframe_by_columns_values(dataframe, columns, values_list):
     Returns:
     pandas.DataFrame: The filtered DataFrame.
     """
+    dataframe_filtered = dataframe
 
     # Check if the number of columns and values in the lists match.
     if len(columns) != len(values_list):
@@ -173,9 +174,9 @@ def _index_dataframe_by_columns_values(dataframe, columns, values_list):
             row_matches = row_matches[0]
 
         # Filter the DataFrame to only include rows where the row_matches_combined value is True.
-        dataframe = dataframe[row_matches]
+        dataframe_filtered = dataframe[row_matches]
 
-    return dataframe
+    return dataframe_filtered
 
 
 def column_transform(
@@ -245,7 +246,11 @@ def column_transform(
                 verbose_feature_names_out=True,
                 #remainder='passthrough'
                 )
+    
+    # delete duplicated columns
+    dataframe_final = dataframe_final.loc[:,~dataframe_final.columns.duplicated()].copy()
 
+    # fit and transform
     arr_transformed = preprocesser.fit_transform(dataframe_final)
 
     # get transformed feature names (on fitted transformers only)

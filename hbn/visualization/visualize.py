@@ -6,19 +6,19 @@ import seaborn as sns
 
 def plotting_style(palette='Paired'):
     plt.style.use('seaborn-poster') # ggplot
-    params = {'axes.labelsize': 20,
-            'axes.titlesize': 25,
-            'legend.fontsize': 20,
-            'xtick.labelsize': 20,
-            'ytick.labelsize': 20,
+    params = {'axes.labelsize': 10,
+            'axes.titlesize': 15,
+            'legend.fontsize': 10,
+            'xtick.labelsize': 10,
+            'ytick.labelsize': 10,
             'legend.title_fontsize': 20,
             # 'figure.figsize': (10,5),
             'font.weight': 'regular',
             # 'font.size': 'regular',
             'font.family': 'sans-serif',
-            'lines.markersize': 20,
+            'lines.markersize': 10,
             'font.serif': 'Helvetica Neue',
-            'lines.linewidth': 4,
+            'lines.linewidth': 2,
             'axes.grid': False,
             'axes.spines.top': False,
             'axes.spines.right': False}
@@ -228,83 +228,121 @@ def lineplot(x,
     sns.despine(bottom=False, left=False)
     return ax
 
-def barplot(data, 
-            y='feature_names', 
-            x='feature_importances', 
-            hue=None, 
-            title='', 
-            xlabel='Feature Importance', 
-            ylabel=None, 
-            top_features=20, 
-            ylim=[0.5,1],
-            figsize=(3,3)
-            ):
-    plt.figure(figsize=figsize)
-    if y=='feature_names':
-        data['feature_names'] = data['feature_names'].str.replace('numeric__', '')
-        ax = sns.barplot(y=y, x=x, hue=hue,data=data.head(top_features))
-    else:
-        ax = sns.barplot(y=y, x=x, hue=hue, data=data)
-
-    if ylabel is not None:
-        ax.set_ylabel(ylabel)
-    else:
-        ax.set_ylabel(y)
-    if xlabel is not None:
-        ax.set_xlabel(xlabel)
-    else:
-        ax.set_xlabel(x)
-    ax.set_title(title)
-    if ylim is not None:
-        ax.set_ylim(ylim)
-    plt.xticks(rotation=45, ha='right')
-    sns.despine(bottom=False, left=False)
-    plt.tight_layout()
-    return ax
 
 def pointplot(
-            data, 
-            y='feature_names', 
-            x='feature_importances', 
-            hue=None,
-            fig_title='', 
-            legend_title='Model', 
-            ylim=[0.3, 1], 
-            xlabel='ROC AUC', 
-            ylabel=None, 
-            markers="o",
-            linestyles="--",
-            join_lines=True,
-            scale=0.5,
-            dodge=.4,
-            alpha=.2,
-            figsize=(3,3)
-            ):
-    plt.figure(figsize=figsize)
-    ax = sns.stripplot(
-        data=data, x=x, y=y, hue=hue,
-        dodge=True, alpha=alpha, legend=False,
-        )
-    sns.pointplot(
-        data=data, x=x, y=y, hue=hue,
-        join=join_lines, dodge=dodge, errorbar=None,
-        markers=markers, scale=scale,
-        linestyles=linestyles, 
-    )
-
-    # customize hue
-    if hue is not None:
-        plt.legend(loc='best', fontsize=10, bbox_to_anchor=(1.1, 1.05), title=legend_title);
-
-    # Customize the plot further (optional)
-    ax.set_xlabel(xlabel)
-    ax.set_ylim(ylim)
+        ax, 
+        data, 
+        y='roc_auc_score',
+        x='development_stage', 
+        hue=None, 
+        order=None, 
+        title='', 
+        ylim=[0.4,1],
+        ylabel='ROC AUC',
+        xlabel='',
+        subplot=None,
+        labelsize=20,
+        x_pos=-0.1,
+        y_pos=1.1,
+        ci=95,
+        legend=True,
+        xticks=True,
+        marker_color=None,
+        bbox_to_anchor=(.2, .4)
+        ): 
+    if marker_color is not None:
+        palette = marker_color
+    ax = sns.pointplot(x=x, y=y, hue=hue, data=data, 
+                        order=order, ax=ax, join=legend, 
+                        ci=ci, errwidth=0.5, capsize=0.2, palette=marker_color,
+                        )
+    plt.title(title)
+    if hue:
+        # set legend to False
+        if not legend:
+            ax.get_legend().set_visible(False)
+        else:
+            ax.legend(bbox_to_anchor=bbox_to_anchor, loc=2, borderaxespad=0.0)
     ax.set_ylabel(ylabel)
-    ax.set_title(fig_title)
-    plt.xticks(ha='right', rotation=45)
-    sns.despine(bottom=False, left=False)
-    plt.tight_layout()
-    
+    ax.set_xlabel(xlabel)
+    if ylabel is None:
+        ax.set_ylabel(y)
+    if xlabel is None:
+        ax.set_xlabel(x)
+    ax.set_ylim(ylim)
+    sns.despine()
+    ax.text(x_pos, y_pos, subplot, transform=ax.transAxes, fontsize=labelsize, verticalalignment='top')
+    # remove x ticks from x axis
+    if xticks:
+        plt.xticks(rotation=45, ha='right')
+    else:
+        ax.set_xticklabels([])
+
     return ax
+
+def barplot(ax, 
+            data,
+            y='roc_auc_score',  
+            x='development_stage', 
+            hue=None, 
+            order=None, 
+            title='', 
+            ylabel='ROC AUC',
+            xlabel='',
+            subplot=None,
+            labelsize=20,
+            x_pos=-0.1,
+            y_pos=1.1,
+            ylim=[0.4,1],
+            legend=True,
+            xticks=True,
+            bbox_to_anchor=(.2, .4)
+            ): 
+    # plot data
+    ax = sns.barplot(x=x, y=y, hue=hue, data=data, order=order, ax=ax, errwidth=0.5, capsize=0.2)
+    plt.title(title)
+    if hue:
+        # set legend to False
+        if not legend:
+            ax.get_legend().remove()
+        else:
+            ax.legend(bbox_to_anchor=bbox_to_anchor, loc=2, borderaxespad=0.0)
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+    if ylabel is None:
+        ax.set_ylabel(y)
+    if xlabel is None:
+        ax.set_xlabel(x)
+    ax.set_ylim(ylim)
+    ax.text(x_pos, y_pos, subplot, transform=ax.transAxes, fontsize=labelsize, verticalalignment='top')
+    # remove x ticks from x axis
+    if xticks:
+        plt.xticks(rotation=45, ha='right')
+    else:
+        ax.set_xticklabels([])
+    sns.despine()
+
+    return ax
+
+def plot_facetgrid(df, data='Internalizing'):
+
+    g = sns.FacetGrid(df, col="DX_Reading", margin_titles=True, col_wrap=2)
+    g.map_dataframe(sns.barplot,x=data, y=f'{data}_standarized', hue='Sex', errwidth=0.5, capsize=0.2,)
+    g.set_axis_labels("Assessment", "Score")
+    g.add_legend(fontsize=15)
+
+    # get yticklabels
+    xticklabels = g.axes[2].get_xticklabels()
+
+    # get xticklabels
+    yticklabels = g.axes[2].get_yticklabels()
+
+    axes = g.axes.flatten()
+    for i,col in enumerate(df['DX_Reading'].unique()):
+        axes[i].set_title(col, fontsize=15)
+        axes[i].set_xlabel('')
+        axes[i].set_xticklabels(xticklabels, fontsize=10, rotation=45)
+        axes[i].set_ylabel(f'{data} Score', fontsize=15)
+        axes[i].set_yticklabels(yticklabels, fontsize=10)
 
     

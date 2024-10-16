@@ -63,6 +63,9 @@ def _get_specs(
     info = io.load_json(model_spec)
     info_filter = info.copy()
 
+    # update pydraml spec
+    info_filter['feature_threshold'] = f'{which_features}_{feat}_selected_features'
+
     for clf_info in info['clf_info']:
 
         if clf in clf_info[-1][1]:
