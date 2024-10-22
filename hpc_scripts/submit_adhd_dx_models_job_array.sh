@@ -18,7 +18,9 @@ target=target-Diagnosis-ADHD-Subtype-spec.json # target spec
 
 features=(
     # "features-parent-cbcl-spec.json" \
-    "features-child-cbcl-spec.json" \
+    "features-child-mood-spec.json" \
+    # "features-child-anxiety-spec.json" \
+    # "features-child-cbcl-spec.json" \
     # "features-child-connors-spec.json" \
         )
 
@@ -69,12 +71,12 @@ features=(
 participants=(
     "participants-adhd-combined_type-male-young-spec.json" \
     "participants-adhd-combined_type-female-young-spec.json" \
-    # "participants-adhd-combined_type-male-old-spec.json" \
-    # "participants-adhd-combined_type-female-old-spec.json" \
+    "participants-adhd-combined_type-male-old-spec.json" \
+    "participants-adhd-combined_type-female-old-spec.json" \
     "participants-adhd-inattentive_type-male-young-spec.json" \
     "participants-adhd-inattentive_type-female-young-spec.json" \
-    # "participants-adhd-inattentive_type-male-old-spec.json" \
-    # "participants-adhd-inattentive_type-female-old-spec.json" \
+    "participants-adhd-inattentive_type-male-old-spec.json" \
+    "participants-adhd-inattentive_type-female-old-spec.json" \
     # "participants-adhd-all-male-spec.json" \
     # "participants-adhd-all-female-spec.json" \
     # "participants-adhd-only-male-spec.json" \

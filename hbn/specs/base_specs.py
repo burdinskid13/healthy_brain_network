@@ -2001,7 +2001,7 @@ def features():
                 {
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'YSR', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
+                "cols_to_filter": ['Identifiers', 'YSR', 'ASR', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
                 }, 
                 'features-child-anxiety':
                 {
