@@ -151,6 +151,65 @@ def add_cols_adhd(df, adhd='ADHD'):
     return df_all
 
 
+def add_cols_depression(df, depression='Depressive Disorders'):
+    import pandas as pd
+    from scipy import stats as sp
+
+    # get rows that contain 'ADHD'
+    mask = df['DX_Cat_Name'].str.contains('ADHD', case=False)
+    mask = mask.fillna(False)
+
+    # assign new groups
+    df.loc[mask, 'DX_Cat_Name'] = df.loc[mask, 'DX_Subtype_Name']
+
+    # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
+    df_all = pd.DataFrame()
+    for _, group in df.groupby('Identifiers'):
+        dx = group['DX_Cat_Name'].values
+        if 'No Diagnosis Given' in dx:
+            group['DX_Depression'] = 'No Diagnosis Given'
+        elif (depression in dx) and not (any("ADHD" in str(item) for item in dx)):
+            group['DX_Depression'] = 'Depression (no ADHD)'
+        elif (depression not in dx) and ('ADHD-Combined Type' in dx):
+            group['DX_Depression'] = 'ADHD-Combined Type (no Depression)'
+        elif (depression not in dx) and ('ADHD-Inattentive Type' in dx):
+            group['DX_Depression'] = 'ADHD-Inattentive Type (no Depression)'
+        else:
+            group['DX_Depression'] = 'other_diagnoses'
+        df_all = pd.concat([df_all, group]) 
+
+    return df_all
+
+def add_cols_anxiety(df, anxiety='Anxiety Disorders'):
+    import pandas as pd
+    from scipy import stats as sp
+
+    # get rows that contain 'ADHD'
+    mask = df['DX_Cat_Name'].str.contains('ADHD', case=False)
+    mask = mask.fillna(False)
+
+    # assign new groups
+    df.loc[mask, 'DX_Cat_Name'] = df.loc[mask, 'DX_Subtype_Name']
+
+    # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
+    df_all = pd.DataFrame()
+    for _, group in df.groupby('Identifiers'):
+        dx = group['DX_Cat_Name'].values
+        if 'No Diagnosis Given' in dx:
+            group['DX_Anxiety'] = 'No Diagnosis Given'
+        elif (anxiety in dx) and not (any("ADHD" in str(item) for item in dx)):
+            group['DX_Anxiety'] = 'Anxiety (no ADHD)'
+        elif (anxiety not in dx) and ('ADHD-Combined Type' in dx):
+            group['DX_Anxiety'] = 'ADHD-Combined Type (no Anxiety)'
+        elif (anxiety not in dx) and ('ADHD-Inattentive Type' in dx):
+            group['DX_Anxiety'] = 'ADHD-Inattentive Type (no Anxiety)'
+        else:
+            group['DX_Anxiety'] = 'other_diagnoses'
+        df_all = pd.concat([df_all, group]) 
+
+    return df_all
+
+
 def run(
     inpath, 
     outpath
@@ -200,6 +259,12 @@ def run(
 
     # add adhd-specific cols
     df_out = add_cols_adhd(df=df_out, adhd='ADHD')
+
+    # add depression-specific cols
+    df_out = add_cols_depression(df=df_out, depression='Depressive Disorders')
+
+    # add anxiety-specific cols
+    df_out = add_cols_anxiety(df=df_out, anxiety='Anxiety Disorders')
 
     # add development stage
     df_out = add_development_stage(df=df_out)

@@ -1,13 +1,28 @@
 
-
 def calculate_embedding(
     data, 
+    standarize=True,
     n_neighbors=15, 
     min_dist=0.1, 
     n_components=2,
     metric='euclidean', 
     ): 
+    """ calculate embedding using UMAP
+    
+    Args:
+        data (pd dataframe): shape (n_rows, n_cols)
+        standarize (bool): whether to standarize data
+        n_neighbors (int): number of neighbors
+        min_dist (float): minimum distance
+        n_components (int): number of components
+        metric (str): metric to use for UMAP
+    Returns:
+        embedding (pd dataframe): shape (n_rows, n_components)
+    """
     import umap
+    import pandas as pd
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.impute import SimpleImputer
     
     # construct model
     reducer = umap.UMAP(
@@ -18,6 +33,15 @@ def calculate_embedding(
         metric=metric
         )
     
+    # impute if there are NaN
+    imputer = SimpleImputer(strategy='mean')  # Replace 'mean' with 'median', 'most_frequent', etc.
+    data = pd.DataFrame(imputer.fit_transform(data), columns=data.columns)
+
+    # optionally standarize
+    if standarize:
+        scaler = StandardScaler()
+        data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
+    
     # train model 
     reducer.fit(data)
     
@@ -26,53 +50,56 @@ def calculate_embedding(
     embedding = reducer.transform(data)
 #     embedding = reducer.fit_transform(data);
 
+    # rename embeddings as 'x', 'y', 'z'
+    columns = ['x', 'y']
+    if n_components==3:
+        columns = ['x', 'y', 'z']
+
+    # rename embeddings 
+    embedding = pd.DataFrame(embedding, columns=columns)
+
     return embedding
 
 
-def visualize_embedding(embedding, target):
-    """visualize embedding
-    
-    Args: 
-        features (pd dataframe): shape (n_rows, n_cols) 
-        target (pd dataframe): shape (n_rows,1) same n_rows as `features`
-    """
-    import pandas as pd
-
-
-    # visualize embedding (3d display)
-    df_embedding = pd.DataFrame(embedding, columns=['x', 'y', 'z'])
-    dataframe = pd.concat([df_embedding, target], axis=1)
-
-    plot_umap_3d(dataframe, hue=target)
-
-
-def plot_umap(embedding, target=None, title=''):
+def plot_umap_2d(embedding, target=None):
     from matplotlib import pyplot as plt
     import numpy as np
+    import seaborn as sns
+    import pandas as pd
+
+    # check if embedding is a pd dataframe
+    if not isinstance(embedding, pd.DataFrame):
+        # return error if not
+        raise ValueError('embedding must be a pd dataframe')
     
-    # now plot the resulting embedding, coloring the data points by the class that they belong to
-    n_components = embedding.shape[1]
-    fig = plt.figure()
-    if n_components==1:
-        fig.add_subplot(111)
-        plt.scatter(embedding[:, 0], range(len(embedding)), c=target, cmap='Spectral', s=5)
-    if n_components==2:
-        fig.add_subplot(111)
-        plt.scatter(embedding[:, 0], embedding[:, 1], c=target, cmap='Spectral', s=5)
-    if n_components==3:
-        fig.add_subplot(111, projection='3d')
-        plt.scatter(embedding[:, 0], embedding[:, 1], c=target, cmap='Spectral', s=5)
-    
-    plt.title(title, fontsize=18)
-    plt.gca().set_aspect('equal', 'datalim')
     if target is not None:
-        plt.colorbar(boundaries=np.arange(11)-0.5).set_ticks(np.arange(10))
-    
+        target = embedding[target]
+
+    # now plot the resulting embedding, coloring the data points by the class that they belong to
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ax = sns.scatterplot(data=embedding, x="x", y="y", hue=target, ax=ax)
+
+    # Set the legend title to an empty string
+    ax.legend().set_title("")
+
+    # set aspect ratio
+    plt.gca().set_aspect('equal', 'datalim')
     plt.show()
 
 
-def plot_umap_3d(dataframe, hue=None):
+def plot_umap_3d(embedding, target=None):
     import plotly.express as px
+    import pandas as pd
 
-    fig = px.scatter_3d(dataframe, x='x', y='y', z='z', color=hue)
+    # # visualize embedding (3d display)
+    # df_embedding = pd.DataFrame(embedding, columns=['x', 'y', 'z'])
+    # dataframe = pd.concat([df_embedding, target], axis=1)
+
+    # check if embedding is a pd dataframe
+    if not isinstance(embedding, pd.DataFrame):
+        # return error if not
+        raise ValueError('embedding must be a pd dataframe')
+
+
+    fig = px.scatter_3d(embedding, x='x', y='y', z='z', color=target) 
     fig.show()

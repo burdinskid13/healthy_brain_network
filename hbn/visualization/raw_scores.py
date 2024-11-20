@@ -6,10 +6,19 @@ import numpy as np
 from hbn.visualization import utils
 from hbn.constants import Defaults 
 
-def get_data(assessment='Child', 
-             dx='DX_Reading',
-             cols_to_filter=['WIAT,WIAT_Word_Raw', 'WIAT,WIAT_RC_Raw', 'TOWRE,TOWRE_PDE_Raw', 'TOWRE,TOWRE_SWE_Raw'],
+def get_data(assessment='Parent', 
+             dx='DX_ADHD',
+             measure='CBCL',
+             cols_to_filter=None,
              ):
+    """get data from questionnaires
+    Args:
+        measure: str
+        dx: str
+        cols_to_filter: list
+    returns:
+        data (pd.DataFrame)
+    """
     # get features and merge with demographics
     df = pd.read_csv(os.path.join(Defaults.INTERIM_FEATURES_DIR, 'participant_train_test.csv'))
 
@@ -17,8 +26,14 @@ def get_data(assessment='Child',
     df_features = pd.read_csv(os.path.join(Defaults.INTERIM_FEATURES_DIR, f'{assessment}-features-raw.csv'), engine='python')
 
     # # get `cols_to_filter`
-    cols_to_keep = [col for col in df_features.columns if any(string in col for string in cols_to_filter)]
-    cols_to_keep.extend(['Identifiers'])
+    if cols_to_filter is not None:
+        cols_to_keep = [col for col in df_features.columns if any(string in col for string in cols_to_filter)]
+        cols_to_keep.extend(['Identifiers'])
+    elif (measure is not None) and (cols_to_filter is None):
+        cols_to_keep = [col for col in df_features.columns if measure in col]
+        cols_to_keep.extend(['Identifiers'])
+    else:
+        cols_to_keep = ['Identifiers']
 
     # merge with dataframe
     df_out = df.merge(df_features[cols_to_keep], on='Identifiers')
@@ -28,12 +43,17 @@ def get_data(assessment='Child',
 
     # remap 
     remap_labels = utils.remap_dx()
-    df_out[dx] = df_out[dx].apply(lambda x: remap_labels[x])
+    def map_labels(x):
+        if x in remap_labels.keys():
+            return remap_labels[x]
+        else:
+            return x
+    df_out[dx] = df_out[dx].apply(lambda x: map_labels(x))
 
     # reformat age
     df_out['Age_round'] = df_out['Age_round'].astype(int)
 
-    return df_out
+    return df_out, cols_to_keep
 
 def map_labels(x):
     data_dict = {
@@ -66,7 +86,7 @@ def melt_dataframe(df, dx='DX_Reading',data='Internalizing', key='Int'):
 
     return df_melt
 
-def load_parent_child_teacher(key='Int', dx='DX_Reading', dx_to_include=['Reading (all)', 'Reading (none)']):
+def load_parent_child_teacher(key=['Int'], dx='DX_Reading', dx_to_include=['Reading (all)', 'Reading (none)']):
     
     # get parent cols
     parent_cols = []
@@ -84,9 +104,9 @@ def load_parent_child_teacher(key='Int', dx='DX_Reading', dx_to_include=['Readin
         teacher_cols.append(f'TRF,TRF_{k}')
 
     # get data
-    df_parent = get_data(assessment='Parent', cols_to_filter=parent_cols)
-    df_child = get_data(assessment='Child', cols_to_filter=child_cols)
-    df_teacher = get_data(assessment='Teacher', cols_to_filter=teacher_cols)
+    df_parent = get_data(assessment='Parent', dx=dx, cols_to_filter=parent_cols)
+    df_child = get_data(assessment='Child', dx=dx, cols_to_filter=child_cols)
+    df_teacher = get_data(assessment='Teacher', dx=dx, cols_to_filter=teacher_cols)
     
     # merge dataframes
     df_merged = df_parent.merge(df_child).merge(df_teacher)

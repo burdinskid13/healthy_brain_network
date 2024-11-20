@@ -11,7 +11,7 @@ def plotting_style(palette='Paired'):
             'legend.fontsize': 10,
             'xtick.labelsize': 10,
             'ytick.labelsize': 10,
-            'legend.title_fontsize': 20,
+            'legend.title_fontsize': 10,
             # 'figure.figsize': (10,5),
             'font.weight': 'regular',
             # 'font.size': 'regular',
@@ -228,7 +228,6 @@ def lineplot(x,
     sns.despine(bottom=False, left=False)
     return ax
 
-
 def pointplot(
         ax, 
         data, 
@@ -247,16 +246,19 @@ def pointplot(
         ci=95,
         legend=True,
         xticks=True,
+        xticklabels=None,
         marker_color=None,
         bbox_to_anchor=(.2, .4)
         ): 
     if marker_color is not None:
         palette = marker_color
     ax = sns.pointplot(x=x, y=y, hue=hue, data=data, 
-                        order=order, ax=ax, join=legend, 
+                        order=order, ax=ax, join=True, 
                         ci=ci, errwidth=0.5, capsize=0.2, palette=marker_color,
                         )
     plt.title(title)
+    if not legend:
+        ax.get_legend().set_visible(False)
     if hue:
         # set legend to False
         if not legend:
@@ -272,11 +274,15 @@ def pointplot(
     ax.set_ylim(ylim)
     sns.despine()
     ax.text(x_pos, y_pos, subplot, transform=ax.transAxes, fontsize=labelsize, verticalalignment='top')
+    if xticklabels is None:
+        ax.xaxis.set_ticklabels(ax.get_xticklabels())
+    else:
+        ax.xaxis.set_ticklabels(xticklabels)
     # remove x ticks from x axis
     if xticks:
-        plt.xticks(rotation=45, ha='right')
+        plt.xticks(rotation=0)
     else:
-        ax.set_xticklabels([])
+        plt.xticks([])
 
     return ax
 
@@ -296,6 +302,7 @@ def barplot(ax,
             ylim=[0.4,1],
             legend=True,
             xticks=True,
+            xticklabels=None,
             bbox_to_anchor=(.2, .4)
             ): 
     # plot data
@@ -316,18 +323,65 @@ def barplot(ax,
     ax.set_ylim(ylim)
     ax.text(x_pos, y_pos, subplot, transform=ax.transAxes, fontsize=labelsize, verticalalignment='top')
     # remove x ticks from x axis
-    if xticks:
-        plt.xticks(rotation=45, ha='right')
+    if xticklabels is None:
+        ax.xaxis.set_ticklabels(ax.get_xticklabels())
     else:
-        ax.set_xticklabels([])
+        ax.xaxis.set_ticklabels(xticklabels)
+    # remove x ticks from x axis
+    if xticks:
+        plt.xticks(rotation=0) # ha='right'
+    else:
+        plt.xticks([])
     sns.despine()
 
     return ax
 
-def plot_facetgrid(df, data='Internalizing'):
+def modify_axes(ax1, ax2, ylim_outliers=(40, 80), ylim_data=(0, 10)):
 
-    g = sns.FacetGrid(df, col="DX_Reading", margin_titles=True, col_wrap=2)
-    g.map_dataframe(sns.barplot,x=data, y=f'{data}_standarized', hue='Sex', errwidth=0.5, capsize=0.2,)
+    ax1.set_ylim(ylim_outliers)  # outliers only
+    ax2.set_ylim(ylim_data)  # most of the data
+    # limit range of y-axis to the data only
+
+    # remove x-axis line's between the two sub-plots
+    ax1.spines['bottom'].set_visible(False)  # 1st subplot bottom x-axis
+    ax2.spines['top'].set_visible(False)  # 2nd subplot top x-axis
+
+    # 1st x-axis: move ticks from bottom to top
+    ax1.xaxis.tick_top()
+    ax1.tick_params(labeltop=False)  # no labels
+    ax1.tick_params(axis='x', top=False)
+    # 2nd x-axis: ticks on the bottom
+    ax2.xaxis.tick_bottom()
+
+    # 1st subplot y-axis: remove first tick
+    ax1.set_yticks(ax1.get_yticks()[1:])
+    # 2nd subplot y-axis: remove the last
+    ax2.set_yticks(ax2.get_yticks()[:-1])
+
+    return ax1, ax2
+
+def _draw_cut(ax1, ax2):
+    # now draw the cut
+    d = .5  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(
+        marker=[(-1, -d), (1, d)],
+        markersize=14,  # "length" of cut-line
+        linestyle='none',
+        color='k',  # ?
+        mec='k',  # ?
+        mew=2,  # line thickness
+        clip_on=False
+    )
+    ax1.plot([0, 1], [0, 0], transform=ax1.transAxes, **kwargs)
+    ax2.plot([0, 1], [1, 1], transform=ax2.transAxes, **kwargs)
+
+    ax1.plot([0, 1], [0.05, 0], transform=ax1.transAxes, **kwargs)
+    ax2.plot([0, 1], [0, 0.05], transform=ax1.transAxes, **kwargs)
+
+def plot_facetgrid(df, x='Internalizing', col='DX_Reading', hue='Sex', y='data', ylabel=''):
+
+    g = sns.FacetGrid(df, col=col, margin_titles=True, col_wrap=2)
+    g.map_dataframe(sns.barplot, x=x, y=y, hue=hue, errwidth=0.5, capsize=0.2,)
     g.set_axis_labels("Assessment", "Score")
     g.add_legend(fontsize=15)
 
@@ -338,11 +392,143 @@ def plot_facetgrid(df, data='Internalizing'):
     yticklabels = g.axes[2].get_yticklabels()
 
     axes = g.axes.flatten()
-    for i,col in enumerate(df['DX_Reading'].unique()):
+    for i,col in enumerate(df[col].unique()):
         axes[i].set_title(col, fontsize=15)
         axes[i].set_xlabel('')
         axes[i].set_xticklabels(xticklabels, fontsize=10, rotation=45)
-        axes[i].set_ylabel(f'{data} Score', fontsize=15)
+        axes[i].set_ylabel(ylabel, fontsize=15)
         axes[i].set_yticklabels(yticklabels, fontsize=10)
+
+def get_label_rotation(angle, offset):
+    # Rotation must be specified in degrees :(
+    rotation = np.rad2deg(angle + offset)
+    if angle <= np.pi:
+        alignment = "right"
+        rotation = rotation + 180
+    else: 
+        alignment = "left"
+    return rotation, alignment
+
+def add_labels(angles, values, labels, offset,ax=None):
+    
+    # Iterate over angles, values, and labels, to add all of them.
+    for angle, value, label, in zip(angles, values, labels):
+        angle = angle
+        
+        # Obtain text rotation and alignment
+        rotation, alignment = get_label_rotation(angle, offset)
+
+        # And finally add the text
+        ax.text(
+            x=angle, 
+            y=value, 
+            s=label, 
+            ha=alignment, 
+            va="center", 
+            rotation=rotation, 
+            rotation_mode="anchor"
+        ) 
+
+def circular_barplot(df, values='value', labels='name', group='group', extra_custom=True):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+
+    # Reorder the dataframe
+    df_sorted = (
+        df \
+        .groupby([group])
+        .apply(lambda x: x.sort_values([values], ascending = False))
+        .reset_index(drop=True)
+    )
+
+    VALUES = df_sorted[values].values 
+    LABELS = df_sorted[labels].values
+    GROUP = df_sorted[group].values
+
+    PAD = 3
+    ANGLES_N = len(VALUES) + PAD * len(np.unique(GROUP))
+
+    ANGLES = np.linspace(0, 2 * np.pi, num=ANGLES_N, endpoint=False)
+    WIDTH = (2 * np.pi) / len(ANGLES)
+
+    GROUPS_SIZE = [len(i[1]) for i in df.groupby(group)]
+
+    offset = 0
+    IDXS = []
+    for size in GROUPS_SIZE:
+        IDXS += list(range(offset + PAD, offset + size + PAD))
+        offset += size + PAD
+
+    fig, ax = plt.subplots(figsize=(20, 10), subplot_kw={"projection": "polar"})
+
+    ax.set_theta_offset(offset)
+    # ax.set_ylim(80, 120)
+    ax.set_frame_on(False)
+    ax.xaxis.grid(False)
+    ax.yaxis.grid(False)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    
+    GROUPS_SIZE = [len(i[1]) for i in df.groupby(group)]
+    COLORS = [f"C{i}" for i, size in enumerate(GROUPS_SIZE) for _ in range(size)]
+
+    ax.bar(
+        ANGLES[IDXS], VALUES, width=WIDTH, color=COLORS,
+        edgecolor="white", linewidth=2
+    )
+
+    # add labels for name 
+    # padding is the space between the end of the bar and the label
+    VALUES_PADDING = []
+    for val in VALUES:
+        padding = -100
+        if val < 100:
+            padding = 60
+        VALUES_PADDING.append(val + padding)
+    add_labels(ANGLES[IDXS], VALUES_PADDING, LABELS, offset, ax=ax)
+
+    # add labels for values
+    TEXT = [f'{abs(round(val))}%' for val in VALUES]
+    VALUES_PADDING = []
+    for val in VALUES:
+        padding = 4
+        if val < 100:
+            padding = 100
+        VALUES_PADDING.append( val + padding)
+    add_labels(ANGLES[IDXS], VALUES_PADDING, TEXT, offset, ax=ax)
+
+    # Extra customization below here --------------------
+    if extra_custom:
+        # This iterates over the sizes of the groups adding reference
+        # lines and annotations.
+        offset = 0 
+        num=50
+        for group, size in zip(["A", "B", "C", "D"], GROUPS_SIZE):
+            # Add line below bars
+            x1 = np.linspace(ANGLES[offset + PAD], ANGLES[offset + size + PAD - 1], num=num)
+            ax.plot(x1, [-5] * num, color="#333333")
+            
+            # Add text to indicate group
+            ax.text(
+                np.mean(x1), -20, group, color="#333333", fontsize=14, 
+                fontweight="bold", ha="center", va="center"
+            )
+            
+            # Add reference lines at 20, 40, 60, and 80
+            x2 = np.linspace(ANGLES[offset], ANGLES[offset + PAD - 1], num=num)
+            ax.plot(x2, [20] * num, color="#bebebe", lw=0.8)
+            ax.plot(x2, [40] * num, color="#bebebe", lw=0.8)
+            ax.plot(x2, [60] * num, color="#bebebe", lw=0.8)
+            ax.plot(x2, [80] * num, color="#bebebe", lw=0.8)
+            
+            offset += size + PAD
+    
+    plt.show()
+
+
+
+
+
 
     

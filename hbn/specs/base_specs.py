@@ -431,6 +431,155 @@ def participants():
         },
         }
 
+    spec_info_anxiety_adhd = {
+        'participants-adhd-combined_type-anxiety-male':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['male'],
+         'DX_Anxiety': ['ADHD-Combined Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-anxiety-male':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['male'],
+         'DX_Anxiety': ['ADHD-Inattentive Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        'participants-adhd-combined_type-anxiety-female':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['female'],
+         'DX_Anxiety': ['ADHD-Combined Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-anxiety-female':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['female'],
+         'DX_Anxiety': ['ADHD-Inattentive Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-anxiety-male-young':
+        {
+         age: [5,6,7,8,9,10,11],
+         sex: ['male'],
+         'DX_Anxiety': ['ADHD-Inattentive Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-anxiety-male-old':
+        {
+         age: [12,13,14,15,16,17],
+         sex: ['male'],
+         'DX_Anxiety': ['ADHD-Inattentive Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        'participants-adhd-combined_type-anxiety-male-young':
+        {
+         age: [5,6,7,8,9,10,11],
+         sex: ['male'],
+         'DX_Anxiety': ['ADHD-Combined Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        'participants-adhd-combined_type-anxiety-male-old':
+        {
+         age: [12,13,14,15,16,17],
+         sex: ['male'],
+         'DX_Anxiety': ['ADHD-Combined Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-anxiety-female-young':
+        {
+         age: [5,6,7,8,9,10,11],
+         sex: ['female'],
+         'DX_Anxiety': ['ADHD-Inattentive Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-anxiety-female-old':
+        {
+         age: [12,13,14,15,16,17],
+         sex: ['female'],
+         'DX_Anxiety': ['ADHD-Inattentive Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        'participants-adhd-combined_type-anxiety-female-young':
+        {
+         age: [5,6,7,8,9,10,11],
+         sex: ['female'],
+         'DX_Anxiety': ['ADHD-Combined Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        'participants-adhd-combined_type-anxiety-female-old':
+        {
+         age: [12,13,14,15,16,17],
+         sex: ['female'],
+         'DX_Anxiety': ['ADHD-Combined Type (no Anxiety)', 'Anxiety (no ADHD)']
+        },
+        }
+    spec_info_depression_adhd = {
+        'participants-adhd-combined_type-depression-male':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['male'],
+         'DX_Depression': ['ADHD-Combined Type (no Depression)', 'Depression (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-depression-male':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['male'],
+         'DX_Depression': ['ADHD-Inattentive Type (no Depression)', 'Depression (no ADHD)']
+        },
+        'participants-adhd-combined_type-depression-female':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['female'],
+         'DX_Depression': ['ADHD-Combined Type (no Depression)', 'Depression (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-depression-female':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['female'],
+         'DX_Depression': ['ADHD-Inattentive Type (no Depression)', 'Depression (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-depression-male-young':
+        {
+         age: [5,6,7,8,9,10,11],
+         sex: ['male'],
+         'DX_Depression': ['ADHD-Inattentive Type (no Depression)', 'Depression (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-depression-male-old':
+        {
+         age: [12,13,14,15,16,17],
+         sex: ['male'],
+         'DX_Depression': ['ADHD-Inattentive Type (no Depression)', 'Depression (no ADHD)']
+        },
+        'participants-adhd-combined_type-depression-male-young':
+        {
+         age: [5,6,7,8,9,10,11],
+         sex: ['male'],
+         'DX_Depression': ['ADHD-Combined Type (no Depression)', 'Depression (no ADHD)']
+        },
+        'participants-adhd-combined_type-depression-male-old':
+        {
+         age: [12,13,14,15,16,17],
+         sex: ['male'],
+         'DX_Depression': ['ADHD-Combined Type (no Depression)', 'Depression (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-depression-female-young':
+        {
+         age: [5,6,7,8,9,10,11],
+         sex: ['female'],
+         'DX_Depression': ['ADHD-Inattentive Type (no Depression)', 'Depression (no ADHD)']
+        },
+        'participants-adhd-inattentive_type-depression-female-old':
+        {
+         age: [12,13,14,15,16,17],
+         sex: ['female'],
+         'DX_Depression': ['ADHD-Inattentive Type (no Depression)', 'Depression (no ADHD)']
+        },
+        'participants-adhd-combined_type-depression-female-young':
+        {
+         age: [5,6,7,8,9,10,11],
+         sex: ['female'],
+         'DX_Depression': ['ADHD-Combined Type (no Depression)', 'Depression (no ADHD)']
+        },
+        'participants-adhd-combined_type-depression-female-old':
+        {
+         age: [12,13,14,15,16,17],
+         sex: ['female'],
+         'DX_Depression': ['ADHD-Combined Type (no Depression)', 'Depression (no ADHD)']
+        },
+        }
+
     spec_info_gender_adhd_all_comorbidities = {
         'participants-adhd-all-comorbidities':
         {
@@ -1498,6 +1647,8 @@ def participants():
     spec_info = _concat_dicts(spec_info_adhd_all_comorbidities, 
                               spec_info_adhd_no_comorbidities, 
                               spec_info_adhd_other,
+                              spec_info_depression_adhd,
+                              spec_info_anxiety_adhd,
                               spec_info_gender_adhd_all_comorbidities, 
                               spec_info_gender_adhd_no_comorbidities,
                               spec_info_gender_other,
@@ -1535,6 +1686,20 @@ def targets():
                     'target_column': 'DX_ADHD', # should be string (e.g., 'age', 'diagnosis')
                     'binarize': True,
                     'cols_to_keep': ['Identifiers', 'DX_ADHD'], # columns we want in the final dataframe
+                    },
+        'target-Diagnosis-Depression':
+                    {
+                    'filename': 'participant_train_test.csv',
+                    'target_column': 'DX_Depression', # should be string (e.g., 'age', 'diagnosis')
+                    'binarize': True,
+                    'cols_to_keep': ['Identifiers', 'DX_Depression'], # columns we want in the final dataframe
+                    },
+        'target-Diagnosis-Anxiety':
+                    {
+                    'filename': 'participant_train_test.csv',
+                    'target_column': 'DX_Anxiety', # should be string (e.g., 'age', 'diagnosis')
+                    'binarize': True,
+                    'cols_to_keep': ['Identifiers', 'DX_Anxiety'], # columns we want in the final dataframe
                     },
         'target-Diagnosis-ADHD-Subtype':
                     {
@@ -1995,61 +2160,61 @@ def features():
                 {
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'C3SR', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
+                "cols_to_filter": ['Identifiers', 'C3SR', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-child-cbcl':
                 {
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'YSR', 'ASR', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
+                "cols_to_filter": ['Identifiers', 'YSR', 'ASR', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-child-anxiety':
                 {
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'SCARED_SR', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
+                "cols_to_filter": ['Identifiers', 'SCARED_SR', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-child-mood':
                 {
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'MFQ_SR', 'PANAS', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
+                "cols_to_filter": ['Identifiers', 'MFQ_SR', 'PANAS', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-child-suicide':
                 {
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'CSSRS', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
+                "cols_to_filter": ['Identifiers', 'CSSRS', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-child-language-all':
                 {
                 "filename": 'Child-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'CELF_Full_5to8', 'CELF_Full_9to21', 'CELF_Meta', 'EVT', 'PPVT', 'GFTA', 'CTOPP', 'TOWRE', 'CELF', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
+                "cols_to_filter": ['Identifiers', 'CELF_Full_5to8', 'CELF_Full_9to21', 'CELF_Meta', 'EVT', 'PPVT', 'GFTA', 'CTOPP', 'TOWRE', 'CELF', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-parent-cbcl':
                 {
                 "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'CBCL', 'CBCL_Pre', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
+                "cols_to_filter": ['Identifiers', 'CBCL', 'CBCL_Pre', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-teacher-cbcl':
                 {
                 "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'TRF', 'TRF_Pre', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
+                "cols_to_filter": ['Identifiers', 'TRF', 'TRF_Pre', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-parent-anxiety':
                 {
                 "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'SCARED_P', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
+                "cols_to_filter": ['Identifiers', 'SCARED_P', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-parent-strengths-weaknesses-adhd-all':
                 {
                 "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'SWAN', 'ESWAN', 'SDQ', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round']
+                "cols_to_filter": ['Identifiers', 'SWAN', 'ESWAN', 'SDQ', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 }
     asd_info = {

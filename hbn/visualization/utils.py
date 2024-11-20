@@ -24,6 +24,19 @@ def remap_dx():
                 'adhd_no_comorbidities_No Diagnosis Given': 'ADHD (no comorbid.)',
                 'ADHD-Combined Type_No Diagnosis Given': 'ADHD (Combined Type)',
                 'ADHD-Inattentive Type_No Diagnosis Given': 'ADHD (Inattentive Type)',
+                'ADHD-Combined Type (no Depression)_Depression (no ADHD)': 'ADHD (Combined Type) (no Depression)',
+                'ADHD-Inattentive Type (no Depression)_Depression (no ADHD)': 'ADHD (Inattentive Type) (no Depression)',
+                'ADHD-Combined Type (no Anxiety)_Anxiety (no ADHD)': 'ADHD (Combined Type) (no Anxiety)',
+                'ADHD-Inattentive Type (no Anxiety)_Anxiety (no ADHD)': 'ADHD (Inattentive Type) (no Anxiety)',
+                'ADHD-Inattentive Type (no Depression)': 'ADHD (Inattentive Type) (no Depression)',
+                'ADHD-Combined Type (no Depression)': 'ADHD (Combined Type) (no Depression)',
+                'ADHD-Inattentive Type (no Anxiety)': 'ADHD (Inattentive Type) (no Anxiety)',
+                'ADHD-Combined Type (no Anxiety)': 'ADHD (Combined Type) (no Anxiety)',
+                'Depression (no ADHD)': 'Depression (no ADHD)',
+                'Anxiety (no ADHD)': 'Anxiety (no ADHD)',
+                'Disruptive, Impulse Control and Conduct Disorders': 'Conduct Disorders',
+                'Specific Learning Disorder with Impairment in Reading': 'Reading Impairment',
+                'Obsessive Compulsive and Related Disorders': 'Obsessive Compulsive Disorder',
                 }
     
     return data_dict
