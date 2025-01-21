@@ -28,7 +28,7 @@ def pydraml():
         "nsamples" : "auto",
         "l1_reg" : "aic",
         "plot_top_n_shap": 10,
-        "metrics" : ['roc_auc_score'] #'f1_score', 'precision_score', 'recall_score'
+        "metrics" : ['roc_auc_score'] 
         }
 
     spec_info = {
@@ -105,6 +105,54 @@ def participants():
         {
          age: [int(t) for t in np.arange(5,18)],
          sex: ['male', 'female'],
+         dx_adhd: ['adhd_all_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-all-male':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['male'],
+         dx_adhd: ['adhd_all_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-all-female':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['female'],
+         dx_adhd: ['adhd_all_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-all-prepubertal':
+        {
+         'puberty': ['pre'],
+         sex: ['male', 'female'],
+         dx_adhd: ['adhd_all_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-all-postpubertal':
+        {
+         'puberty': ['post'],
+         sex: ['male', 'female'],
+         dx_adhd: ['adhd_all_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-all-male-prepubertal':
+        {
+         'puberty': ['pre'],
+         sex: ['male'],
+         dx_adhd: ['adhd_all_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-all-male-postpubertal':
+        {
+         'puberty': ['post'],
+         sex: ['male'],
+         dx_adhd: ['adhd_all_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-all-female-prepubertal':
+        {
+         'puberty': ['pre'],
+         sex: ['female'],
+         dx_adhd: ['adhd_all_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-all-female-postpubertal':
+        {
+         'puberty': ['post'],
+         sex: ['female'],
          dx_adhd: ['adhd_all_comorbidities', 'No Diagnosis Given']
         },
         'participants-adhd-all-stage1':
@@ -259,6 +307,54 @@ def participants():
          sex: ['male', 'female'],
          dx_adhd: ['adhd_no_comorbidities', 'No Diagnosis Given']
         },
+        'participants-adhd-only-male':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['male'],
+         dx_adhd: ['adhd_no_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-only-female':
+        {
+         age: [int(t) for t in np.arange(5,18)],
+         sex: ['female'],
+         dx_adhd: ['adhd_no_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-only-prepubertal':
+        {
+         'puberty': ['pre'],
+         sex: ['male', 'female'],
+         dx_adhd: ['adhd_no_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-only-postpubertal':
+        {
+         'puberty': ['post'],
+         sex: ['male', 'female'],
+         dx_adhd: ['adhd_no_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-only-male-prepubertal':
+        {
+         'puberty': ['pre'],
+         sex: ['male'],
+         dx_adhd: ['adhd_no_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-only-female-prepubertal':
+        {
+        'puberty': ['pre'],
+         sex: ['female'],
+         dx_adhd: ['adhd_no_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-only-male-postpubertal':
+        {
+         'puberty': ['post'],
+         sex: ['male'],
+         dx_adhd: ['adhd_no_comorbidities', 'No Diagnosis Given']
+        },
+        'participants-adhd-only-female-postpubertal':
+        {
+        'puberty': ['post'],
+         sex: ['female'],
+         dx_adhd: ['adhd_no_comorbidities', 'No Diagnosis Given']
+        },
         'participants-adhd-only-stage1':
         {
          age: [5,6,7],
@@ -357,21 +453,45 @@ def participants():
          sex: ['male', 'female'],
          'DX_Subtype_Name': ['ADHD-Inattentive Type', 'No Diagnosis Given']
         },
+        'participants-adhd-combined_type-prepubertal':
+        {
+         'puberty': ['pre'],
+         sex: ['male', 'female'],
+         'DX_Subtype_Name': ['ADHD-Combined Type', 'No Diagnosis Given']
+        },
+        'participants-adhd-inattentive_type-prepubertal':
+        {
+         'puberty': ['pre'],
+         sex: ['male', 'female'],
+         'DX_Subtype_Name': ['ADHD-Inattentive Type', 'No Diagnosis Given']
+        },
+        'participants-adhd-combined_type-postpubertal':
+        {
+         'puberty': ['post'],
+         sex: ['male', 'female'],
+         'DX_Subtype_Name': ['ADHD-Combined Type', 'No Diagnosis Given']
+        },
+        'participants-adhd-inattentive_type-postpubertal':
+        {
+         'puberty': ['post'],
+         sex: ['male', 'female'],
+         'DX_Subtype_Name': ['ADHD-Inattentive Type', 'No Diagnosis Given']
+        },
         'participants-adhd-combined_type-male':
         {
          age: [int(t) for t in np.arange(5,18)],
          sex: ['male'],
          'DX_Subtype_Name': ['ADHD-Combined Type', 'No Diagnosis Given']
         },
-        'participants-adhd-combined_type-male-young':
+        'participants-adhd-combined_type-male-prepubertal':
         {
-         age: [5,6,7,8,9,10,11],
+         'puberty': ['pre'],
          sex: ['male'],
          'DX_Subtype_Name': ['ADHD-Combined Type', 'No Diagnosis Given']
         },
-        'participants-adhd-combined_type-male-old':
+        'participants-adhd-combined_type-male-postpubertal':
         {
-         age: [12,13,14,15,16,17],
+         'puberty': ['post'],
          sex: ['male'],
          'DX_Subtype_Name': ['ADHD-Combined Type', 'No Diagnosis Given']
         },
@@ -381,15 +501,15 @@ def participants():
          sex: ['male'],
          'DX_Subtype_Name': ['ADHD-Inattentive Type', 'No Diagnosis Given']
         },
-        'participants-adhd-inattentive_type-male-young':
+        'participants-adhd-inattentive_type-male-prepubertal':
         {
-         age: [5,6,7,8,9,10,11],
+        'puberty': ['pre'],
          sex: ['male'],
          'DX_Subtype_Name': ['ADHD-Inattentive Type', 'No Diagnosis Given']
         },
-        'participants-adhd-inattentive_type-male-old':
+        'participants-adhd-inattentive_type-male-postpubertal':
         {
-         age: [12,13,14,15,16,17],
+         'puberty': ['post'],
          sex: ['male'],
          'DX_Subtype_Name': ['ADHD-Inattentive Type', 'No Diagnosis Given']
         },
@@ -399,15 +519,15 @@ def participants():
          sex: ['female'],
          'DX_Subtype_Name': ['ADHD-Combined Type', 'No Diagnosis Given']
         },
-        'participants-adhd-combined_type-female-young':
+        'participants-adhd-combined_type-female-prepubertal':
         {
-         age: [5,6,7,8,9,10,11],
+         'puberty': ['pre'],
          sex: ['female'],
          'DX_Subtype_Name': ['ADHD-Combined Type', 'No Diagnosis Given']
         },
-        'participants-adhd-combined_type-female-old':
+        'participants-adhd-combined_type-female-postpubertal':
         {
-         age: [12,13,14,15,16,17],
+         'puberty': ['post'],
          sex: ['female'],
          'DX_Subtype_Name': ['ADHD-Combined Type', 'No Diagnosis Given']
         },
@@ -417,15 +537,15 @@ def participants():
          sex: ['female'],
          'DX_Subtype_Name': ['ADHD-Inattentive Type', 'No Diagnosis Given']
         },
-        'participants-adhd-inattentive_type-female-young':
+        'participants-adhd-inattentive_type-female-prepubertal':
         {
-         age: [5,6,7,8,9,10,11],
+         'puberty': ['pre'],
          sex: ['female'],
          'DX_Subtype_Name': ['ADHD-Inattentive Type', 'No Diagnosis Given']
         },
-        'participants-adhd-inattentive_type-female-old':
+        'participants-adhd-inattentive_type-female-postpubertal':
         {
-         age: [12,13,14,15,16,17],
+         'puberty': ['post'],
          sex: ['female'],
          'DX_Subtype_Name': ['ADHD-Inattentive Type', 'No Diagnosis Given']
         },
@@ -2216,7 +2336,34 @@ def features():
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'SWAN', 'ESWAN', 'SDQ', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
-                }
+                'features-all-questions':
+                {
+                "filename": 'all-features-Not_Total_Scores-raw.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 
+                                 'Year', 'missing', 'present', '_Complete', '_Incomplete_reason', '_Invalid_Reason', '_Valid',
+                                 'PANAS,PANAS_PositiveAffect', 'PANAS,PANAS_NegativeAffect', 'SCARED_SR,SCARED_SR_GD',
+                                 'SCARED_SR,SCARED_SR_PN', 'SCARED_SR,SCARED_SR_SC', 'SCARED_SR,SCARED_SR_SH', 
+                                 'SCARED_SR,SCARED_SR_SP','SWAN,SWAN_IN','SWAN,SWAN_HY','SWAN,SWAN_Total',
+                                 'DTS,DTS_absorption', 'DTS,DTS_appraisal', 'DTS,DTS_regulation', 'DTS,DTS_tolerance'], # cols to drop from dataframe
+                "cols_to_filter": ['Identifiers', 
+                                    'PreInt_Demos_Fam,Child_Race_cat',
+                                   'PreInt_TxHx,psych_meds_cur', 
+                                   'PreInt_TxHx,psych_meds_past', 
+                                   'PreInt_TxHx,suicide',
+                                   'PreInt_TxHx,trauma',
+                                   'PreInt_FamHx_RDC,mdx',
+                                   'PreInt_FamHx_RDC,fdx',
+                                   'PreInt_DevHx,puberty',
+                                   'PreInt_DevHx,dev_normal',
+                                   'PreInt_DevHx,temp',
+                                   'PreInt_DevHx,skill_age',
+                                    'CBCL,CBCL', 'YSR,YSR', 'TRF,TRF', 'PSI,PSI', 'WIAT,WIAT', 'NIH_final,NIH',
+                                    'NIH_Scores,NIH', 'C3SR,C3SR', 'SWAN,SWAN', 'ESWAN,ESWAN', 'SDQ,SDQ', 
+                                    'CELF_Full', 'SCARED_SR,SCARED_SR','MFQ_SR,MFQ_SR', 'PANAS,PANAS', 'CSSRS,CSSRS',
+                                    'WISC,WISC', 'WAIS,WAIS', 'ARI_S,ARI_S', 'CIS_SR,CIS_SR', 'SAS,SAS', 'SympChck,SympChck', 'DTS,DTS'
+                                   ]
+                                    }, 
+                                    }
     asd_info = {
                 'features-parent-asd':
                 {

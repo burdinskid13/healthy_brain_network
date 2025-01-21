@@ -98,6 +98,14 @@ def add_comorbidities(df):
 
     return df
 
+def add_pubertal_info(df, df_puberty):
+    import pandas as pd
+
+    df_puberty['puberty'] = df_puberty['PreInt_DevHx,puberty'].map({0: 'pre', 1: 'post'})
+
+    df = pd.merge(df, df_puberty[['Identifiers', 'puberty']], how='left', on='Identifiers')
+
+    return df
 
 def add_development_stage(df):
     df.loc[df['Age_round'].isin([6,7,8]), 'development_stage'] = 'Early'
@@ -222,8 +230,10 @@ def run(
     Returns:
         df_out (pd dataframe): A dataframe containing the train, validate, and test sets.
     """
+    import os
     import itertools
     import pandas as pd
+    from hbn.constants import Defaults
     from hbn.data.data_utils import remove_small_groups
 
     columns_to_keep = ['Sex', 'Age_round', 'PreInt_Demos_Fam,Child_Race_cat']
@@ -253,6 +263,10 @@ def run(
 
     # add comorbidities
     df_out = add_comorbidities(df=df_out)
+
+    # add pubertal info
+    df_puberty = pd.read_csv(os.path.join(Defaults.INTERIM_FEATURES_DIR, 'Parent-features-Not_Total_Scores-raw.csv'), engine='python')
+    df_out = add_pubertal_info(df=df_out, df_puberty=df_puberty)
 
     # add reading-specific cols
     df_out = add_cols_reading(df=df_out, reading='Specific Learning Disorder with Impairment in Reading')

@@ -526,6 +526,108 @@ def circular_barplot(df, values='value', labels='name', group='group', extra_cus
     
     plt.show()
 
+def wrap_labels(ax, width, break_long_words=False):
+    import textwrap
+
+    labels = []
+    for label in ax.get_yticklabels():
+        text = label.get_text()
+        labels.append(textwrap.fill(text, width=width, break_long_words=break_long_words))
+    ax.set_yticklabels(labels, rotation=0)
+
+    return ax
+
+def plot_features_subplot(df, 
+                          colors=None,
+                          x='feature_importances', 
+                          y='key', 
+                          hue=None,
+                          top_features=10,
+                          ax=None,
+                          topic_labels=False,
+                          x_pos=-0.1,
+                          y_pos=1.1,
+                          labelsize=20,
+                          title='',
+                          subplot='A'
+                          ):
+    
+    if hue is not None:
+        df = df.groupby(hue)\
+                .apply(lambda x: x[['feature_importances', 'feature_names', hue]] \
+                    .sort_values(by='feature_importances', ascending=False) \
+                        .head(top_features)).reset_index(drop=True)
+    else:
+        df = df.sort_values(by='feature_importances', ascending=False).head(top_features)
+
+    # plot data
+    ax = sns.barplot(x=x, y=y, data=df, hue=hue, ax=ax)
+
+    if topic_labels:
+        for ytick in ax.get_yticklabels():
+            key = ytick.get_text()
+            topic = df[df[y]==key]['custom_labels'].unique()[0]
+            ytick.set_color(colors[topic])
+
+    ax.set_title(title)
+    ax.set_ylabel(f'Top {top_features} features')
+    ax.set_xlabel('Feature Importance') 
+    ax.text(x_pos, y_pos, subplot, transform=ax.transAxes, fontsize=labelsize, verticalalignment='top')
+    wrap_labels(ax,12)
+
+    plt.tight_layout()
+    sns.despine()
+
+def rgb_to_hex(rgb_list):
+  """
+  Converts a list of RGB color tuples to a list of corresponding hexadecimal strings.
+
+  Args:
+    rgb_list: A list of tuples, where each tuple represents an RGB color 
+              with three integers (red, green, blue) ranging from 0 to 255.
+
+  Returns:
+    A list of strings, where each string is the hexadecimal color code 
+    (e.g., "#FFFFFF").
+  """
+  hex_colors = []
+  for r, g, b in rgb_list:
+    hex_color = f"#{r:02x}{g:02x}{b:02x}"
+    hex_colors.append(hex_color)
+  return hex_colors
+
+
+def plot_stacked(
+        df, 
+        ylabel='Selected Features (%)',
+        ax=None,
+        subplot='',
+        colors=None
+        ): 
+    """plot % of features for each topic for selected model and overall model (features input to model)"""
+    if ax is None:
+        ax = plt.subplot(111)
+    
+    # define plot
+    df.plot(kind='bar', legend=True, stacked=True, width=.95, ax=ax)
+    if colors is not None:
+        df.plot(kind='bar', legend=True, stacked=True, width=.95, colors=colors, ax=ax)
+    
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel('')
+    ax.set_xticks(ax.get_xticks())
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+    ax.text(-0.3,  1.1, subplot, transform=ax.transAxes, fontsize=20, verticalalignment='top')
+    ax.legend(frameon=False)
+    ax.get_legend().set_bbox_to_anchor((1.5, 1.05))
+
+    plt.tight_layout()
+    sns.despine()
+
+    return ax
+    
+
+
 
 
 

@@ -2,7 +2,7 @@
 participants=($@)
 
 # Model outname
-model_outname=adhd_october_dx_subtype_questionnaires/
+model_outname=december_adhd_dx/
 
 ### SET DIRECTORIES ###
 base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
@@ -13,93 +13,43 @@ model_dir=/om2/user/$(whoami)/hbn_data/interim/models/$model_outname # MODEL OUT
 
 ### SET VARIABLES ###
 pydraml=pydraml3-spec.json # pydraml base
-# target=target-Diagnosis-ADHD-spec.json # target spec
-target=target-Diagnosis-ADHD-Subtype-spec.json # target spec
+target=target-Diagnosis-ADHD-spec.json # target spec
+# target=target-Diagnosis-ADHD-Subtype-spec.json # target spec
 # target=target-Diagnosis-Depression-spec.json # target spec
 
 features=(
-    "features-parent-cbcl-spec.json" \
-    # "features-child-mood-spec.json" \
-    # "features-child-anxiety-spec.json" \
-    # "features-child-cbcl-spec.json" \
-    # "features-child-connors-spec.json" \
-    # "features-parent-strengths-weaknesses-adhd-all-spec.json"
+    "features-all-questions-spec.json" 
+    )
+ 
+participants=(
+    # "participants-adhd-only-male-spec.json" \
+    "participants-adhd-only-female-spec.json" \
+    # "participants-adhd-only-prepubertal-spec.json" \
+    # "participants-adhd-only-postpubertal-spec.json" \
+    # "participants-adhd-only-female-prepubertal-spec.json" \
+    # "participants-adhd-only-male-prepubertal-spec.json" \
+    # "participants-adhd-only-female-postpubertal-spec.json" \
+    # "participants-adhd-only-male-postpubertal-spec.json" \
     )
 
-# features=(
-#         "features-teacher-internalizing-spec.json" \
-#         "features-teacher-externalizing-spec.json" \
-#         "features-teacher-anxious_depressed-spec.json" \
-#         "features-teacher-social_problems-spec.json" \
-#         "features-teacher-thought_problems-spec.json" \
-#         "features-teacher-withdrawn_depressed-spec.json" \
-#         "features-teacher-attention_problems-spec.json" \
-#         "features-teacher-rule_breaking-spec.json" \
-#         "features-teacher-aggressive_behavior-spec.json" \
-#         "features-teacher-somatic_complaints-spec.json" \
-#         "features-child-internalizing-spec.json" \
-#         "features-child-externalizing-spec.json" \
-#         "features-child-anxious_depressed-spec.json" \
-#         "features-child-withdrawn_depressed-spec.json" \
-#         "features-child-social_problems-spec.json" \
-#         "features-child-thought_problems-spec.json" \
-        # "features-child-attention_problems-spec.json" \
-#         "features-child-rule_breaking-spec.json" \
-#         "features-child-aggressive_behavior-spec.json" \
-#         "features-child-somatic_complaints-spec.json" \
-        # "features-parent-withdrawn_depressed-spec.json" \
-        # "features-parent-anxious_depressed-spec.json" \
-        # "features-parent-externalizing-spec.json" \
-        # "features-parent-internalizing-spec.json" \
-        # "features-parent-thought_problems-spec.json" \
-        # "features-parent-social_problems-spec.json" \
-        # "features-parent-rule_breaking-spec.json" \
-        # "features-parent-attention_problems-spec.json" \
-        # "features-parent-somatic_complaints-spec.json" \
-        # "features-parent-aggressive_behavior-spec.json" \
-#         "features-demos-excl-sex-spec.json"
-#         "features-child-defiance_aggression-spec.json" \
-#         "features-child-family_relations-spec.json" \
-#         "features-child-hyperactive_impulsivity-spec.json" \
-#         "features-child-inattention-spec.json" \
-#         "features-child-learning_problems-spec.json" \
-#         "features-child-negative_impression-spec.json" \
-#         "features-child-positive_impression-spec.json" \
-#         "features-child-swan_inattention-spec.json" \
-#         "features-child-swan_hyperactive-spec.json" \
-#         "features-child-suicidality-spec.json" \
-        # )
-    
-participants=(
-    # "participants-adhd-combined_type-male-young-spec.json" \
-    # "participants-adhd-combined_type-female-young-spec.json" \
-    # "participants-adhd-combined_type-male-old-spec.json" \
-    "participants-adhd-combined_type-female-old-spec.json" \
-    # "participants-adhd-inattentive_type-male-young-spec.json" \
-    # "participants-adhd-inattentive_type-female-young-spec.json" \
-    # "participants-adhd-inattentive_type-male-old-spec.json" \
-    # "participants-adhd-inattentive_type-female-old-spec.json" \
-    # "participants-adhd-all-male-spec.json" \
-    # "participants-adhd-all-female-spec.json" \
-    # "participants-adhd-only-male-spec.json" \
-    # "participants-adhd-only-female-spec.json" \
+# participants=(
     # "participants-adhd-combined_type-male-spec.json" \
+    # "participants-adhd-inattentive_type-female-spec.json" \
     # "participants-adhd-combined_type-female-spec.json" \
-    # "participants-adhd-inattentive_type-male-spec.json"
-    # "participants-adhd-inattentive_type-female-spec.json"
-    # "participants-adhd-combined_type-depression-male-spec.json" \
-    # "participants-adhd-combined_type-depression-female-spec.json" \
-    # "participants-adhd-inattentive_type-depression-male-spec.json" \
-    # "participants-adhd-inattentive_type-depression-female-spec.json" \
-#     "participants-adhd-combined_type-depression-male-young-spec.json" \
-#     "participants-adhd-combined_type-depression-female-young-spec.json" \
-#     "participants-adhd-inattentive_type-depression-male-old-spec.json" \
-#     "participants-adhd-inattentive_type-depression-female-old-spec.json" \
-#     "participants-adhd-inattentive_type-depression-male-young-spec.json" \
-#     "participants-adhd-inattentive_type-depression-female-young-spec.json" \
-#     "participants-adhd-combined_type-depression-male-old-spec.json" \
-#     "participants-adhd-combined_type-depression-female-old-spec.json"
-    )
+    # "participants-adhd-inattentive_type-male-spec.json" \
+    # "participants-adhd-combined_type-prepubertal-spec.json" \
+    # "participants-adhd-combined_type-postpubertal-spec.json" \
+    # "participants-adhd-inattentive_type-prepubertal-spec.json" \
+    # participants-adhd-inattentive_type-postpubertal-spec.json \
+    # "participants-adhd-combined_type-male-prepubertal-spec.json" \
+    # "participants-adhd-combined_type-male-postpubertal-spec.json" \
+    # "participants-adhd-inattentive_type-male-prepubertal-spec.json" \
+    # participants-adhd-inattentive_type-male-postpubertal-spec.json \
+    # "participants-adhd-combined_type-female-prepubertal-spec.json" \
+    # "participants-adhd-combined_type-female-postpubertal-spec.json" \
+    # "participants-adhd-inattentive_type-female-prepubertal-spec.json" \
+    # participants-adhd-inattentive_type-female-postpubertal-spec.json \
+    # )
 
 mkdir -p $model_dir
 
