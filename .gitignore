@@ -83,6 +83,10 @@ model_specs/
 log_files/
 messages/
 
+
+# But DO NOT ignore subdirectories called data
+!data/**/data/
+
 # Mac OS-specific storage files
 .DS_Store
 
