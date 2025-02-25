@@ -159,10 +159,10 @@ def get_abbrevs(assessment='Child Measures', measure='Grooved Pegboard'):
         return abbrevs
 
 
-def get_datadic(abbrev='NIH_final'):
+def get_datadic(abbrev='NIH_final', release='Release9_DataDic_Nov2020'):
     
     # datadic file
-    fpath = os.path.join(Defaults.PHENO_DIR, 'Release9_DataDic', f'{abbrev}.xlsx')
+    fpath = os.path.join(Defaults.PHENO_DIR, release, f'{abbrev}.xlsx')
 
     def _check_exceptions(abbrev):
         exceptions = {
@@ -265,21 +265,28 @@ def define_new_categories(dataframe):
     return dataframe
 
 
-def assessment_list(assessment, save=True):
+def separate_main_assessment_file_into_csvs(
+        assessment, 
+        fpath=os.path.join(Defaults.PHENO_DIR, 'Assessment_List_Jan2019.xlsx'), 
+        data_dir=Defaults.PHENO_DIR
+        ):
     """correct assessment list, update `domain` for each `measure`
 
     Args:
-        assessment (str): options: 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
-        save (bool): default is True. save to disk in `data/phenotype`
+        assessment (str): e.g., 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
+        assessment_file (str): full path to `Assessment_List_Jan2019.xlsx`
+        data_dir (str): directory where output will be saved. Default is `PHENO_DIR`
     Returns: 
         info (pd dataframe), domain (str)
     """
-    fname = 'Assessment_List_Jan2019'
-    # parse `assessment` sheets
-    xls = pd.ExcelFile(os.path.join(Defaults.PHENO_DIR, f'{fname}.xlsx'), engine='openpyxl');
+    # parse `assessment` sheets from `fpath`
+    xls = pd.ExcelFile(fpath, engine='openpyxl');
+
+    # save out assessments as separate csvs
+    assessment_split = ' '.join(assessment.split("_"))
     
     # read excel
-    info = pd.read_excel(xls, assessment, header=1);
+    info = pd.read_excel(xls, assessment_split, header=1);
     info = info.dropna(axis=0, how='all') # drop rows that are all NaN
     
     # populate NaN entries with correct Domain
@@ -293,11 +300,183 @@ def assessment_list(assessment, save=True):
             else:
                 info.loc[row, 'Domain'] = domains[-1]
     
-    if save:
-        assessment = '_'.join(assessment.split())
-        info.to_csv(os.path.join(Defaults.PHENO_DIR, f'{fname}_{assessment}.csv'))
+    # save out individual assessment as csv
+    fname = Path(fpath).stem # remove .xlsx
+    assessment_out = '_'.join(assessment.split())
+    info.to_csv(os.path.join(data_dir, f'{fname}_{assessment_out}.csv'))
 
-    return info, domain
+
+def remove_redundant_identifiers_from_questionnaires(data_dir):
+    """ some basic clean up on assessment files, remove redundant identifiers from questionnaire csvs
+
+    Args:
+        data_dir (str): fullpath to directory where csv files for assessment are saved
+    """
+    # get all csv files within assessment directory
+    fpaths = glob.glob(f'{data_dir}/*/*.csv')
+    # loop over files
+    for fpath in fpaths:
+        df = pd.read_csv(fpath, engine='python')
+        df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|').str.extract(r'(\w+)', expand=False)
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+        df = df[~df['Identifiers'].isna()]
+        df.to_csv(fpath, index=False)
+
+
+def make_new_proprietary_assessments_file(
+    data_dir=Defaults.PHENO_DIR,
+    filename='Free_Assessments_HBN.xlsx', 
+    outname='Free_Assessments_HBN_new.csv'
+    ):
+    """
+    Preprocess `Free_Assessments_HBN.xlsx` and save out as `Free_Assessments_HBN_new.csv`.
+    `data_dir` should contain `filename`. `outname` will also be saved to `data_dir`
+    Args:
+        data_dir (str): directory where `filename` is saved and where `outname` will be saved
+        filename (str or None): `Free_Assessments_HBN.xlsx` file. 
+        outname (str or None): saves out as `Free_Assessments_HBN_new.csv`. 
+    """
+
+    # get full path to proprietary data
+    df = pd.read_excel(os.path.join(data_dir, filename))
+
+    # get outpath
+    outpath = os.path.join(data_dir, outname)
+
+    # rows to be added to the dataframe
+    add_rows = [
+        {'Assessment': 'Adverse Childhood Experiences Scale (ACE_P)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'Alabama Parenting Questionnaire – Self Report (APQ_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'Barratt Simplified Measure of Social Status (Barratt)', 'Price': 'Proprietary', 'used_in_study': 'HBN, NKI Rockland'},
+        {'Assessment': 'Conners 3 - Self-Report (C3SR)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Child Behavior Checklist - Pre-School (CBCL_Pre)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Teacher Report Form Preschool Age (TRF_P)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Teacher Report Form School Age (TRF)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Screener (CELF)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Full Assessment (CELF_Full_5to8)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Full Assessment (CELF_Full_9to21)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Metalinguistics (CELF_Meta)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Child Flourishing (CFS)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
+        {'Assessment': 'Ishihara Color Vision Test (ColorVision)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
+        {'Assessment': 'Comprehensive Test of Phonological Processing (CTOPP)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Dishion Social Acceptance Scale - Teacher (Dishion_Teacher)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
+        {'Assessment': 'Expressive Vocabulary Test (EVT)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Internet Use Questionnaire Parent (IUQ_P)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'Internet Use Questionnaire Self-Report (IUQ_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'Kaufman Brief Intelligence Test (KBIT)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'National Institute of Health Toolbox Full Data (NIH_Full)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'National Institute of Health Toolbox Full Data (NIH_Scores)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Negative Life Events Scale Self Report (NLES_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'The Positive and Negative Affect Schedule (PANAS)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'Positive Behavior Scale (PBS)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
+        {'Assessment': 'Screen for Anxiety Related Disorders Self Report (SCARED_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        {'Assessment': 'TOWRE-2 (TOWRE)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Vineland Adaptive Behavior Scale-II (Vineland)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Wechsler Adult Intelligence Scale (WAIS)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Wechsler Adult Intelligence Scale (WAIS_abb)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Wechsler Abbreviated Scale of Intelligence (WASI)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Wechsler Individual Achievement Test (WIAT)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Wechsler Intelligence Scale for Children (WISC)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Grooved Pegboard (Pegboard)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
+        {'Assessment': 'Yale Food Addiction Scale (YFAS_C)', 'Price': 'Free', 'used_in_study': 'HBN'},
+        ]
+
+    remap = {
+        'APQ _ Parent': 'APQ_P',
+        'APQ – Parent': 'APQ_P',
+        'CBCL _ TRF': 'TRF',
+        'C_SSRS': 'CSSRS',
+        'NLES _ Parent': 'NLES_P',
+        'E_SWAN': 'ESWAN',
+        'PSITM': 'PSI',
+        'RBS_R': 'RBS',
+        'SCARED': 'SCARED_P',
+        'SDSC': 'SDS',
+        'SRS_P': 'SRS_Pre',
+        'SRS_2': 'SRS',
+        'Symptom Checker': 'SympChck',
+        }
+
+    # need to match the keys in `Free_Assessments_HBN.xlsx` to the dataframe
+    def remap_keys(x):
+        if x in list(remap.keys()):
+            return remap[x]
+        else:
+            return x
+
+    # add new cols to dataframe
+    for row in add_rows:
+        df.loc[len(df.index)] = list(row.values())
+
+    # make new cols `measure` and `datadic`
+    df['measure'] = df['Assessment'].str.split('(').str.get(0)
+    df['datadic'] = df['Assessment'].str.split('(').str.get(1).str.replace(')', '')
+
+    # replace '-' with '_' in datadic
+    df['datadic'] = df['datadic'].str.replace('-', '_')
+
+    # match the keys in `Free_Asssessments_HBN.xlsx` to the dataframe
+    df['datadic'] = df['datadic'].apply(lambda x: remap_keys(x))
+
+    # Convert NaN values to Unknown
+    df.loc[df['Price'].isna(), 'Price'] = 'Unknown'
+
+    # create boolean columns for proprietary/free questionnaires
+    df['Free_Assessments'] = np.where(df['Price'] =='Free', True, False)
+    df['Proprietary_Assessments'] = np.where(df['Price'] =='Proprietary', True, False)
+
+    # save to file
+    df.to_csv(outpath, index=False)
+
+    return df
+
+
+def make_items_file(
+    filename='item-names.csv', 
+    proprietary_filename='Free_Assessments_HBN_new.csv',
+    outname='item-names-cleaned.csv',
+    data_dir=Defaults.PHENO_DIR,
+    ):
+    """preprocess `item-names.csv` and save out as `item-names-cleaned.csv` to `out_dir` (modified from original https://github.com/charlie42/diagnosis-predictor/blob/main/references/item-names.csv)
+
+    `filename` and `proprietary_filename` should exist in `data_dir`
+
+    Args:
+        filename (str): filename `item-names.csv`
+        proprietary_filename (str or None): optionally merge columns from `Free_Assessments_HBN_new.csv` to `filename`. 
+        outname (str): filename `item-names-cleaned.csv` where preprocessed items will be saved.
+        data_dir (str): directory where `item-names.csv` `Free_Assessments_HBN_new.csv` are located
+    """
+    # load item names filename
+    dataframe = pd.read_csv(os.path.join(data_dir, filename), engine='python')
+
+    # add new assessment, domain, measures info to item names
+    df = match_datadic_to_data(dataframe=dataframe)
+
+    # add proprietry/free questionnaires to item names
+    df_proprietary = pd.read_csv(os.path.join(data_dir, proprietary_filename))
+
+    # add proprietary info to dataframe and assign NaN to Unknown
+    df = df_proprietary.merge(df, on='datadic', how='outer')
+
+    # remove rows that don't have any questions or keys
+    conditional = (df['questions'].isna()) & (df['keys'].isna())
+    df = df[~conditional]
+
+    # fix domain name (missing domain in `Assessment_List_Jan2019.xlsx`)
+    df = fix_domain(dataframe=df)
+
+    # identify questions that contain total scores
+    df = identify_total_scores(dataframe=df)
+
+    # identify questions that are subheadings
+    df = identify_subheadings(dataframe=df)
+
+    # identify questions that are preambles
+    df = identify_preamble(dataframe=df)
+
+    # save out new file
+    df.to_csv(os.path.join(data_dir, outname), index=False)
 
 
 def match_datadic_to_data(dataframe):
