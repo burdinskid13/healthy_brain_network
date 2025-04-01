@@ -5,6 +5,53 @@ import pandas as pd
 import os
 from hbn.constants import Defaults
 
+import warnings
+warnings.filterwarnings("ignore")
+
+def cleanup_diagnosis_cols(df):
+    # do some clean up
+    df.columns = df.columns.str.replace('Diagnosis_ClinicianConsensus,', '')
+
+    # replace NaN
+    for num in range(1,11):
+        # num
+        num_str = str(num).zfill(2)
+        
+        # Replace "NaN" diagnosis with 'No Diagnosis Given: No Reason Given'
+        df.loc[df[f'DX_{num_str}']==' ',f'DX_{num_str}'] = 'No Diagnosis Given: No Reason Given'
+    df.loc[df[f'DX_{num_str}_Cat'].isna(),f'DX_{num_str}_Cat'] = 'No Diagnosis Given: No Reason Given'
+
+    return df
+
+
+def exclude_diagnoses(df, dx_to_exclude):
+    # we're excluding diagnoses that have the following labels: RuleOut, Rem (remission), PRem (partial remission), RC (requires confirmation)
+    # see full list here: https://docs.google.com/spreadsheets/d/1si0JDiI0rELnyQAGAaoO3lbERRfcKQ5X/edit?usp=sharing&ouid=115304373382106482578&rtpof=true&sd=true
+    # we're doing this by setting these diagnoses to NaN
+    for dx in dx_to_exclude:
+        for num in np.arange(1,11):
+            for col in [f'DX_{num:02d}', f'DX_{num:02d}_Cat', f'DX_{num:02d}_Cat_new']:
+                df.loc[df[f'DX_{num:02d}_{dx}']==1, col] = np.nan
+
+    # deal with missing values and NaN
+    df = df.replace(' ', float("NaN")).fillna(float("NaN")).dropna(how='all', axis=1)
+    df = df.dropna(how='all', axis=0)
+
+    return df
+
+
+def melt_dx(df, cols_to_keep=['Identifiers']):
+    dx_cols = [f'DX_{num:02d}' for num in np.arange(1,11)]
+    dx_subtype = pd.melt(df, id_vars=cols_to_keep, value_vars=dx_cols, var_name='DX_Subtype', value_name='DX_Subtype_Name')
+
+    dx_cols = [f'DX_{num:02d}_Cat_new' for num in np.arange(1,11)]
+    dx_cat = pd.melt(df, id_vars=cols_to_keep, value_vars=dx_cols, var_name='DX_Cat', value_name='DX_Cat_Name')
+
+    dx_concat = pd.concat([dx_cat, dx_subtype[['DX_Subtype', 'DX_Subtype_Name']]], axis=1)
+    dx_concat = dx_concat.loc[:, ~dx_concat.columns.duplicated()].copy()
+
+    return dx_concat
+
 
 def get_all_diagnoses(dataframe):
     """Get all diagnoses from dataframe
@@ -32,157 +79,6 @@ def get_all_diagnoses(dataframe):
     data_dict = {'diagnosis': np.unique(np.array(diagnoses_all)), 'subtype': np.unique(np.array(subtypes_all))}
 
     return data_dict
-
-
-def get_domains(assessment='Child Measures'):
-    """get domains for `assessment`
-
-    Args:
-        assessment (str): options: 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
-    Returns:
-        list of str: list of domains
-    """
-    fname = '_'.join(assessment.split())
-
-    # master info file
-    fpath = os.path.join(Defaults.PHENO_DIR, f'Assessment_List_Jan2019_{fname}.csv')
-
-    if not os.path.isfile(fpath):
-        assessment_list(assessment=assessment)
-    
-    # read in corrected assessment list
-    info = pd.read_csv(fpath)
-
-    if 'Domain' in info.columns:
-        domains = info['Domain'].unique().tolist()
-
-        return {assessment: domains + ['all']}
-    else:
-        return {assessment: None}
-
-
-def get_measures(assessment='Child Measures', domain='Cognitive Testing'):
-    """get measures for `assessment` and `domain`. See `Assessment_List_2019.xlsx` for `assessment` and `domain`
-
-    Args:
-        assessment (str): options: 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
-        domain (str or None): specific for each assessment. if 'all', then measures for all domains are returned.
-    Returns:
-        list of str: list of domains
-    """
-    fname = '_'.join(assessment.split())
-
-    # info file
-    fpath = os.path.join(Defaults.PHENO_DIR, f'Assessment_List_Jan2019_{fname}.csv')
-
-    if not os.path.isfile(fpath):
-        assessment_list(assessment=assessment)
-    
-    # read in corrected assessment list
-    info = pd.read_csv(fpath)
-
-    # return measures if both domain and measures are present
-    if sum(info.columns.isin(['Domain', 'Measure']))==2:
-        if domain != 'all':
-            measures = info[info['Domain']==domain]['Measure'].tolist()
-        else:
-            measures = []
-            for name, group in info.groupby('Domain'):
-                measures.extend(group['Measure'].tolist())
-    else:
-        measures = info['Measure']
-
-    return {domain: measures}
-
-
-def get_abbrevs(assessment='Child Measures', measure='Grooved Pegboard'):
-    """get data dictionaries (.xlsx) for each `measure`
-
-    Args:
-        measure (str): default is 'Grooved Pegboard'
-    Returns:
-        list of dicts
-    """
-    abbrev = 'Abbreviation(s) LORIS'
-
-    def _check_exceptions(assessment, measure):
-        # where there is a mismatch between the abbrev in the assessment list and the measure csv
-        exceptions = {
-            'Child_Measures': 
-            {
-            'NIH Toolbox': ['NIH_final', 'NIH_Scores'],
-            'Temporal Discounting Task': ['temp_disc_final'],
-            'Kiddie Schedule for Affective Disorders and Schizophrenia': ['KSADS_C'],
-            'Body Composition': ['bia_final'],
-            'Alcohol Use Disorders Identification Test ': ['Audit'],
-            'Food Frequency Questionnaire-Screening Form': ['FFQ_final']
-            },
-            'Parent_Measures': 
-            {
-            'Kiddie Schedule for Affective Disorders and Schizophrenia': ['KSADS_P']
-            }
-        }
-        try:
-            return exceptions[assessment][measure]
-        except:
-            return None
-
-    assessment = '_'.join(assessment.split(' '))
-    
-    # loop over assessments
-    if assessment=='Teacher_Measures':
-        abbrev = 'Abbreviation'
-    fpath = os.path.join(Defaults.PHENO_DIR, f'Assessment_List_Jan2019_{assessment}.csv')
-
-    if not os.path.isfile(fpath):
-        assessment_list(assessment=assessment)
-    
-    # read in corrected assessment list
-    info = pd.read_csv(fpath)
-
-    # loop over measures
-    match = info[info['Measure']==measure]
-    if not match.empty:
-        abbrevs = match[abbrev].tolist()
-        if measure=='Clinical Evaluation of Language Fundamentals':
-            abbrevs = ['CELF_Full_5to8', 'CELF_Full_9to21']
-        elif measure=='Treadmill Test':
-            abbrevs = ['Fitness_Aerobic', 'Fitness_Endurance']
-        elif measure=='Intake Interview':
-            abbrevs = ['PreInt_Demos_Fam', 'PreInt_Demos_Home', 'PreInt_DevHx', 'PreInt_EduHx', 'PreInt_Lang', 'PreInt_TxHx']
-        else:
-            abbrevs = abbrevs[0].split(', ')
-        # check exceptions
-        exception = _check_exceptions(assessment, measure)
-        if exception is not None:
-            abbrevs = exception
-        return abbrevs
-
-
-def get_datadic(abbrev='NIH_final', release='Release9_DataDic_Nov2020'):
-    
-    # datadic file
-    fpath = os.path.join(Defaults.PHENO_DIR, release, f'{abbrev}.xlsx')
-
-    def _check_exceptions(abbrev):
-        exceptions = {
-            'NIH_final': 'NIH_Full',
-            'temp_disc_final': 'Temp_Disc',
-            'bia_final': 'BIA',
-            'Basic_Demos': 'BasicDemos',
-            'TRF_Pre': 'TRF_P',
-            'Audit': 'AUDIT'
-            }
-        try:
-            return exceptions[abbrev]
-        except:
-            return None
-
-    # read excel
-    if not os.path.isfile(fpath):
-        abbrev = _check_exceptions(abbrev)
-
-    return abbrev
 
 
 def filter_dataframe(dataframe, column='diagnosis', value='ADHD'):
@@ -265,388 +161,578 @@ def define_new_categories(dataframe):
     return dataframe
 
 
-def separate_main_assessment_file_into_csvs(
-        assessment, 
-        fpath=os.path.join(Defaults.PHENO_DIR, 'Assessment_List_Jan2019.xlsx'), 
-        data_dir=Defaults.PHENO_DIR
-        ):
-    """correct assessment list, update `domain` for each `measure`
-
-    Args:
-        assessment (str): e.g., 'Child Measures', 'Parent Measures', 'Clinical Measures', 'Teacher Measures'
-        assessment_file (str): full path to `Assessment_List_Jan2019.xlsx`
-        data_dir (str): directory where output will be saved. Default is `PHENO_DIR`
-    Returns: 
-        info (pd dataframe), domain (str)
-    """
-    # parse `assessment` sheets from `fpath`
-    xls = pd.ExcelFile(fpath, engine='openpyxl');
-
-    # save out assessments as separate csvs
-    assessment_split = ' '.join(assessment.split("_"))
-    
-    # read excel
-    info = pd.read_excel(xls, assessment_split, header=1);
-    info = info.dropna(axis=0, how='all') # drop rows that are all NaN
-    
-    # populate NaN entries with correct Domain
-    domain = False
-    if 'Domain' in info.columns:
-        domain = True; domains = []
-        for row in info.index:
-            row_value = info.loc[row, 'Domain']
-            if type(row_value)==str:
-                domains.append(row_value)
-            else:
-                info.loc[row, 'Domain'] = domains[-1]
-    
-    # save out individual assessment as csv
-    fname = Path(fpath).stem # remove .xlsx
-    assessment_out = '_'.join(assessment.split())
-    info.to_csv(os.path.join(data_dir, f'{fname}_{assessment_out}.csv'))
+def _remove_redundant_str(df):
+    df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|').str.extract(r'(\w+)', expand=False)
+    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+    df = df[~df['Identifiers'].isna()]
+    return df
 
 
-def remove_redundant_identifiers_from_questionnaires(data_dir):
-    """ some basic clean up on assessment files, remove redundant identifiers from questionnaire csvs
-
-    Args:
-        data_dir (str): fullpath to directory where csv files for assessment are saved
-    """
-    # get all csv files within assessment directory
-    fpaths = glob.glob(f'{data_dir}/*/*.csv')
-    # loop over files
-    for fpath in fpaths:
-        df = pd.read_csv(fpath, engine='python')
-        df['Identifiers'] = df['Identifiers'].str.strip(r',assessment|,,assessment|').str.extract(r'(\w+)', expand=False)
-        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-        df = df[~df['Identifiers'].isna()]
-        df.to_csv(fpath, index=False)
-
-
-def make_new_proprietary_assessments_file(
-    data_dir=Defaults.PHENO_DIR,
-    filename='Free_Assessments_HBN.xlsx', 
-    outname='Free_Assessments_HBN_new.csv'
-    ):
-    """
-    Preprocess `Free_Assessments_HBN.xlsx` and save out as `Free_Assessments_HBN_new.csv`.
-    `data_dir` should contain `filename`. `outname` will also be saved to `data_dir`
-    Args:
-        data_dir (str): directory where `filename` is saved and where `outname` will be saved
-        filename (str or None): `Free_Assessments_HBN.xlsx` file. 
-        outname (str or None): saves out as `Free_Assessments_HBN_new.csv`. 
-    """
-
-    # get full path to proprietary data
-    df = pd.read_excel(os.path.join(data_dir, filename))
-
-    # get outpath
-    outpath = os.path.join(data_dir, outname)
-
-    # rows to be added to the dataframe
-    add_rows = [
-        {'Assessment': 'Adverse Childhood Experiences Scale (ACE_P)', 'Price': 'Free', 'used_in_study': 'HBN'},
-        {'Assessment': 'Alabama Parenting Questionnaire – Self Report (APQ_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
-        {'Assessment': 'Barratt Simplified Measure of Social Status (Barratt)', 'Price': 'Proprietary', 'used_in_study': 'HBN, NKI Rockland'},
-        {'Assessment': 'Conners 3 - Self-Report (C3SR)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Child Behavior Checklist - Pre-School (CBCL_Pre)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Teacher Report Form Preschool Age (TRF_P)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Teacher Report Form School Age (TRF)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Screener (CELF)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Full Assessment (CELF_Full_5to8)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Full Assessment (CELF_Full_9to21)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Clinical Evaluation of Language Fundamentals, Fifth Edition Metalinguistics (CELF_Meta)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Child Flourishing (CFS)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
-        {'Assessment': 'Ishihara Color Vision Test (ColorVision)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
-        {'Assessment': 'Comprehensive Test of Phonological Processing (CTOPP)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Dishion Social Acceptance Scale - Teacher (Dishion_Teacher)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
-        {'Assessment': 'Expressive Vocabulary Test (EVT)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Internet Use Questionnaire Parent (IUQ_P)', 'Price': 'Free', 'used_in_study': 'HBN'},
-        {'Assessment': 'Internet Use Questionnaire Self-Report (IUQ_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
-        {'Assessment': 'Kaufman Brief Intelligence Test (KBIT)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'National Institute of Health Toolbox Full Data (NIH_Full)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'National Institute of Health Toolbox Full Data (NIH_Scores)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Negative Life Events Scale Self Report (NLES_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
-        {'Assessment': 'The Positive and Negative Affect Schedule (PANAS)', 'Price': 'Free', 'used_in_study': 'HBN'},
-        {'Assessment': 'Positive Behavior Scale (PBS)', 'Price': 'Unknown', 'used_in_study': 'HBN'},
-        {'Assessment': 'Screen for Anxiety Related Disorders Self Report (SCARED_SR)', 'Price': 'Free', 'used_in_study': 'HBN'},
-        {'Assessment': 'TOWRE-2 (TOWRE)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Vineland Adaptive Behavior Scale-II (Vineland)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Wechsler Adult Intelligence Scale (WAIS)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Wechsler Adult Intelligence Scale (WAIS_abb)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Wechsler Abbreviated Scale of Intelligence (WASI)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Wechsler Individual Achievement Test (WIAT)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Wechsler Intelligence Scale for Children (WISC)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Grooved Pegboard (Pegboard)', 'Price': 'Proprietary', 'used_in_study': 'HBN'},
-        {'Assessment': 'Yale Food Addiction Scale (YFAS_C)', 'Price': 'Free', 'used_in_study': 'HBN'},
-        ]
-
-    remap = {
-        'APQ _ Parent': 'APQ_P',
-        'APQ – Parent': 'APQ_P',
-        'CBCL _ TRF': 'TRF',
-        'C_SSRS': 'CSSRS',
-        'NLES _ Parent': 'NLES_P',
-        'E_SWAN': 'ESWAN',
-        'PSITM': 'PSI',
-        'RBS_R': 'RBS',
-        'SCARED': 'SCARED_P',
-        'SDSC': 'SDS',
-        'SRS_P': 'SRS_Pre',
-        'SRS_2': 'SRS',
-        'Symptom Checker': 'SympChck',
+def _check_for_exact_match_csv(cell, target):
+    # remap keys
+    remap_keys = {'TRF_P': 'TRF_Pre',
+        'ARI_SR': 'ARI_S',
+        'Audit': 'AUDIT',
+        'FLANKER': 'Flanker',
+        'CELF5_Meta': 'CELF_Meta',
+        'PhenX_SchoolRisk': 'PhenX_School',
+        'PreInt_FamHx': 'PreInt_FamHx_RDC'
         }
+    if target in remap_keys.keys():
+        target = remap_keys[target]
 
-    # need to match the keys in `Free_Assessments_HBN.xlsx` to the dataframe
-    def remap_keys(x):
-        if x in list(remap.keys()):
-            return remap[x]
+    if isinstance(cell, str):
+        parts = [part.strip() for part in cell.split(',')]  # Split and trim
+        return target in parts
+    else:
+        return False #handles non string types.
+
+
+def parse_csv_files( 
+    data_dir,
+    release='Release11_Apr2024', 
+    assessment='HBN_Assessment_List_shared_Apr2024.xlsx',
+    filter_col='Data shared R11',
+    filter_val='Yes'
+    ):
+    """ parse csv files and sort into respective domain folders 
+
+    assessment (str): full name of assessment list `HBN_Assessment_List_shared_Apr2024.xlsx`
+    release (str): full name of release (e.g., Release11_Apr2024)
+    data_dir (str): fullpath to top-level directory of raw data (e.g., `Defaults.PHENO_DIR`)
+    """
+    import os
+    import glob
+    import pandas as pd
+    from pathlib import Path
+    import shutil
+
+    # open data dictionary file
+    df_dict = pd.read_excel(os.path.join(data_dir, assessment))
+
+    # filter assessment
+    if filter_col is not None:
+        df_dict = df_dict[df_dict[filter_col]==filter_val]
+
+    # grab all csv files
+    csv_files = glob.glob(os.path.join(data_dir, release, '*.csv'))
+
+    # create domain folders
+    domains = df_dict['Domain'].unique()
+    for domain in domains:
+        dest = os.path.join(data_dir, release, domain)
+        os.makedirs(dest, exist_ok=True)
+
+    # get LORIS abbreviations
+    col_name = 'Abbreviation(s) LORIS'
+    abbrev_loris = df_dict[col_name].unique()
+
+    # assign each csv file to its respective domain folder
+    for csv in csv_files:
+
+        # read csv
+        df = pd.read_csv(csv, engine='python')
+        
+        # remove redundant str
+        df = _remove_redundant_str(df)
+
+        # check that the abbrev (e.g., FGC) in column names matches the data dic
+        abbrev = df.columns[1].split(',')[0]
+        datadic = Path(csv).name.split('.')[0]
+
+        # if column names are the same as csv file name, then change column names to be the same
+        if abbrev!=datadic:
+            df.columns = [col.replace(abbrev, datadic) for col in df.columns]
+            print(f'{csv} file name is not the same as column names')
+        
+        # save csv to domain folder
+        df_filter = df_dict[df_dict[col_name].apply(lambda x: _check_for_exact_match_csv(x, datadic))]
+        if not df_filter.empty:
+            domain = df_filter['Domain'].values[0]
+            assessment = df_filter['Measure Participant'].values[0]
+            outdir = os.path.join(data_dir, release, assessment, domain)
         else:
-            return x
+            outdir = os.path.join(data_dir, release, 'Unknown', 'Unknown')
 
-    # add new cols to dataframe
-    for row in add_rows:
-        df.loc[len(df.index)] = list(row.values())
+        os.makedirs(outdir, exist_ok=True)
+        outpath = os.path.join(outdir, Path(csv).name)
+        df.to_csv(outpath, index=False)
 
-    # make new cols `measure` and `datadic`
-    df['measure'] = df['Assessment'].str.split('(').str.get(0)
-    df['datadic'] = df['Assessment'].str.split('(').str.get(1).str.replace(')', '')
 
-    # replace '-' with '_' in datadic
-    df['datadic'] = df['datadic'].str.replace('-', '_')
+def _lookup_data_dict(csv, data_dir):
+	"""find corresponding data dictionary xlsx for a given csv file
 
-    # match the keys in `Free_Asssessments_HBN.xlsx` to the dataframe
-    df['datadic'] = df['datadic'].apply(lambda x: remap_keys(x))
+	Args: 
+		csv (str): csv filename (e.g., `ACE.csv`)
+		data_dir (str): fullpath where xlsx files are saved
+	Returns: 
+		xlsx (str): xlsx filename
+	"""
+	import os 
+	from pathlib import Path
 
-    # Convert NaN values to Unknown
-    df.loc[df['Price'].isna(), 'Price'] = 'Unknown'
+	csv = Path(csv).name.replace('.csv', '')
 
-    # create boolean columns for proprietary/free questionnaires
-    df['Free_Assessments'] = np.where(df['Price'] =='Free', True, False)
-    df['Proprietary_Assessments'] = np.where(df['Price'] =='Proprietary', True, False)
+	fpath = os.path.join(data_dir, csv + '.xlsx')
+	if os.path.exists(fpath):
+		return fpath
+	else:
+		None
 
-    # save to file
-    df.to_csv(outpath, index=False)
+
+def _identify_scores_and_assign_col_type(df):
+    """
+    Identifies rows with "Scores" in the "Question" column and assigns "Total_Scores"
+    to the "col_type" column in subsequent rows.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame with the "col_type" column.
+    """
+
+    df['col_type'] = float(np.nan)  # Initialize the new column with None
+    df['col_type'] = df['col_type'].astype(object)
+
+    scores_found = False  # Flag to track if "Scores" has been found
+    for index, row in df.iterrows():
+        if "Scores" in str(row['Question']): #Handles potential nan values
+            scores_found = True
+        elif scores_found:
+            df.loc[index, 'col_type'] = "Scores"
 
     return df
 
 
-def make_items_file(
-    filename='item-names.csv', 
-    proprietary_filename='Free_Assessments_HBN_new.csv',
-    outname='item-names-cleaned.csv',
-    data_dir=Defaults.PHENO_DIR,
-    ):
-    """preprocess `item-names.csv` and save out as `item-names-cleaned.csv` to `out_dir` (modified from original https://github.com/charlie42/diagnosis-predictor/blob/main/references/item-names.csv)
+def _fix_symchck_dict(df):
+    import re
+    
+    # Create a dictionary to store the values from 'Question' corresponding to 'CSC_*C' values in 'Variable Name'
+    c_values = {}
 
-    `filename` and `proprietary_filename` should exist in `data_dir`
+    # Iterate through the DataFrame to populate the dictionary
+    for index, row in df.iterrows():
+        if pd.notna(row['Variable Name']) and re.match(r'CSC_.*C', row['Variable Name']):  # Check for NaN first
+            c_values[row['Variable Name']] = row['Question']
+
+    # Iterate through the DataFrame to populate NaN values
+    for index, row in df.iterrows():
+        if pd.notna(row['Variable Name']) and re.match(r'CSC_.*P', row['Variable Name']):  # Check for NaN first
+            corresponding_c = row['Variable Name'].replace('P', 'C')
+            if corresponding_c in c_values:
+                df.loc[index, 'Question'] = c_values[corresponding_c]
+    
+    return df
+
+
+def _check_exceptions(df, abbrev):
+    """there's a mismatch between some data dictionaries (.xlsx) and data (.csv) files. 
+    for example, 'CBCLPre,..' is coded in .csv 'CBCL_Pre.csv' but correct abbrev (as listed in .xlsx) is 'CBCL_Pre'
+    this needs to be corrected and the correct mapping provided so that the data cols can be correctly indexed
+    """
+    import re
+
+    merge_col = 'data_col_name_map'
+    if abbrev=='CBCL_Pre':
+        df['data_col_name_map'] = df['data_col_name'].str.replace('CBCLPre', abbrev).str.replace('CBCLpre', abbrev)
+    elif abbrev=='BIA':
+        df['data_col_name_map'] = df['data_col_name'].str.replace(f'{abbrev}_', '')
+    elif abbrev=='Barratt':
+        df['data_col_name_map'] = df['data_col_name'].str.replace('Barratt_Total_Edu', 'Total_Edu').str.replace( 'Barratt_Total_Occ', 'Occupation_Total')
+    elif abbrev=='ICU_P':
+        df['data_col_name_map'] = df['data_col_name'].str.replace('ICU_P', 'ICU').str.replace('ICU_Total', 'ICU_P_Total')
+    elif abbrev=='DTS':
+        df['data_col_name_map'] =  df['data_col_name'].str.replace('DTS_Total', 'DTS_total')
+    elif abbrev=='CTOPP':
+        df['data_col_name_map'] = df['data_col_name'] \
+                                    .str.replace(r'CTOPP_(..)_Sum', r'\1_sum', regex=True) \
+                                    .str.replace(r'CTOPP_(..)_comp', r'\1_composite', regex=True) \
+                                    .str.replace(r'CTOPP_(..)_P', r'\1_percentile', regex=True) \
+                                    .str.replace(r'CTOPP_(..)_S', r'\1_scaled', regex=True) \
+                                    .str.replace(r'CTOPP_(..)_D', r'\1_desc', regex=True) \
+                                    .str.replace(r'CTOPP_(..)_R', r'\1_raw', regex=True)
+    elif abbrev=='RBS': 
+        df['data_col_name_map'] = df['data_col_name'].str.replace('RBS_Score', 'Score')
+    elif abbrev=='SDQ':
+        df['data_col_name_map'] = df['data_col_name'].str.replace('SDQ_Conduct_Problems', 'Conduct_Problems_Total') \
+                                                     .str.replace('SDQ_Difficulties_Total', 'Difficulties_Total').str.replace('SDQ_Emotional_Problems', 'Emotional_Problems_Total') \
+                                                     .str.replace('SDQ_Externalizing', 'Externalising_Total').str.replace('SDQ_Generating_Impact', 'Generating_Impact_Total') \
+                                                     .str.replace('SDQ_Hyperactivity', 'Hyperactivity_Total').str.replace('SDQ_Internalizing', 'Internalising_Total') \
+                                                     .str.replace('SDQ_Peer_Problems', 'Peer_Problems_Total').str.replace('SDQ_Prosocial', 'Prosocial_Total') 
+    elif abbrev=='YFAS_C':
+        df['data_col_name_map'] = df['data_col_name'].str.replace('YFAS_C', 'YFAS')
+    else:
+        df['data_col_name_map'] = float("nan")
+        merge_col = 'data_col_name'
+
+    return df, merge_col
+
+
+def make_items(data_dir, outname='item-names.csv'):
+    import os
+    import glob
+    import pandas as pd
+    import numpy as np
+    from pathlib import Path
+
+    # grab all csv files
+    csv_files = glob.glob(os.path.join(data_dir, '**', '*.csv'), recursive=True)
+
+    # grab all data dict files
+    dict_files = glob.glob(os.path.join(data_dir, '*.xlsx'))
+
+    # ignore any diagnosis files (those will not go in question-column lookup file)
+    files_to_ignore = ['KSADS', 'Diagnosis', 'item-names']
+    csv_files_updated = [csv for csv in csv_files if not any(key in Path(csv).name for key in files_to_ignore)]
+
+    # loop over all csv files
+    df_merged_all = pd.DataFrame()
+    for csv in csv_files_updated:
+
+        # grab csv file
+        df_csv = pd.read_csv(csv, engine='python')
+
+        # which assessment, domain - relies on structure of data organization
+        domain = Path(csv).parent.name
+        assessment = Path(csv).parent.parent.name
+
+        # grab all columns after the first Identifiers col
+        col_names = [col.split(',')[1] for col in df_csv.columns[1:]]
+
+        # abbrev name
+        col_names_abbrev = df_csv.columns[1].split(',')[0]
+
+        df = pd.DataFrame()
+        df['data_col_name'] = col_names
+
+        # check if there are exceptions, mismatches between csv data col names and correct abbrev
+        df, merge_col = _check_exceptions(df, col_names_abbrev)
+
+        # look up data dictionary
+        xlsx = _lookup_data_dict(csv, data_dir)
+
+        if xlsx is not None:
+            df_xlsx = pd.read_excel(xlsx, header=1)
+
+            # 'SympChck' dictionary needs to be fixed
+            if col_names_abbrev=='SympChck':
+                df_xlsx = _fix_symchck_dict(df_xlsx)
+
+            # delete Unnamed columns
+            df_xlsx = df_xlsx.drop(columns=[col for col in df_xlsx.columns if "Unnamed" in col])
+
+            # rename cols 
+            keywords = ['Question', 'Scores', 'Item', 'Subtest']
+            check = any(keyword in col for col in df_xlsx.columns.tolist() for keyword in keywords)
+            if not check:
+                df_xlsx = pd.read_excel(xlsx, header=2)
+
+            col_names = ['Question', 'Variable Name', 'Variable Type', 'Value', 'Value Labels']
+
+            current_cols = df_xlsx.columns.tolist()
+            for idx, col in enumerate(col_names):
+                current_cols[idx] = col
+            df_xlsx.columns = current_cols
+            df_xlsx = df_xlsx[col_names]
+
+            # create new conditional col
+            df_xlsx = _identify_scores_and_assign_col_type(df_xlsx)
+
+            # get questions corresponding to column name
+            df_merged = df_xlsx.merge(df, left_on='Variable Name', right_on=merge_col, how='outer')
+
+            df_merged['abbrev'] = col_names_abbrev
+            df_merged['domain'] = domain
+            df_merged['assessment'] = assessment
+
+            # figure out variable/col name is a question/subheading/administrative col/total score
+            df_merged = _create_conditional_col(df_merged)
+
+            # concat all dataframes
+            df_merged_all = pd.concat([df_merged_all, df_merged])
+        else:
+            import logging
+            logging.basicConfig(filename=os.path.join(data_dir, 'item-names-log.log'), level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+            logging.info(f'there is no corresponding data dictionary for {Path(csv).name}')
+
+    df_merged_all.to_csv(os.path.join(data_dir, outname), index=False)
+
+
+def _create_conditional_col(df):
+    """
+    updates conditional column with multiple conditions. `col_type` should already be in `df`
 
     Args:
-        filename (str): filename `item-names.csv`
-        proprietary_filename (str or None): optionally merge columns from `Free_Assessments_HBN_new.csv` to `filename`. 
-        outname (str): filename `item-names-cleaned.csv` where preprocessed items will be saved.
-        data_dir (str): directory where `item-names.csv` `Free_Assessments_HBN_new.csv` are located
+        df (pd.DataFrame): The input DataFrame.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame with the "col_type" column.
     """
-    # load item names filename
-    dataframe = pd.read_csv(os.path.join(data_dir, filename), engine='python')
-
-    # add new assessment, domain, measures info to item names
-    df = match_datadic_to_data(dataframe=dataframe)
-
-    # add proprietry/free questionnaires to item names
-    df_proprietary = pd.read_csv(os.path.join(data_dir, proprietary_filename))
-
-    # add proprietary info to dataframe and assign NaN to Unknown
-    df = df_proprietary.merge(df, on='datadic', how='outer')
-
-    # remove rows that don't have any questions or keys
-    conditional = (df['questions'].isna()) & (df['keys'].isna())
-    df = df[~conditional]
-
-    # fix domain name (missing domain in `Assessment_List_Jan2019.xlsx`)
-    df = fix_domain(dataframe=df)
-
-    # identify questions that contain total scores
-    df = identify_total_scores(dataframe=df)
-
-    # identify questions that are subheadings
-    df = identify_subheadings(dataframe=df)
-
-    # identify questions that are preambles
-    df = identify_preamble(dataframe=df)
-
-    # save out new file
-    df.to_csv(os.path.join(data_dir, outname), index=False)
-
-
-def match_datadic_to_data(dataframe):
-    """add new columns to item names dataframe
-    """
-    import os
-    from hbn import io
-    import math
-    import glob
-    from collections import defaultdict
-    from hbn.constants import Defaults
-    from hbn.specs import make_specs
-
-
-    # grab all feature files and make dictionary from abbrevs and datadic args
-    fdir = os.path.join(Defaults.FEATURE_DIR, 'basic_demographics')
-    parent_spec = os.path.join(fdir, 'features-parent_spec.json')
-    if not os.path.isdir(fdir):
-        make_specs.make_feature_specs(parent_spec, out_dir=fdir) # make feature spec files if they don't exist
-    feature_specs = glob.glob(os.path.join(fdir, '*features*'))
-
-    # initializing dict with lists
-    new_dict = defaultdict(list)
-
-    # loop over feature specs
-    for spec in feature_specs:
-        if 'features-parent_spec' not in spec:
-            info = io.read_json(spec)
-
-            dict = {info['datadic']: [info['abbrevs'], info['assessment'], info['domains'], info['measures']]}
-        for k,v in dict.items():
-            new_dict[k].append(v)
-
-    # assign column names so that data can be indexed correctly
-    for index in dataframe.index:
-        key = dataframe.loc[index, 'datadic']
-        is_str = type(dataframe.loc[index, 'keys']) is str
-        if key in new_dict and is_str:
-            dataframe.loc[index, 'col_name'] = new_dict[key][0][0] + ',' + dataframe.loc[index, 'keys']
-            dataframe.loc[index, 'assessment'] = new_dict[key][0][1]
-            dataframe.loc[index, 'domains'] = new_dict[key][0][2]
-            dataframe.loc[index, 'measures'] = new_dict[key][0][3]
-
-    return dataframe
-
-
-def fix_domain(dataframe):
-    measures_to_change = ['SympChck', 'ICU_P', 'ARI_P', 'SRS_Pre', 'SRS', 'RBS', 'SDQ', 'WHODAS_P', 'SAS', 
-                'CIS_P', 'SCQ', 'ASSQ', 'SWAN','ESWAN','SCARED_P','MFQ_P', 'CBCL', 'CBCL_Pre']
-    for abbrev in dataframe['datadic'].unique():
-        if abbrev in measures_to_change:
-            dataframe.loc[(dataframe["datadic"]==abbrev) & (~dataframe['keys'].isna()), "domains"] = 'Questionnaire_Measures_of_Emotional_and_Cognitive_Status'
-
-    return dataframe
-
-
-def identify_total_scores(dataframe):
-
-    overall_scores = ['Total', 'Raw Score', 'T-Score', 'T Score', 'Standard']
-
-    # filter dataframe
-    questions_to_filter = dataframe[dataframe['questions'].str.contains('|'.join(overall_scores))==True]['questions'].unique()
-
-    # assign new column to identify whether qustion is a total score or not
-    dataframe['Total_Scores'] = dataframe['questions'].isin(questions_to_filter)
-    dataframe.loc[dataframe['Total_Scores']==False, 'Not_Total_Scores'] = True
-
-    return dataframe
-
-
-def identify_preamble(dataframe):
-
-    # anything is a preamble if 'keys' is empty and is not a subheading
-    conditional = (dataframe['keys'].isna()) & (dataframe['Subheadings']==False) 
-
-    # filter dataframe
-    questions_to_filter = dataframe[conditional]['questions'].unique()
-
-    dataframe['Preamble'] = dataframe['questions'].isin(questions_to_filter)
-
-    # figure out which preambles are actually subheadings and reassign:
-    subheadings = ['Other (1)', 'Other (2)', 'Suicidal ideation', 'Suicidal behavior', 'Social Anxiety',
-                'Panic Disorder', 'Positive Behavior Scale Score']
-
-    dataframe.loc[dataframe['questions'].isin(subheadings), 'Subheadings'] = True
-    dataframe.loc[dataframe['questions'].isin(subheadings), 'Preamble'] = False
-
-    return dataframe
-
-
-def identify_subheadings(dataframe):
-
-    # find keys with exact match: "Scores", "Scale Score", "Scoring"
-    # and find keys that contain "Scales"
-    conditional = (dataframe['questions']=='Scores') | (dataframe['questions'].str.contains('Scale Scores')) | (dataframe['questions']=='Scoring') |  (dataframe['questions'].str.contains('Scales')) & (dataframe['keys'].isna())
+    import numpy as np
+    import pandas as pd
     
-    # filter dataframe
-    questions_to_filter = dataframe[conditional]['questions'].unique()
+    if 'col_type' not in df.columns:
+        df['col_type'] = float(np.nan)  # Initialize the new column with None
+        df['col_type'] = df['col_type'].astype(object)
 
-    # assign new column to identify whether qustion is a total score or not
-    dataframe['Subheadings'] = dataframe['questions'].isin(questions_to_filter)
+    # Condition 1: subheading
+    condition1 = (df['Question'].notna()) & (df['Variable Name'].isna()) & (df['Variable Type'].isna())
+    df.loc[condition1, 'col_type'] = 'Subheading'
 
-    return dataframe
+    # Condition 2: Question
+    condition2 = (df['col_type'].isna() & (df['Question'].notna()))
+    df.loc[condition2, 'col_type'] = 'Question'
+
+    # Condition 3: Total Scores
+    condition2 = (df['col_type'].isna() & (df['data_col_name'].str.contains(r'Score|Total', case=False, na=False)))
+    df.loc[condition2, 'col_type'] = 'Scores'
+
+    # Condition 4: Unknown
+    condition3 = (df['data_col_name'].notna()) & (df['Question'].isna())
+    df.loc[condition3, 'col_type'] = 'Unknown'
+
+    return df
 
 
-def add_demographics(dataframe):
+def get_demographics(
+    df,
+    child_dir,
+    parent_dir,
+    ):
     """add demographics to existing dataframe, merging on participant id `Identifiers`
 
     Args: 
-        dataframe (pd dataframe):  Must contain columns `Identifiers`.
+        df (pd dataframe):  Must contain columns `Identifiers`
+        child_demos (pd dataframe): directory where child demographic files are saved 
+        parent_demos (pd dataframe): directory where parent demographic files are saved
     Returns:
-        dataframe (pd dataframe): returns `dataframe` with additional demographic columns
+        merged_df (pd dataframe): returns `dataframe` with demographic columns for each `Identifiers`
     """
-    # READ BASIC DEMOGRAPHICS
-    df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Demographic_Questionnaire_Measures/Basic_Demos.csv'))
-    df_demo.columns = df_demo.columns.str.replace('Basic_Demos,','')
-    df_demo['Sex'] = df_demo['Sex'].map({0: 'male', 1: 'female'})
+    import os
+    import pandas as pd
+    from functools import reduce
 
-    df_merged = df_demo[['Identifiers', 'Age', 'Sex', 'Enroll_Year']].merge(dataframe, on='Identifiers') # 'Sex_binarize',
+    # assign directories
+    child_demos_dir = os.path.join(child_dir, 'Demographics')
+    parent_demos_dir = os.path.join(parent_dir, 'Demographics')
+    parent_interview_dir = os.path.join(parent_dir, 'Emotional and Psychological Function')
 
-    return df_merged
+    # READ BASIC DEMOGRAPHICS FILES
+    df_demo = pd.read_csv(os.path.join(child_demos_dir, 'Basic_Demos.csv'))[['Identifiers', 'Basic_Demos,Sex', 'Basic_Demos,Age', 'Basic_Demos,Study_Site']]
+    df_race = pd.read_csv(os.path.join(parent_interview_dir, 'PreInt_Demos_Fam.csv'))[['Identifiers', 'PreInt_Demos_Fam,Child_Race', 'PreInt_Demos_Fam,Child_Ethnicity']]
+    df_edu = pd.read_csv(os.path.join(parent_demos_dir, 'Barratt.csv'))[['Identifiers', 'Barratt,Barratt_Total_Edu']]
+    df_ses = pd.read_csv(os.path.join(parent_demos_dir, 'FSQ.csv'))[['Identifiers', 'FSQ,FSQ_04']]
+    df_dev = pd.read_csv(os.path.join(parent_interview_dir, 'PreInt_DevHx.csv'))[['Identifiers', 'PreInt_DevHx,puberty']]
 
+    # assign new variables
+    df_demo['sex'] = df_demo['Basic_Demos,Sex'].map({0: 'male', 1: 'female'})
+    df_demo['age_round'] = df_demo['Basic_Demos,Age'].round()
+    df_demo['study_site'] = df_demo['Basic_Demos,Study_Site']
+    df_dev['puberty'] = df_dev['PreInt_DevHx,puberty'].map({0: 'pre', 1: 'post'})
+    df_ses['household_income'] = df_ses['FSQ,FSQ_04'].map(_remap_ses())
+    df_edu.loc[df_edu['Barratt,Barratt_Total_Edu']>=18, 'education'] = 'College Degree or Higher'
+    df_edu.loc[df_edu['Barratt,Barratt_Total_Edu']<18, 'education'] = 'Less than College Degree'
+    df_race['Identifiers'] = df_race['Identifiers'].str.replace(',assessment', '')
+    df_race['race'] = df_race['PreInt_Demos_Fam,Child_Race'].fillna(10).apply(lambda x: _remap_race(x)) # fill NaN values with "Unknown"
+    df_race['ethnicity'] = df_race['PreInt_Demos_Fam,Child_Ethnicity'].fillna(3).apply(lambda x: _remap_ethnicity(x)) # fill NaN values with "Unknown"
 
-def add_race_ethnicity(dataframe):
-    """add race and ethnicity to existing dataframe, merging on participant id `Identifiers`
+    # merge dataframes
+    dfs = [df_demo, df_dev, df_ses, df_edu, df_race.iloc[1:]]  # List of DataFrames
+    merged_df = reduce(lambda left, right: pd.merge(left, right, on='Identifiers', how='outer'), dfs)
 
-    Args: 
-        dataframe (pd dataframe): must contain col `Identifiers`.
-    Returns:
-        dataframe (pd dataframe): returns `dataframe` with additional demographic columns
-    """
-    def race(x):
-        race_dict = {
-            0: "White/Caucasian",
-            1:"Black/African American",
-            2:"Hispanic",
-            3:"Asian",
-            4:"Asian",
-            5:"Native American",
-            6:"Native American",
-            7:"Native Hawaiian/Other Pacific Islander",
-            8:"Two or more races",
-            9:"Unknown",
-            10:"Unknown",
-            11:"Unknown"
-            }
-        return race_dict[x]
-        
-    def ethnicity(x):
-        ethnicity_dict = {
-            0: "White/Caucasian",
-            1: "Hispanic or Latino",
-            2: "Unknown",
-            3: "Unknown",
-            }
-        return ethnicity_dict[x]
+    cols_to_keep = ['Identifiers', 'sex', 'age_round', 'study_site', 'puberty', 'household_income', 'education', 'race', 'ethnicity']
+    merged_df = merged_df[cols_to_keep]
 
-    # READ DEMOGRAPHICS - INTAKE INTERVIEW
-    df_demo = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Parent_Measures/Interview_of_Emotional_and_Psychological_Function/PreInt_Demos_Fam.csv'))
-    df_merged = dataframe.merge(df_demo, on='Identifiers', how='left')
-    df_merged['PreInt_Demos_Fam,Child_Race_cat'] = df_merged['PreInt_Demos_Fam,Child_Race'].fillna(10).apply(lambda x: race(x)) # fill NaN values with "Unknown"
-    df_merged['PreInt_Demos_Fam,Child_Ethnicity_cat'] = df_merged['PreInt_Demos_Fam,Child_Ethnicity'].fillna(3).apply(lambda x: ethnicity(x)) # fill NaN values with "Unknown"
+    # add development stage
+    merged_df = _add_development_stage(df=merged_df)
 
-    return df_merged
+    return merged_df
 
 
-    df_score = pd.read_csv(os.path.join(Defaults.PHENO_DIR, 'Clinical_Measures', 'CGAS.csv'))
-    df_score.columns = df_score.columns.str.replace('CGAS,','')
-    df_score[df_score['CGAS_Score']>100] = np.float("NaN")
-    df_merged = df_score[['Identifiers', 'CGAS_Score']].merge(dataframe, on='Identifiers')
+def _add_comorbidities(df):
+    # get comorbidities
+    dx_counts = df.groupby('Identifiers')['DX_Cat_Name'].apply(lambda x: x.nunique()-1).reset_index(name='comorbidities')
+    df = dx_counts.merge(df, on='Identifiers')
 
-    return df_merged
+    return df
+
+
+def _add_development_stage(df):
+    df.loc[df['age_round'].isin([6,7,8]), 'reading_stage'] = 'Early'
+    df.loc[df['age_round'].isin([9,10]), 'reading_stage'] = 'Emerging'
+    df.loc[df['age_round'].isin([11,12,13,14,15,16,17,18]), 'reading_stage'] = 'Expert'
+
+    return df
+
+
+def _add_group_reading(df, reading='Specific Learning Disorder with Impairment in Reading'):
+    import pandas as pd
+    from scipy import stats as sp
+
+    # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
+    df_all = pd.DataFrame()
+    for _, group in df.groupby('Identifiers'):
+        dx = group['DX_Cat_Name'].values
+        if 'No Diagnosis Given' in dx:
+            group['DX_Reading'] = 'No Diagnosis Given'
+        elif (reading in dx) and (sum(group['comorbidities'])==0):
+            group['DX_Reading'] = 'reading_no_comorbidities'
+        elif ('ADHD' in dx) and (reading not in dx):
+            group['DX_Reading'] = 'adhd_no_reading' 
+        elif reading in dx and (sum(group['comorbidities'])>0):
+            group['DX_Reading'] = 'reading_all_comorbidities' 
+        else:
+            group['DX_Reading'] = 'other_diagnoses'
+        df_all = pd.concat([df_all, group]) 
+
+    return df_all
+
+
+def _add_group_adhd(df, adhd='ADHD'):
+    import pandas as pd
+    from scipy import stats as sp
+
+    # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
+    df_all = pd.DataFrame()
+    for _, group in df.groupby('Identifiers'):
+        dx = group['DX_Cat_Name'].values
+        if 'No Diagnosis Given' in dx:
+            group['DX_ADHD'] = 'No Diagnosis Given'
+        elif (adhd in dx) and (sum(group['comorbidities'])==0):
+            group['DX_ADHD'] = 'adhd_no_comorbidities'
+        elif ('ADHD' in dx) and (sum(group['comorbidities'])>0):
+            group['DX_ADHD'] = 'adhd_all_comorbidities' 
+        else:
+            group['DX_ADHD'] = 'other_diagnoses'
+        df_all = pd.concat([df_all, group]) 
+
+    return df_all
+
+
+def _add_group_depression(df, depression='Depressive Disorders'):
+    import pandas as pd
+    from scipy import stats as sp
+
+    # get rows that contain 'ADHD'
+    mask = df['DX_Cat_Name'].str.contains('ADHD', case=False)
+    mask = mask.fillna(False)
+
+    # assign new groups
+    df.loc[mask, 'DX_Cat_Name'] = df.loc[mask, 'DX_Subtype_Name']
+
+    # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
+    df_all = pd.DataFrame()
+    for _, group in df.groupby('Identifiers'):
+        dx = group['DX_Cat_Name'].values
+        if 'No Diagnosis Given' in dx:
+            group['DX_Depression'] = 'No Diagnosis Given'
+        elif (depression in dx) and not (any("ADHD" in str(item) for item in dx)):
+            group['DX_Depression'] = 'Depression (no ADHD)'
+        elif (depression not in dx) and ('ADHD-Combined Type' in dx):
+            group['DX_Depression'] = 'ADHD-Combined Type (no Depression)'
+        elif (depression not in dx) and ('ADHD-Inattentive Type' in dx):
+            group['DX_Depression'] = 'ADHD-Inattentive Type (no Depression)'
+        else:
+            group['DX_Depression'] = 'other_diagnoses'
+        df_all = pd.concat([df_all, group]) 
+
+    return df_all
+
+
+def _add_group_anxiety(df, anxiety='Anxiety Disorders'):
+    import pandas as pd
+    from scipy import stats as sp
+
+    # get rows that contain 'ADHD'
+    mask = df['DX_Cat_Name'].str.contains('ADHD', case=False)
+    mask = mask.fillna(False)
+
+    # assign new groups
+    df.loc[mask, 'DX_Cat_Name'] = df.loc[mask, 'DX_Subtype_Name']
+
+    # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
+    df_all = pd.DataFrame()
+    for _, group in df.groupby('Identifiers'):
+        dx = group['DX_Cat_Name'].values
+        if 'No Diagnosis Given' in dx:
+            group['DX_Anxiety'] = 'No Diagnosis Given'
+        elif (anxiety in dx) and not (any("ADHD" in str(item) for item in dx)):
+            group['DX_Anxiety'] = 'Anxiety (no ADHD)'
+        elif (anxiety not in dx) and ('ADHD-Combined Type' in dx):
+            group['DX_Anxiety'] = 'ADHD-Combined Type (no Anxiety)'
+        elif (anxiety not in dx) and ('ADHD-Inattentive Type' in dx):
+            group['DX_Anxiety'] = 'ADHD-Inattentive Type (no Anxiety)'
+        else:
+            group['DX_Anxiety'] = 'other_diagnoses'
+        df_all = pd.concat([df_all, group]) 
+
+    return df_all
+
+
+def add_diagnosis_groups(df):
+    # add comorbidities
+    df = _add_comorbidities(df=df)
+
+    # add reading-specific cols
+    df = _add_group_reading(df=df, reading='Specific Learning Disorder with Impairment in Reading')
+
+    # add adhd-specific cols
+    df = _add_group_adhd(df=df, adhd='ADHD')
+
+    # add depression-specific cols
+    df = _add_group_depression(df=df, depression='Depressive Disorders')
+
+    # add anxiety-specific cols
+    df = _add_group_anxiety(df=df, anxiety='Anxiety Disorders')
+
+    return df
+
+
+def _remap_ses():
+    return {
+        0: "<$10,000",
+        1: "$10,000 - $19,999",
+        2: "$20,000 - $29,999",
+        3: "$30,000 - $39,999",
+        4: "$40,000 - $49,999",
+        5: "$50,000 - $59,999",
+        6: "$60,000 - $69,999",
+        7: "$70,000 - $79,999",
+        8: "$80,000 - $89,999",
+        9: "$90,000 - $99,999",
+        10: "$100,000 - $149,999",
+        11: "$150,000 or more"
+        }
+
+    return df_out
+
+
+def _remap_race(x):
+    race_dict = {
+        0: "White/Caucasian",
+        1:"Black/African American",
+        2:"Hispanic",
+        3:"Asian",
+        4:"Asian",
+        5:"Native American",
+        6:"Native American",
+        7:"Native Hawaiian/Other Pacific Islander",
+        8:"Two or more races",
+        9:"Unknown",
+        10:"Unknown",
+        11:"Unknown"
+        }
+    return race_dict[x]
+
+
+def _remap_ethnicity(x):
+    ethnicity_dict = {
+        0: "White/Caucasian",
+        1: "Hispanic or Latino",
+        2: "Unknown",
+        3: "Unknown",
+        }
+    return ethnicity_dict[x]
+
 
