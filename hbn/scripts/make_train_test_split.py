@@ -92,33 +92,6 @@ def get_unique_dataset(
     return df_unique
 
 
-def index_into_original_dataframe(df_original, df_stratify):
-    """ Index train and test participants from `df_stratify` into `df_original`.
-
-    Args:
-        df_original (pd dataframe): original dataframe
-        df_stratify (pd dataframe): stratified dataframe
-    Returns:
-        df_out (pd dataframe): A dataframe containing the train and test sets.
-    """
-    import pandas as pd
-
-    # index test and train participants into original dataframe
-    train_participants = df_stratify[df_stratify['split']=='train']['Identifiers'].tolist()
-    test_participants = df_stratify[df_stratify['split']=='test']['Identifiers'].tolist()
-
-    df_train = df_original[df_original['Identifiers'].isin(train_participants)].reset_index(drop=True)
-    df_train['split'] = 'train'
-
-    df_test = df_original[df_original['Identifiers'].isin(test_participants)].reset_index(drop=True)
-    df_test['split'] = 'test'
-
-    # concat train and test
-    df_out = pd.concat([df_train, df_test])
-
-    return df_out.reset_index(drop=True)
-
-
 def run(
     inpath, 
     outpath
@@ -133,9 +106,8 @@ def run(
     """
     import os
     import itertools
+    import numpy as np
     import pandas as pd
-    from hbn.constants import Defaults
-    from hbn.data.data_utils import remove_small_groups
 
     columns_to_keep = ['sex', 'age_round', 'race'] 
     columns_to_stratify = list(itertools.chain(*[columns_to_keep, ['DX_Index']]))
@@ -157,7 +129,13 @@ def run(
     df_stratified = stratify_split(df_unique, columns_to_stratify, test_size, random_state)
 
     # index train and test participants into original dataframe
-    df_out = index_into_original_dataframe(df_original=df, df_stratify=df_stratified)
+    df['age_round'] = df['age_round'].astype(object)
+    df_out = df.merge(df_stratified, on=['Identifiers', 'sex', 'age_round', 'race'], how='outer')
+
+    # replace 'missing' with NaN
+    df_out = df_out.replace('Missing', np.nan)
+    for col in ['age_round', 'DX_Index']:
+        df_out[col] = df_out[col].astype(float)
 
     # save dataframe to `out_dir`
     df_out.to_csv(outpath, index=False)

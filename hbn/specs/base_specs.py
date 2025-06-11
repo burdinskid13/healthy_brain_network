@@ -61,9 +61,18 @@ def pydraml():
         },
         'pydraml3':
         {'clf_info': 
+        # [
+        # [["sklearn.impute", "SimpleImputer", {"strategy": "mean", "add_indicator": True},
+        #    "sklearn.preprocessing", "StandardScaler"],
+        #    ["sklearn.impute", "SimpleImputer", {"strategy": "constant", "fill_value": None, "add_indicator": True},
+        #     "sklearn.preprocessing", "OneHotEncoder", {"handle_unknown": "ignore", "sparse_output": False, "categories": 'auto', "drop": 'if_binary', "min_frequency": 0.01},
+        #         "sklearn.preprocessing", "StandardScaler"],
+        #     ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]], # classifier has to be last list
+        # ],
         [
-        [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]], # classifier has to be last list
+            [["sklearn.impute", "SimpleImputer"],
+            ["sklearn.preprocessing", "StandardScaler"],
+            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]],
         ],
         },
         'pydraml4':
@@ -93,8 +102,8 @@ def participants():
                 'split': ['train', 'test'],
                 }
     
-    age = 'Age_round'
-    sex = 'Sex'
+    age = 'age_round'
+    sex = 'sex'
     race = 'PreInt_Demos_Fam,Child_Race_cat'
     dx_reading = 'DX_Reading'
     dx_adhd = 'DX_ADHD'
@@ -1857,53 +1866,19 @@ def features():
         return new_dict
     
     base_info = {
-                "threshold": True, # threshold dataframe based on some fixed criterion - remove featuers that are missing more than 10% of values
-                "clf_info": {
-                    "numeric": [
-                        [
-                            "sklearn.impute",
-                            "SimpleImputer",
-                            {
-                                "strategy": "mean",
-                                "add_indicator": True
-                            }
-                        ],
-                    ],
-                    "category": [
-                        [
-                            "sklearn.impute",
-                            "SimpleImputer",
-                            {
-                                "strategy": "constant", # most_frequent,
-                                "fill_value": None,
-                                "add_indicator": True
-                            }
-                        ],
-                        [
-                            "sklearn.preprocessing",
-                            "OneHotEncoder",
-                            {
-                                "handle_unknown": "ignore",
-                                "sparse_output": False, 
-                                "categories": 'auto',
-                                "drop": 'if_binary',
-                                "max_categories": 5
-                            }
-                        ]
-                    ]
-                    }
-        }
+                "threshold": .9, # threshold dataframe based on some fixed criterion - remove features that are missing more than 10% of values
+                }
 
     demos_info = {
             'features-demos':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season',  'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'Sex', 'Age_round',  'PreInt_Demos_Fam,Child_Race_cat', 'PreInt_Demos_Fam,Child_Ethnicity_cat']
             },
             'features-demos-excl-sex':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season',  'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'Age_round',  'PreInt_Demos_Fam,Child_Race_cat', 'PreInt_Demos_Fam,Child_Ethnicity_cat']
             }
@@ -1913,91 +1888,91 @@ def features():
     reading_info = {
                 'features-Child-language':
                 {
-                "filename": 'Child-features-raw.csv',  # was `Child-Not_Total_Scores-raw.csv`
+                "filename": 'child-features-raw.csv',  # was `Child-Question.csv`
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CELF', 'PPVT', 'EVT', 'Sex', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-Child-phonological':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CTOPP', 'Sex','PreInt_Demos_Fam,Child_Race_cat']
                 },
                 'features-Child-phonological-minimal':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'EL_raw', 'BW_raw', 'NR_raw', 'RD_raw', 'RL_raw', 'RO_raw', 'Sex','PreInt_Demos_Fam,Child_Race_cat']
                 },
                 'features-Child-production':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'GFTA', 'Sex','PreInt_Demos_Fam,Child_Race_cat']
                 },
                 'features-Child-executive-function':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'NIH','Sex', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-Child-intelligence':
                 {
-                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "filename": 'child-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'WISC', 'WAIS', 'WAIS_Abb','KBIT','Sex','PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-Child-reading':
                 {
-                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "filename": 'child-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'WIAT', 'TOWRE','Sex','PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-Child-reading-minimal':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TOWRE,TOWRE_PDE_Raw','TOWRE,TOWRE_SWE_Raw','WIAT,WIAT_Word_Raw','WIAT,WIAT_RC_Raw', 'Sex','PreInt_Demos_Fam,Child_Race_cat']
                 },
                 'features-Child-emotional-status':
                 {
-                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "filename": 'child-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR', 'C3SR', 'SCARED_SR', 'CIS_SR', 'WHODAS_SR', 'PANAS','Sex','PreInt_Demos_Fam,Child_Race_cat']
                 },
                 'features-Parent-SES':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'Barratt', 'FSQ','Sex','PreInt_Demos_Fam,Child_Race_cat'] # cols related to SES
                 },
                 'features-Parent-Stress':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'PSI', 'DTS', 'APQ_P', 'PCIAT','Sex','PreInt_Demos_Fam,Child_Race_cat']
                 },
                 'features-Parent-Psychological-Function':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'NLES_P', 'PreInt_FamHx_RDC', 'Vineland', 'PreInt_Demos_Fam', 'PreInt_Demos_Home', 'PreInt_DevHx', 'PreInt_EduHx',  'PreInt_Lang', 'PreInt_TxHx','Sex','PreInt_Demos_Fam,Child_Race_cat']
                 },
                 'features-Parent-Intake-Interview':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers',  'PreInt_Demos_Fam', 'PreInt_Demos_Home', 'PreInt_DevHx', 'PreInt_EduHx',  'PreInt_Lang', 'PreInt_TxHx','Sex','PreInt_Demos_Fam,Child_Race_cat']
                 },
                 'features-Parent-Family-History':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'PreInt_FamHx_RDC','Sex','PreInt_Demos_Fam,Child_Race_cat']
                 },
                 'features-Child-reading-all':
                 {
-                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "filename": 'child-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CELF', 'PPVT', 'EVT', 'CTOPP', 'WIAT', 'TOWRE', 'Sex','PreInt_Demos_Fam,Child_Race_cat'] 
                 }
@@ -2007,37 +1982,37 @@ def features():
     internalizing_externalizing = {
                 'features-parent-internalizing':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL_Int', 'CBCL_Pre_Int', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
                 },
                 'features-parent-externalizing':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL_Ext', 'CBCL_Pre_Ext', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
                 },
                 'features-teacher-internalizing':
                 {
-                "filename": 'Teacher-features-raw.csv', 
+                "filename": 'teacher-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF_Int', 'TRF_P_Int', 'PreInt_Demos_Fam,Child_Race_cat',  'Age_round'],
                 },
                 'features-teacher-externalizing':
                 {
-                "filename": 'Teacher-features-raw.csv', 
+                "filename": 'teacher-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF_Ext', 'TRF_P_Ext', 'PreInt_Demos_Fam,Child_Race_cat',  'Age_round'],
                 },
                 'features-child-internalizing':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR_Int', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
                 },
                 'features-child-externalizing':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR_Ext', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
                 },
@@ -2045,19 +2020,19 @@ def features():
     anxious_depressed = {
                 'features-parent-anxious_depressed':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL_AD', 'CBCL_Pre_AD', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
                 'features-teacher-anxious_depressed':
                 {
-                "filename": 'Teacher-features-raw.csv', 
+                "filename": 'teacher-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF_AD', 'TRF_AD', 'PreInt_Demos_Fam,Child_Race_cat',  'Age_round'],# 'Sex'
                 },
                 'features-child-anxious_depressed':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR_AD', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
@@ -2065,19 +2040,19 @@ def features():
     withdrawn_depressed = {
                 'features-parent-withdrawn_depressed':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL_WD','CBCL_Pre_WD','PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
                 'features-teacher-withdrawn_depressed':
                 {
-                "filename": 'Teacher-features-raw.csv', 
+                "filename": 'teacher-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF_WD', 'TRF_P_WD', 'PreInt_Demos_Fam,Child_Race_cat',  'Age_round'],# 'Sex'
                 },
                 'features-child-withdrawn_depressed':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR_WD', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
@@ -2085,19 +2060,19 @@ def features():
     social_problems = {
                 'features-parent-social_problems':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL_SP', 'CBCL_Pre_SP','PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
                 'features-teacher-social_problems':
                 {
-                "filename": 'Teacher-features-raw.csv', 
+                "filename": 'teacher-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF_SP', 'TRF_P_SP', 'PreInt_Demos_Fam,Child_Race_cat',  'Age_round'],# 'Sex'
                 },
                 'features-child-social_problems':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR_SP', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
@@ -2105,19 +2080,19 @@ def features():
     thought_problems = {
                 'features-parent-thought_problems':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL_TP', 'CBCL_Pre_TP', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
                 'features-teacher-thought_problems':
                 {
-                "filename": 'Teacher-features-raw.csv', 
+                "filename": 'teacher-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF_TP', 'TRF_P_TP', 'PreInt_Demos_Fam,Child_Race_cat',  'Age_round'],# 'Sex'
                 },
                 'features-child-thought_problems':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR_TP', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
@@ -2125,19 +2100,19 @@ def features():
     attention_problems = {
                 'features-parent-attention_problems':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL_AP', 'CBCL_Pre_AP', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
                 'features-teacher-attention_problems':
                 {
-                "filename": 'Teacher-features-raw.csv', 
+                "filename": 'teacher-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF_AP', 'TRF_P_AP', 'PreInt_Demos_Fam,Child_Race_cat',  'Age_round'],# 'Sex'
                 },
                 'features-child-attention_problems':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR_AP', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
@@ -2145,19 +2120,19 @@ def features():
     rule_breaking = {
                 'features-parent-rule_breaking':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL_RBB', 'CBCL_Pre_RBB','PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
                 'features-teacher-rule_breaking':
                 {
-                "filename": 'Teacher-features-raw.csv', 
+                "filename": 'teacher-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF_RBB', 'TRF_P_RBB', 'PreInt_Demos_Fam,Child_Race_cat',  'Age_round'],# 'Sex'
                 },
                 'features-child-rule_breaking':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR_RBB', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
@@ -2165,19 +2140,19 @@ def features():
     aggressive_behavior = {
                 'features-parent-aggressive_behavior':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL_AB', 'CBCL_Pre_AB','PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
                 'features-teacher-aggressive_behavior':
                 {
-                "filename": 'Teacher-features-raw.csv', 
+                "filename": 'teacher-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF_AB', 'TRF_P_AB', 'PreInt_Demos_Fam,Child_Race_cat',  'Age_round'],# 'Sex'
                 },
                 'features-child-aggressive_behavior':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR_AB', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
@@ -2185,19 +2160,19 @@ def features():
     somatic_complaints = {
                 'features-parent-somatic_complaints':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL_SC', 'CBCL_Pre_SC', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
                 'features-teacher-somatic_complaints':
                 {
-                "filename": 'Teacher-features-raw.csv', 
+                "filename": 'teacher-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF_SC', 'TRF_P_SC', 'PreInt_Demos_Fam,Child_Race_cat',  'Age_round'],# 'Sex'
                 },
                 'features-child-somatic_complaints':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR_SC', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],# 'Sex'
                 },
@@ -2207,43 +2182,43 @@ def features():
     C3SR_info = {
             'features-child-defiance_aggression':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'C3SR_AG', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
             },
             'features-child-family_relations':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'C3SR_FR', 'PreInt_Demos_Fam,Child_Race_cat',  'Age_round'],
             },
             'features-child-hyperactive_impulsivity':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'C3SR_HY', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
             },
             'features-child-inattention':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'C3SR_IN', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
             },
             'features-child-learning_problems':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'C3SR_LP', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
             },
             'features-child-negative_impression':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'C3SR_NI', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
             },
             'features-child-positive_impression':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'C3SR_PI', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
             },
@@ -2253,7 +2228,7 @@ def features():
     CSSRS_info = {
             'features-child-suicidality':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'CSSRS', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
             },
@@ -2263,129 +2238,110 @@ def features():
     SWAN_info = {
             'features-child-swan_inattention':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'SWAN_IN', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
             },
             'features-child-swan_hyperactive':
             {
-            "filename": 'Child-features-raw.csv', 
+            "filename": 'child-features-raw.csv', 
             "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
             "cols_to_filter": ['Identifiers', 'SWAN_HY', 'PreInt_Demos_Fam,Child_Race_cat', 'Age_round'],
             },
         }
     
-    adhd_info = {                
+    adhd_info = {     
+                'features-all-questions':
+                {
+                "filename": 'all-features-Question.csv', 
+                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', '_Complete', '_Incomplete', 
+                                 'START_DATE', 'Days_Baseline', 'Year', 'missing', 'present',
+                                 '_Invalid', '_Valid'], # cols to drop from dataframe
+                "cols_to_filter": None
+                },      
                 'features-child-connors':
                 {
-                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "filename": 'child-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'C3SR', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-child-cbcl':
                 {
-                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "filename": 'child-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR', 'ASR', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-child-anxiety':
                 {
-                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "filename": 'child-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'SCARED_SR', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-child-mood':
                 {
-                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "filename": 'child-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'MFQ_SR', 'PANAS', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-child-suicide':
                 {
-                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "filename": 'child-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CSSRS', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-child-language-all':
                 {
-                "filename": 'Child-features-Not_Total_Scores-raw.csv', 
+                "filename": 'child-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CELF_Full_5to8', 'CELF_Full_9to21', 'CELF_Meta', 'EVT', 'PPVT', 'GFTA', 'CTOPP', 'TOWRE', 'CELF', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-parent-cbcl':
                 {
-                "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
+                "filename": 'parent-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL', 'CBCL_Pre', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-teacher-cbcl':
                 {
-                "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
+                "filename": 'parent-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF', 'TRF_Pre', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-parent-anxiety':
                 {
-                "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
+                "filename": 'parent-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'SCARED_P', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
                 'features-parent-strengths-weaknesses-adhd-all':
                 {
-                "filename": 'Parent-features-Not_Total_Scores-raw.csv', 
+                "filename": 'parent-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'SWAN', 'ESWAN', 'SDQ', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
-                'features-all-questions':
-                {
-                "filename": 'all-features-Not_Total_Scores-raw.csv', 
-                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 
-                                 'Year', 'missing', 'present', '_Complete', '_Incomplete_reason', '_Invalid_Reason', '_Valid',
-                                 'PANAS,PANAS_PositiveAffect', 'PANAS,PANAS_NegativeAffect', 'SCARED_SR,SCARED_SR_GD',
-                                 'SCARED_SR,SCARED_SR_PN', 'SCARED_SR,SCARED_SR_SC', 'SCARED_SR,SCARED_SR_SH', 
-                                 'SCARED_SR,SCARED_SR_SP','SWAN,SWAN_IN','SWAN,SWAN_HY','SWAN,SWAN_Total',
-                                 'DTS,DTS_absorption', 'DTS,DTS_appraisal', 'DTS,DTS_regulation', 'DTS,DTS_tolerance'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 
-                                    'PreInt_Demos_Fam,Child_Race_cat',
-                                   'PreInt_TxHx,psych_meds_cur', 
-                                   'PreInt_TxHx,psych_meds_past', 
-                                   'PreInt_TxHx,suicide',
-                                   'PreInt_TxHx,trauma',
-                                   'PreInt_FamHx_RDC,mdx',
-                                   'PreInt_FamHx_RDC,fdx',
-                                   'PreInt_DevHx,puberty',
-                                   'PreInt_DevHx,dev_normal',
-                                   'PreInt_DevHx,temp',
-                                   'PreInt_DevHx,skill_age',
-                                    'CBCL,CBCL', 'YSR,YSR', 'TRF,TRF', 'PSI,PSI', 'WIAT,WIAT', 'NIH_final,NIH',
-                                    'NIH_Scores,NIH', 'C3SR,C3SR', 'SWAN,SWAN', 'ESWAN,ESWAN', 'SDQ,SDQ', 
-                                    'CELF_Full', 'SCARED_SR,SCARED_SR','MFQ_SR,MFQ_SR', 'PANAS,PANAS', 'CSSRS,CSSRS',
-                                    'WISC,WISC', 'WAIS,WAIS', 'ARI_S,ARI_S', 'CIS_SR,CIS_SR', 'SAS,SAS', 'SympChck,SympChck', 'DTS,DTS'
-                                   ]
-                                    }, 
-                                    }
+                }
     asd_info = {
                 'features-parent-asd':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'ASSQ']
                 }, 
                 'features-parent-social-communication':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'SCQ', 'SAS', 'SRS', 'SRS_Pre']
                 }, 
                 'features-parent-child-mind-institute':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'SympChck']
                 }, 
                 'features-parent-mood':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'MFQ_P']
                 }
@@ -2394,31 +2350,31 @@ def features():
     other = {
             'features-Child-CBCL':
                 {
-                "filename": 'Child-features-raw.csv', 
+                "filename": 'child-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'YSR']
                 },
             'features-Parent-CBCL':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CBCL', 'CBCL_Pre']
                 },
             'features-Teacher-CBCL':
                 {
-                "filename": 'Teacher-features-raw.csv', 
+                "filename": 'teacher-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TRF', 'TRF_P']
                 },
             'features-Reading-Raw':
                 {
-                "filename": 'Child-features-raw.csv',
+                "filename": 'child-features-raw.csv',
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'TOWRE', 'WIAT']
                 },
             'features-SES':
                 {
-                "filename": 'Parent-features-raw.csv', 
+                "filename": 'parent-features-raw.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'Barratt', 'FSQ'] 
                 },

@@ -18,7 +18,7 @@ def run(release='Release11_Apr2024'):
     make_dataset.parse_csv_files(
         release=release,
         data_dir=Defaults.PHENO_DIR)
-    print(f'parsed phenotype data for {assessment}', flush=True)
+    print(f'parsed phenotype data', flush=True)
 
     # make items file (maps data dict keys to column names of each csv file)
     make_dataset.make_items(

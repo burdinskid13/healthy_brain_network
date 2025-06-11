@@ -29,14 +29,14 @@ def get_all_participant_diagnoses(
     # exclude diagnoses that have been ruled out, are in remission, or need confirmation
     df = make_dataset.exclude_diagnoses(df, dx_to_exclude)
 
-    # add new categories (including categories to be modeled)
-    df = make_dataset.define_new_categories(dataframe=df)
-
     # melt dataframe
     df = make_dataset.melt_dx(df, cols_to_keep=['Identifiers'])
 
     # add diagnosis groups that are useful later on
     df = make_dataset.add_diagnosis_groups(df)
+
+    # add new DX column for better classification of DX
+    df = make_dataset.create_refined_dx_cat(df)
 
     # add demographic info
     df_demos = make_dataset.get_demographics(
@@ -114,7 +114,6 @@ def make_data_files(
     import logging
 
     # make data files
-    df_all = pd.DataFrame()
     for assessment in ['child', 'parent', 'teacher']:
 
         # load participant info
@@ -163,19 +162,48 @@ def make_data_files(
             df_csv_all.to_csv(os.path.join(out_dir, f'{assessment}-features-{filter_col}.csv'), index=False)
 
 
+def make_all_datafiles(
+    out_dir,
+    participant_id='Identifiers'
+    ):
+    """make all datafiles (merge parent, child, teacher) and add demos to each
+    """
+    import pandas as pd
+    import os
+
+    filters = ['raw', 'Scores', 'Question']
+    for filter in filters:
+        
+        # get fpath
+        df1 = pd.read_csv(os.path.join(out_dir, f'child-features-{filter}.csv'), engine='python')
+        df2 = pd.read_csv(os.path.join(out_dir, f'parent-features-{filter}.csv'), engine='python')
+        df3 = pd.read_csv(os.path.join(out_dir, f'teacher-features-{filter}.csv'), engine='python')
+
+        # get demos
+        demos = pd.read_csv(os.path.join(out_dir, 'all_participant_diagnoses.csv'), engine='python')
+        demos_grouped = demos.groupby('Identifiers').first()
+        demo_cols = ['comorbidities_DX_Subtype', 'comorbidities_DX_Cat', 'sex', 'age_round', 
+                     'study_site', 'puberty', 'household_income', 'education', 'race', 'ethnicity']
+
+        # merge dataframes
+        df_merged = df1.merge(df2, on=participant_id).merge(df3, on=participant_id).merge(demos_grouped[demo_cols], on=participant_id)
+
+        # save merged dataframes for each `filter`
+        df_merged.to_csv(os.path.join(out_dir, f'all-features-{filter}.csv'), index=False)
+
+
 def run(release='Release11_Apr2024'):
     import os
     from hbn.constants import Defaults
     from hbn.scripts import make_train_test_split
 
-    release='Release11_Apr2024'
     clinical_dir = os.path.join(Defaults.PHENO_DIR, release, 'clinician', 'Diagnosis')
     interim_dir = os.path.join(Defaults.INTERIM_FEATURES_DIR, release)
     if not os.path.isdir(interim_dir):
         os.makedirs(interim_dir)
 
     # get all participant diagnoses
-    preprocess_interim_data.get_all_participant_diagnoses(
+    get_all_participant_diagnoses(
         fpath=os.path.join(clinical_dir, 'Diagnosis_ClinicianConsensus.csv'),
         outpath=os.path.join(interim_dir, 'all_participant_diagnoses.csv'),
         demo_dir=os.path.join(Defaults.PHENO_DIR, release)
@@ -183,12 +211,13 @@ def run(release='Release11_Apr2024'):
     print('created participant diagnosis file', flush=True)
 
     # make parent files
-    preprocess_interim_data.make_data_files(
+    make_data_files(
         items_fpath=os.path.join(Defaults.PHENO_DIR, release, 'item-names.csv'),
         participant_fpath=os.path.join(interim_dir, 'all_participant_diagnoses.csv'),
         data_dir=os.path.join(Defaults.PHENO_DIR, release),
         out_dir=interim_dir
         )
+    make_all_datafiles(out_dir=interim_dir)
     print('created new data files', flush=True)
 
     # makes test/train splits

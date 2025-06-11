@@ -308,10 +308,8 @@ def remove_mixed_nan_zero_columns(df):
 
 def preprocess(
         dataframe,
-        clf_info=None,
-        cols_to_ignore=None,
         cols_to_drop=None,
-        threshold=True,
+        threshold=.9,
         target_column=None,
         binarize_target=True
         ):
@@ -323,22 +321,22 @@ def preprocess(
         clf_info (dict of lists of scikit-learn classifiers or None): (optional) see `base_specs.features` for an example.
         cols_to_ignore (list of str or None): (optional) columns to ignore in preprocessing. Default is None.
         cols_to_drop (list of str or None): (optional) columns to drop in preprocessing. Default is None.
-        threshold (bool): threshold dataframe based on some fixed criterion. We are using 50% for columns and 20% for rows. If threshold is False, then only NaN entries are removed (no thresholding applied)
+        threshold (int or None): int to set threshold. for example, if set to .9, then features without 90% full data are removed. If threshold is None, then only NaN entries are removed (no thresholding applied)
         target_column (str): target column name. default is None
         binarize_target (bool): binarize target column if target_column is not None. default is True
     """
-
+    
     # drop features that have more than 10% missing values
-    if threshold:
-        dataframe = dataframe.dropna(thresh=dataframe.shape[0] * .10, axis='columns')
+    if threshold is not None:
+        dataframe = dataframe.dropna(thresh=dataframe.shape[0] * threshold, axis='columns')
 
-    # preprocessing on features: column transformation
-    if clf_info is not None:
-        dataframe = column_transform(
-            dataframe=dataframe, 
-            clf_info=clf_info, 
-            cols_to_ignore=cols_to_ignore
-            )
+    # # preprocessing on features: column transformation
+    # if clf_info is not None:
+    #     dataframe = column_transform(
+    #         dataframe=dataframe, 
+    #         clf_info=clf_info, 
+    #         cols_to_ignore=cols_to_ignore
+    #         )
 
     # preprocessing on target: binarize `target`
     if binarize_target:

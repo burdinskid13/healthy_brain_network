@@ -2,7 +2,7 @@
 participants=($@)
 
 # Model outname
-model_outname=december_adhd_dx/
+model_outname=june_adhd_dx/
 
 ### SET DIRECTORIES ###
 base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
@@ -15,15 +15,14 @@ model_dir=/om2/user/$(whoami)/hbn_data/interim/models/$model_outname # MODEL OUT
 pydraml=pydraml3-spec.json # pydraml base
 target=target-Diagnosis-ADHD-spec.json # target spec
 # target=target-Diagnosis-ADHD-Subtype-spec.json # target spec
-# target=target-Diagnosis-Depression-spec.json # target spec
 
 features=(
     "features-all-questions-spec.json" 
     )
  
 participants=(
-    # "participants-adhd-only-male-spec.json" \
-    "participants-adhd-only-female-spec.json" \
+    "participants-adhd-all-male-spec.json" \
+    # "participants-adhd-only-female-spec.json" \
     # "participants-adhd-only-prepubertal-spec.json" \
     # "participants-adhd-only-postpubertal-spec.json" \
     # "participants-adhd-only-female-prepubertal-spec.json" \

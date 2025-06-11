@@ -9,6 +9,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def cleanup_diagnosis_cols(df):
+
     # do some clean up
     df.columns = df.columns.str.replace('Diagnosis_ClinicianConsensus,', '')
 
@@ -17,9 +18,45 @@ def cleanup_diagnosis_cols(df):
         # num
         num_str = str(num).zfill(2)
         
-        # Replace "NaN" diagnosis with 'No Diagnosis Given: No Reason Given'
-        df.loc[df[f'DX_{num_str}']==' ',f'DX_{num_str}'] = 'No Diagnosis Given: No Reason Given'
-    df.loc[df[f'DX_{num_str}_Cat'].isna(),f'DX_{num_str}_Cat'] = 'No Diagnosis Given: No Reason Given'
+        # any 
+        df.loc[df[f'DX_{num_str}']==' ',f'DX_{num_str}'] = np.nan
+        df.loc[df[f'DX_{num_str}_Cat']==' ',f'DX_{num_str}_Cat'] = np.nan
+
+        # remove trailing whitespace
+        df[f'DX_{num_str}'] = df[f'DX_{num_str}'].str.rstrip()
+        df[f'DX_{num_str}_Cat'] = df[f'DX_{num_str}_Cat'].str.rstrip()
+
+    return df
+
+
+def create_refined_dx_cat(df):
+    """
+    Creates a new column 'DX_Cat_Name_New' in a Pandas DataFrame based on
+    'DX_Cat_Name' and 'DX_Subtype_Name'.
+
+    For rows where 'DX_Subtype_Name' is 'Autism Spectrum Disorder' or contains
+    'Attention-Deficit' or 'ADHD', the 'DX_Cat_Name_New' will take the value
+    from 'DX_Subtype_Name'. Otherwise, it will retain the value from
+    'DX_Cat_Name'.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame with columns 'DX_Cat_Name' and
+                           'DX_Subtype_Name'.
+
+    Returns:
+        pd.DataFrame: The DataFrame with the new 'DX_Cat_Name_New' column.
+    """
+    df['DX_Cat_Name_New'] = df['DX_Cat_Name'].copy()
+
+    # Condition for 'Autism Spectrum Disorder'
+    autism_condition = df['DX_Subtype_Name'] == 'Autism Spectrum Disorder'
+    df.loc[autism_condition, 'DX_Cat_Name_New'] = df.loc[autism_condition, 'DX_Subtype_Name']
+
+    # Condition for strings containing 'Attention-Deficit' or 'ADHD'
+    adhd_condition = df['DX_Subtype_Name'].str.contains('Attention-Deficit', case=False, na=False) | \
+                     df['DX_Subtype_Name'].str.contains('ADHD', case=False, na=False)
+    df.loc[adhd_condition, 'DX_Cat_Name_New'] = 'ADHD'
+    
 
     return df
 
@@ -30,7 +67,7 @@ def exclude_diagnoses(df, dx_to_exclude):
     # we're doing this by setting these diagnoses to NaN
     for dx in dx_to_exclude:
         for num in np.arange(1,11):
-            for col in [f'DX_{num:02d}', f'DX_{num:02d}_Cat', f'DX_{num:02d}_Cat_new']:
+            for col in [f'DX_{num:02d}', f'DX_{num:02d}_Cat', f'DX_{num:02d}_Cat']:
                 df.loc[df[f'DX_{num:02d}_{dx}']==1, col] = np.nan
 
     # deal with missing values and NaN
@@ -44,7 +81,7 @@ def melt_dx(df, cols_to_keep=['Identifiers']):
     dx_cols = [f'DX_{num:02d}' for num in np.arange(1,11)]
     dx_subtype = pd.melt(df, id_vars=cols_to_keep, value_vars=dx_cols, var_name='DX_Subtype', value_name='DX_Subtype_Name')
 
-    dx_cols = [f'DX_{num:02d}_Cat_new' for num in np.arange(1,11)]
+    dx_cols = [f'DX_{num:02d}_Cat' for num in np.arange(1,11)]
     dx_cat = pd.melt(df, id_vars=cols_to_keep, value_vars=dx_cols, var_name='DX_Cat', value_name='DX_Cat_Name')
 
     dx_concat = pd.concat([dx_cat, dx_subtype[['DX_Subtype', 'DX_Subtype_Name']]], axis=1)
@@ -57,7 +94,7 @@ def get_all_diagnoses(dataframe):
     """Get all diagnoses from dataframe
 
     Args:
-        dataframe (pd dataframe): must contain cols `DX_{num_str}_Cat_new` and `DX_{num_str}`. 
+        dataframe (pd dataframe): must contain cols `DX_{num_str}_Cat` and `DX_{num_str}`. 
     Returns: 
         diagnoses_all (dict): dict of all diagnoses and subtypes
     """
@@ -70,7 +107,7 @@ def get_all_diagnoses(dataframe):
         num_str = str(num).zfill(2)
 
         # get categories
-        diagnoses = dataframe[f'DX_{num_str}_Cat_new'].unique()
+        diagnoses = dataframe[f'DX_{num_str}_Cat'].unique()
         subtypes = dataframe[f'DX_{num_str}'].unique()
 
         diagnoses_all.extend(diagnoses)
@@ -85,7 +122,7 @@ def filter_dataframe(dataframe, column='diagnosis', value='ADHD'):
     """ Return participant identifiers for either `diagnosis` (e.g., ADHD) or `subtype` ('ADHD-Combined Type')
 
     Args:
-        dataframe (pd dataframe): must contain columns `DX_{num_str}_Cat_new` and `DX_{num_str}`.
+        dataframe (pd dataframe): must contain columns `DX_{num_str}_Cat` and `DX_{num_str}`.
         column (str): must be either 'diagnosis' or 'subtype'
         value (str): e.g. 'ADHD'    
     Returns:
@@ -98,7 +135,7 @@ def filter_dataframe(dataframe, column='diagnosis', value='ADHD'):
 
         # diagnosis or subtype?
         if column=='diagnosis':
-            col = f'DX_{num_str}_Cat_new'
+            col = f'DX_{num_str}_Cat'
         elif column=='subtype':
             col = f'DX_{num_str}'
 
@@ -117,48 +154,6 @@ def filter_dataframe(dataframe, column='diagnosis', value='ADHD'):
     dataframe_filtered.loc[dataframe_filtered['comorbidities']==0, 'only_diagnosis'] = True
 
     return dataframe_filtered
-
-
-def define_new_categories(dataframe):
-    """define new disorder categories using labels from `DX_<num>_Cat`
-
-    Args:
-        dataframe (pd dataframe):  Must contain columns `DX_{num_str}_Cat_new` and `DX_{num_str}`.
-    Returns:
-        dataframe (pd dataframe): contains columns `DX_{num_str}_Cat_new`
-    """
-    import pandas as pd
-
-    def new_categories(x,y):
-        adhd_list = ['ADHD', 'Attention-Deficit']
-        autism_list = ['Autism']
-        learning_list = ['Specific Learning Disorder with Impairment in Reading']
-        if isinstance(x, str):
-            adhd = any(map(x.__contains__, adhd_list))
-            autism = any(map(x.__contains__, autism_list))
-            learning = any(map(x.__contains__, learning_list))
-            if adhd:
-                return 'ADHD'
-            elif autism:
-                return 'Autism Spectrum Disorder'
-            elif learning:
-                return 'Specific Learning Disorder with Impairment in Reading'
-            else:
-                return y
-
-        
-    dx_to_model = ['Anxiety Disorders', 'Autism Spectrum Disorder', 'ADHD', 'No Diagnosis Given: No Reason Given',
-                'No Diagnosis Given', 'No Diagnosis Given: Incomplete Eval',
-                'Specific Learning Disorder with Impairment in Reading']
-
-    for num in range(1,11):
-        
-        num_str = str(num).zfill(2)
-        
-        ## divide neurodevelopmental disorders into other categories
-        dataframe[f'DX_{num_str}_Cat_new'] = dataframe.apply(lambda x: new_categories(x[f'DX_{num_str}'], x[f'DX_{num_str}_Cat']), axis=1)
-
-    return dataframe
 
 
 def _remove_redundant_str(df):
@@ -552,8 +547,11 @@ def get_demographics(
 
 def _add_comorbidities(df):
     # get comorbidities
-    dx_counts = df.groupby('Identifiers')['DX_Cat_Name'].apply(lambda x: x.nunique()-1).reset_index(name='comorbidities')
-    df = dx_counts.merge(df, on='Identifiers')
+    dx_counts_cat = df.groupby('Identifiers')['DX_Cat_Name'].apply(lambda x: x.nunique()-1).reset_index(name='comorbidities_DX_Cat')
+    dx_counts_subtype = df.groupby('Identifiers')['DX_Subtype_Name'].apply(lambda x: x.nunique()-1).reset_index(name='comorbidities_DX_Subtype')
+    dx_counts_merged = dx_counts_subtype.merge(dx_counts_cat, on='Identifiers')
+    
+    df = dx_counts_merged.merge(df, on='Identifiers')
 
     return df
 
@@ -566,21 +564,26 @@ def _add_development_stage(df):
     return df
 
 
-def _add_group_reading(df, reading='Specific Learning Disorder with Impairment in Reading'):
+def _add_group_reading(df):
     import pandas as pd
     from scipy import stats as sp
+
+    reading='Specific Learning Disorder with Impairment in Reading'
 
     # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
     df_all = pd.DataFrame()
     for _, group in df.groupby('Identifiers'):
-        dx = group['DX_Cat_Name'].values
+        dx = group['DX_Subtype_Name'].values
+
+        any_adhd = any("ADHD" in str(item) or "Attention-Deficit" in str(item) for item in dx)
+
         if 'No Diagnosis Given' in dx:
             group['DX_Reading'] = 'No Diagnosis Given'
-        elif (reading in dx) and (sum(group['comorbidities'])==0):
+        elif (reading in dx) and (sum(group['comorbidities_DX_Subtype'])==0):
             group['DX_Reading'] = 'reading_no_comorbidities'
-        elif ('ADHD' in dx) and (reading not in dx):
+        elif (any_adhd) and (reading not in dx):
             group['DX_Reading'] = 'adhd_no_reading' 
-        elif reading in dx and (sum(group['comorbidities'])>0):
+        elif reading in dx and (sum(group['comorbidities_DX_Subtype'])>0):
             group['DX_Reading'] = 'reading_all_comorbidities' 
         else:
             group['DX_Reading'] = 'other_diagnoses'
@@ -589,19 +592,22 @@ def _add_group_reading(df, reading='Specific Learning Disorder with Impairment i
     return df_all
 
 
-def _add_group_adhd(df, adhd='ADHD'):
+def _add_group_adhd(df):
     import pandas as pd
     from scipy import stats as sp
 
     # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
     df_all = pd.DataFrame()
     for _, group in df.groupby('Identifiers'):
-        dx = group['DX_Cat_Name'].values
+        dx = group['DX_Subtype_Name'].values
+
+        any_adhd = any("ADHD" in str(item) or "Attention-Deficit" in str(item) for item in dx)
+
         if 'No Diagnosis Given' in dx:
             group['DX_ADHD'] = 'No Diagnosis Given'
-        elif (adhd in dx) and (sum(group['comorbidities'])==0):
+        elif (any_adhd) and (sum(group['comorbidities_DX_Subtype'])==0):
             group['DX_ADHD'] = 'adhd_no_comorbidities'
-        elif ('ADHD' in dx) and (sum(group['comorbidities'])>0):
+        elif (any_adhd) and (sum(group['comorbidities_DX_Subtype'])>0):
             group['DX_ADHD'] = 'adhd_all_comorbidities' 
         else:
             group['DX_ADHD'] = 'other_diagnoses'
@@ -610,29 +616,29 @@ def _add_group_adhd(df, adhd='ADHD'):
     return df_all
 
 
-def _add_group_depression(df, depression='Depressive Disorders'):
+def _add_group_depression(df):
     import pandas as pd
-    from scipy import stats as sp
 
-    # get rows that contain 'ADHD'
-    mask = df['DX_Cat_Name'].str.contains('ADHD', case=False)
-    mask = mask.fillna(False)
-
-    # assign new groups
-    df.loc[mask, 'DX_Cat_Name'] = df.loc[mask, 'DX_Subtype_Name']
+    depress_subtypes = df[df['DX_Cat_Name']=='Depressive Disorders']['DX_Subtype_Name'].unique().tolist()
 
     # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
     df_all = pd.DataFrame()
     for _, group in df.groupby('Identifiers'):
-        dx = group['DX_Cat_Name'].values
+        dx = group['DX_Subtype_Name'].values
+
+        any_adhd = any("ADHD" in str(item) or "Attention-Deficit" in str(item) for item in dx)
+        any_depression = any(s in dx for s in depress_subtypes)
+
         if 'No Diagnosis Given' in dx:
             group['DX_Depression'] = 'No Diagnosis Given'
-        elif (depression in dx) and not (any("ADHD" in str(item) for item in dx)):
+        elif any_depression and not any_adhd:
             group['DX_Depression'] = 'Depression (no ADHD)'
-        elif (depression not in dx) and ('ADHD-Combined Type' in dx):
+        elif not (any_depression) and ('ADHD-Combined Type' in dx):
             group['DX_Depression'] = 'ADHD-Combined Type (no Depression)'
-        elif (depression not in dx) and ('ADHD-Inattentive Type' in dx):
+        elif not (any_depression) and ('ADHD-Inattentive Type' in dx):
             group['DX_Depression'] = 'ADHD-Inattentive Type (no Depression)'
+        elif not (any_depression) and any("Attention-Deficit" in str(item) for item in dx):
+            group['DX_Depression'] = 'Other/Unspecified ADHD (no Depression)'
         else:
             group['DX_Depression'] = 'other_diagnoses'
         df_all = pd.concat([df_all, group]) 
@@ -640,29 +646,29 @@ def _add_group_depression(df, depression='Depressive Disorders'):
     return df_all
 
 
-def _add_group_anxiety(df, anxiety='Anxiety Disorders'):
+def _add_group_anxiety(df):
     import pandas as pd
-    from scipy import stats as sp
-
-    # get rows that contain 'ADHD'
-    mask = df['DX_Cat_Name'].str.contains('ADHD', case=False)
-    mask = mask.fillna(False)
-
-    # assign new groups
-    df.loc[mask, 'DX_Cat_Name'] = df.loc[mask, 'DX_Subtype_Name']
+    
+    anxiety_subtypes = df[df['DX_Cat_Name']=='Anxiety Disorders']['DX_Subtype_Name'].unique().tolist()
 
     # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
     df_all = pd.DataFrame()
     for _, group in df.groupby('Identifiers'):
-        dx = group['DX_Cat_Name'].values
+        dx = group['DX_Subtype_Name'].values
+
+        any_adhd = any("ADHD" in str(item) or "Attention-Deficit" in str(item) for item in dx)
+        any_anxiety = any(s in dx for s in anxiety_subtypes)
+
         if 'No Diagnosis Given' in dx:
             group['DX_Anxiety'] = 'No Diagnosis Given'
-        elif (anxiety in dx) and not (any("ADHD" in str(item) for item in dx)):
+        elif (any_anxiety) and not (any_adhd):
             group['DX_Anxiety'] = 'Anxiety (no ADHD)'
-        elif (anxiety not in dx) and ('ADHD-Combined Type' in dx):
+        elif not (any_anxiety) and ('ADHD-Combined Type' in dx):
             group['DX_Anxiety'] = 'ADHD-Combined Type (no Anxiety)'
-        elif (anxiety not in dx) and ('ADHD-Inattentive Type' in dx):
+        elif not (any_anxiety) and ('ADHD-Inattentive Type' in dx):
             group['DX_Anxiety'] = 'ADHD-Inattentive Type (no Anxiety)'
+        elif not (any_anxiety) and any("Attention-Deficit" in str(item) for item in dx):
+            group['DX_Anxiety'] = 'Other/Unspecified ADHD (no Anxiety)'
         else:
             group['DX_Anxiety'] = 'other_diagnoses'
         df_all = pd.concat([df_all, group]) 
@@ -670,21 +676,52 @@ def _add_group_anxiety(df, anxiety='Anxiety Disorders'):
     return df_all
 
 
+def _add_group_autism(df):
+    import pandas as pd
+    
+    # loop over participant groups and assign new groups- ORDER OF STATEMENTS MATTERS
+    df_all = pd.DataFrame()
+    for _, group in df.groupby('Identifiers'):
+        dx = group['DX_Subtype_Name'].values
+
+        any_adhd = any("ADHD" in str(item) or "Attention-Deficit" in str(item) for item in dx)
+        any_asd = 'Autism Spectrum Disorder' in dx
+
+        if 'No Diagnosis Given' in dx:
+            group['DX_ASD'] = 'No Diagnosis Given'
+        elif (any_asd) and not (any_adhd):
+            group['DX_ASD'] = 'ASD (no ADHD)'
+        elif not (any_asd) and ('ADHD-Combined Type' in dx):
+            group['DX_ASD'] = 'ADHD-Combined Type (no ASD)'
+        elif not (any_asd) and ('ADHD-Inattentive Type' in dx):
+            group['DX_ASD'] = 'ADHD-Inattentive Type (no ASD)'
+        elif not (any_asd) and any("Attention-Deficit" in str(item) for item in dx):
+            group['DX_ASD'] = 'Other/Unspecified ADHD (no ASD)'
+        else:
+            group['DX_ASD'] = 'other_diagnoses'
+        df_all = pd.concat([df_all, group]) 
+
+    return df_all
+
+
 def add_diagnosis_groups(df):
     # add comorbidities
-    df = _add_comorbidities(df=df)
+    df = _add_comorbidities(df)
 
     # add reading-specific cols
-    df = _add_group_reading(df=df, reading='Specific Learning Disorder with Impairment in Reading')
+    df = _add_group_reading(df)
 
     # add adhd-specific cols
-    df = _add_group_adhd(df=df, adhd='ADHD')
+    df = _add_group_adhd(df)
 
     # add depression-specific cols
-    df = _add_group_depression(df=df, depression='Depressive Disorders')
+    df = _add_group_depression(df)
 
     # add anxiety-specific cols
-    df = _add_group_anxiety(df=df, anxiety='Anxiety Disorders')
+    df = _add_group_anxiety(df)
+
+    # add autism-specific cols
+    df = _add_group_autism(df)
 
     return df
 

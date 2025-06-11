@@ -179,12 +179,11 @@ def make_features(
 
     # drop duplicates 
     df_merged = df_merged.drop_duplicates().dropna(how='all', axis=1)
-
+    
     # preprocess combined dataframe and drop participant id
+    # preprocess is just dropping columns with X% NaN values, dropping columns specified in `cols_to_drop`, binarize target column
     features_preprocessed = build_features.preprocess(
                     dataframe=df_merged,  
-                    clf_info=feature_info['clf_info'],
-                    cols_to_ignore=filter_cols, 
                     cols_to_drop=feature_info['cols_to_drop'],
                     threshold=feature_info['threshold'],
                     target_column=target_info['target_column'],

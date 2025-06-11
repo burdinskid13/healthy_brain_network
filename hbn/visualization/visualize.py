@@ -5,8 +5,8 @@ import os
 import seaborn as sns
 
 def plotting_style(palette='Paired'):
-    plt.style.use('seaborn-poster') # ggplot
-    params = {'axes.labelsize': 10,
+    plt.style.use('seaborn-v0_8-whitegrid') # ggplot
+    params = {'axes.labelsize': 9,
             'axes.titlesize': 15,
             'legend.fontsize': 10,
             'xtick.labelsize': 10,
@@ -234,6 +234,7 @@ def pointplot(
         y='roc_auc_score',
         x='development_stage', 
         hue=None, 
+        hue_order=None,
         order=None, 
         title='', 
         ylim=[0.4,1],
@@ -248,14 +249,17 @@ def pointplot(
         xticks=True,
         xticklabels=None,
         marker_color=None,
-        bbox_to_anchor=(.2, .4)
+        bbox_to_anchor=(.2, .4),
+        textwrapping_x=True,
         ): 
     if marker_color is not None:
         palette = marker_color
     ax = sns.pointplot(x=x, y=y, hue=hue, data=data, 
-                        order=order, ax=ax, join=True, 
+                        order=order, ax=ax, join=True, hue_order=hue_order,
                         ci=ci, errwidth=0.5, capsize=0.2, palette=marker_color,
                         )
+    for line in ax.lines:
+        line.set_linewidth(0.5)
     plt.title(title)
     if not legend:
         ax.get_legend().set_visible(False)
@@ -264,7 +268,7 @@ def pointplot(
         if not legend:
             ax.get_legend().set_visible(False)
         else:
-            ax.legend(bbox_to_anchor=bbox_to_anchor, loc=2, borderaxespad=0.0)
+            ax.legend(bbox_to_anchor=bbox_to_anchor, loc=2, borderaxespad=0.0, frameon=False)
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
     if ylabel is None:
@@ -283,56 +287,72 @@ def pointplot(
         plt.xticks(rotation=0)
     else:
         plt.xticks([])
+    
+    if textwrapping_x:
+        wrap_xticklabels(ax,10)
 
     return ax
 
-def barplot(ax, 
+def barplot( 
             data,
+            ax=None,
             y='roc_auc_score',  
             x='development_stage', 
+            ylabel='ROC AUC',
             hue=None, 
+            hue_order=None,
             order=None, 
             title='', 
-            ylabel='ROC AUC',
             xlabel='',
             subplot=None,
             labelsize=20,
             x_pos=-0.1,
             y_pos=1.1,
-            ylim=[0.4,1],
+            ylim=None,
             legend=True,
             xticks=True,
             xticklabels=None,
-            bbox_to_anchor=(.2, .4)
+            textwrapping_x=True,
+            textwrapping_y=False,
+            bbox_to_anchor=(.2, .4),
+            log_scale=False
             ): 
+    import textwrap
+
     # plot data
-    ax = sns.barplot(x=x, y=y, hue=hue, data=data, order=order, ax=ax, errwidth=0.5, capsize=0.2)
+    ax = sns.barplot(x=x, y=y, hue=hue, hue_order=hue_order, data=data, order=order, ax=ax, errwidth=0.5, capsize=0.2)
+    if log_scale:
+        ax.set_yscale('log')
     plt.title(title)
     if hue:
         # set legend to False
         if not legend:
             ax.get_legend().remove()
         else:
-            ax.legend(bbox_to_anchor=bbox_to_anchor, loc=2, borderaxespad=0.0)
+            ax.legend(bbox_to_anchor=bbox_to_anchor, loc=2, borderaxespad=0.0, frameon=False)
+    if ylabel is None:
+        ylabel = y
+    if xlabel is None:
+        xlabel = x
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
-    if ylabel is None:
-        ax.set_ylabel(y)
-    if xlabel is None:
-        ax.set_xlabel(x)
-    ax.set_ylim(ylim)
+    if ylim is not None:
+        ax.set_ylim(ylim)
     ax.text(x_pos, y_pos, subplot, transform=ax.transAxes, fontsize=labelsize, verticalalignment='top')
-    # remove x ticks from x axis
+    # xticklabels
     if xticklabels is None:
-        ax.xaxis.set_ticklabels(ax.get_xticklabels())
-    else:
-        ax.xaxis.set_ticklabels(xticklabels)
+        xticklabels = ax.get_xticklabels()
+    ax.xaxis.set_ticklabels(xticklabels)
     # remove x ticks from x axis
-    if xticks:
-        plt.xticks(rotation=0) # ha='right'
-    else:
+    if not xticks:
         plt.xticks([])
+    if textwrapping_x:
+        wrap_xticklabels(ax,10)
+    if textwrapping_y:
+        wrap_yticklabels(ax,15)
     sns.despine()
+
+    plt.tight_layout()
 
     return ax
 
@@ -526,14 +546,23 @@ def circular_barplot(df, values='value', labels='name', group='group', extra_cus
     
     plt.show()
 
-def wrap_labels(ax, width, break_long_words=False):
+def wrap_yticklabels(ax, width=12, break_long_words=False):
     import textwrap
-
     labels = []
     for label in ax.get_yticklabels():
         text = label.get_text()
         labels.append(textwrap.fill(text, width=width, break_long_words=break_long_words))
     ax.set_yticklabels(labels, rotation=0)
+
+    return ax
+
+def wrap_xticklabels(ax, width=12, break_long_words=False):
+    import textwrap
+    labels = []
+    for label in ax.get_xticklabels():
+        text = label.get_text()
+        labels.append(textwrap.fill(text, width=width, break_long_words=break_long_words))
+    ax.set_xticklabels(labels, rotation=0)
 
     return ax
 
@@ -573,7 +602,7 @@ def plot_features_subplot(df,
     ax.set_ylabel(f'Top {top_features} features')
     ax.set_xlabel('Feature Importance') 
     ax.text(x_pos, y_pos, subplot, transform=ax.transAxes, fontsize=labelsize, verticalalignment='top')
-    wrap_labels(ax,12)
+    wrap_yticklabels(ax,12)
 
     plt.tight_layout()
     sns.despine()
@@ -602,35 +631,221 @@ def plot_stacked(
         ylabel='Selected Features (%)',
         ax=None,
         subplot='',
-        colors=None
+        colors=None,
+        xlabel='',
+        labelsize=20,
+        x_pos=-0.1,
+        y_pos=1.2,
+        ylim=[0.4,1],
+        legend=True,
+        xticks=True,
+        xticklabels=None,
+        textwrapping_x=True,
+        textwrapping_y=False,
+        bbox_to_anchor=(.2, .4)
         ): 
     """plot % of features for each topic for selected model and overall model (features input to model)"""
     if ax is None:
         ax = plt.subplot(111)
     
     # define plot
-    df.plot(kind='bar', legend=True, stacked=True, width=.95, ax=ax)
+    df.plot(kind='bar', legend=True, stacked=True, width=.9, ax=ax)
     if colors is not None:
-        df.plot(kind='bar', legend=True, stacked=True, width=.95, colors=colors, ax=ax)
-    
+        df.plot(kind='bar', legend=True, stacked=True, width=.9, colors=colors, ax=ax)
+
+    # set legend to False
+    if not legend:
+        ax.get_legend().remove()
+    else:
+        ax.legend(bbox_to_anchor=bbox_to_anchor, loc=2, borderaxespad=0.0)
     ax.set_ylabel(ylabel)
-    ax.set_xlabel('')
-    ax.set_xticks(ax.get_xticks())
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
-    ax.text(-0.3,  1.1, subplot, transform=ax.transAxes, fontsize=20, verticalalignment='top')
-    ax.legend(frameon=False)
-    ax.get_legend().set_bbox_to_anchor((1.5, 1.05))
+    ax.set_xlabel(xlabel)
+    if ylabel is None:
+        ax.set_ylabel(y)
+    if xlabel is None:
+        ax.set_xlabel(x)
+    ax.set_ylim(ylim)
+    ax.text(x_pos, y_pos, subplot, transform=ax.transAxes, fontsize=labelsize, verticalalignment='top')
+    # xticklabels
+    if xticklabels is None:
+        xticklabels = ax.get_xticklabels()
+    ax.xaxis.set_ticklabels(xticklabels)
+    # remove x ticks from x axis
+    if not xticks:
+        plt.xticks([])
+    if textwrapping_x:
+        wrap_xticklabels(ax,10)
+    if textwrapping_y:
+        wrap_yticklabels(ax,10)
 
     plt.tight_layout()
     sns.despine()
 
     return ax
+
+
+def calculate_slopes(
+    df,
+    compare_group={'DX_Subtype_Name': 'ADHD-Combined Type', 'sex': ['male', 'female']}, 
+    overall_group={'DX_Cat_Name_New': 'ADHD', 'sex': ['male', 'female']},
+    groupby=['age_round']
+    ):
+    from hbn.visualization import raw_scores
+    from hbn.features.build_features import _index_dataframe_by_columns_values
+
+    def _filter_data(df, dict):
+        cols = []; vals = []
+        for k, v in dict.items():
+            cols.append(k)
+            if not isinstance(v, list):
+                v = [v]
+            vals.append(v)
+
+        df_out = _index_dataframe_by_columns_values(dataframe=df, columns=cols, values_list=vals)
+        df_out = df_out.groupby(['Identifiers']).first().reset_index(drop=True)
+        
+        return df_out
+
+    # filter data
+    df_compare = _filter_data(df, compare_group)
+    df_overall = _filter_data(df, overall_group)
+
+    # calculate female percentage
+    df_perc = raw_scores.calculate_sex_percentage(df_compare, df_overall, groupby=groupby)
+
+    return df_perc
+
+
+def plot_slopes(
+        df, 
+        ax=None,
+        x='age_round', 
+        y='perc', 
+        xlabel='Age', 
+        ylabel=None, 
+        hue=None, 
+        title='',
+        subplot=None,
+        labelsize=20,
+        x_pos=-0.1,
+        y_pos=1.2,
+        legend=True,
+        xticks=True,
+        xticklabels=None,
+        bbox_to_anchor=(.2, .4),
+        col=None, 
+        height=4, 
+        aspect=1, 
+        marker='o',
+        fit_reg=True,
+        ylim=[0,100],
+        linestyle='-',
+        textwrapping_x=True,
+        textwrapping_y=False
+        ): 
+
+    scatter = True
+    if marker is None:
+        scatter=False
     
+    # plot data
+    if ax is None:
+        fg = sns.lmplot(x=x, y=y, data=df, hue=hue, col=col, height=height, scatter=scatter, scatter_kws={'s': 90}, aspect=aspect)
+        ax = fg.axes[0, 0] 
+    else:
+        if hue is not None:
+            hues = df[hue].unique()
+            colors = sns.color_palette('Paired', len(hues))
+            for (val, color) in zip(hues, colors):
+                ax = sns.regplot(x=x, y=y, data=df[df[hue]==val], color=color, 
+                                 marker=marker, scatter=scatter, scatter_kws={'s': 90}, ax=ax,
+                                 line_kws={'linestyle': linestyle}, label=val, fit_reg=True)    # label=val, 
+        else:
+            ax = sns.regplot(x=x, y=y, data=df, ax=ax)
+    if fit_reg:
+        # fit regression line
+        sns.regplot(x=x, y=y, data=df, fit_reg=True, scatter=False, 
+                color='lightgray', line_kws={'color': 'lightgray', 'linestyle': '--','alpha': 0.6}, ci=95, ax=ax)
+    plt.title(title)
+    if hue:
+        # set legend to False
+        if not legend:
+            ax.legend().remove()
+        else:
+            ax.legend(bbox_to_anchor=bbox_to_anchor, loc=2, borderaxespad=0.0)
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+    if ylabel is None:
+        ax.set_ylabel(y)
+    if xlabel is None:
+        ax.set_xlabel(x)
+    ax.set_ylim(ylim)
+    ax.text(x_pos, y_pos, subplot, transform=ax.transAxes, fontsize=labelsize, verticalalignment='top')
+    # xticklabels
+    if xticklabels is None:
+        xticklabels = ax.get_xticklabels()
+    ax.xaxis.set_ticklabels(xticklabels)
+    # remove x ticks from x axis
+    if not xticks:
+        plt.xticks([])
+    if textwrapping_x:
+        wrap_xticklabels(ax,10)
+    if textwrapping_y:
+        wrap_yticklabels(ax,15)
+    sns.despine()
+        
+    # from hbn.visualization import stats
+    # stats.compare_slopes(df_perc[df_perc['sex']=='female'], df_perc[df_perc['sex']=='male'], alpha=0.05, x='age_round', y='perc')
 
+    return ax
 
+def scatterplot(df, 
+        x, 
+        y, 
+        ax=None,
+        hue=None, 
+        hue_order=None,
+        style=None,
+        xlabel=None, 
+        ylabel=None, 
+        subplot=None,
+        labelsize=20,
+        x_pos=-0.1,
+        y_pos=1.1,
+        ylim=None,
+        xlim=None,
+        legend=True,
+        xticks=True,
+        fit_reg=True,
+        bbox_to_anchor=(.2, .4),
+        ):
+    
+    ax = sns.scatterplot(x=x, y=y, hue=hue, style=style, data=df, hue_order=hue_order, ax=ax)
 
+    if fit_reg:
+        # fit regression line
+        sns.regplot(x=x, y=y, data=df, fit_reg=True, scatter=False, 
+                color='lightgray', line_kws={'color': 'lightgray', 'linestyle': '--','alpha': 0.6}, ci=95, ax=ax)
 
+    # set legend to False
+    if not legend:
+        ax.get_legend().remove()
+    else:
+        ax.legend(bbox_to_anchor=bbox_to_anchor, loc=2, borderaxespad=0.0)
+    if ylabel is None:
+        ylabel = y
+    if xlabel is None:
+        xlabel = x
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+    ax.set_ylim(ylim)
+    ax.set_xlim(xlim)
+    ax.text(x_pos, y_pos, subplot, transform=ax.transAxes, fontsize=labelsize, verticalalignment='top')
+    # remove x ticks from x axis
+    if not xticks:
+        plt.xticks([])
 
-
+    plt.tight_layout()
+    sns.despine()
 
     

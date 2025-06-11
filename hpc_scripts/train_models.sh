@@ -4,11 +4,11 @@
 #SBATCH --job-name=run_phenotypic_models
 #
 # Partition:
-#SBATCH --partition=normal
+#SBATCH --partition=mit_normal
 #
 # Nodes:
 #SBATCH -N 1 # one node
-#SBATCH --exclude=node[041]
+#SBATCH --exclude=node[028-029,101,142,145,279]
 #
 # Tasks:
 #SBATCH -c 1 # was 16 hyperthreaded cores 
