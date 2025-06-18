@@ -32,54 +32,10 @@ def pydraml():
         }
 
     spec_info = {
-        'pydraml1':
-        {'clf_info': 
-        [
-            ["sklearn.ensemble", "AdaBoostClassifier"],
-            ["sklearn.naive_bayes", "GaussianNB"],
-            ["sklearn.tree", "DecisionTreeClassifier", {"max_depth": 5}],
-            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 100}],
-            ["sklearn.ensemble", "ExtraTreesClassifier", {"n_estimators": 100, "class_weight": "balanced"}],
-            ["sklearn.linear_model", "LogisticRegressionCV", {"solver": "liblinear", "penalty": "l1"}],
-            ["sklearn.neural_network", "MLPClassifier", {"alpha": 1, "max_iter": 1000}],
-            ["sklearn.svm", "SVC", {"probability": True},
-            [{"kernel": ["rbf", "linear"], "C": [1, 10, 100, 1000]}]],
-        ]
-        },
-        'pydraml2':
-        {'clf_info': 
-        [
-        [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.ensemble", "ExtraTreesClassifier", {"n_estimators": 10, "class_weight": "balanced"}]], # classifier has to be last list
-        [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.linear_model", "LogisticRegressionCV", {"solver": "saga", "penalty": "l1", "max_iter": 100}]], # classifier has to be last list
-        [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]], # classifier has to be last list
-        [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.svm", "LinearSVC"]], # classifier has to be last list
-        ],
-        },
         'pydraml3':
         {'clf_info': 
-        # [
-        # [["sklearn.impute", "SimpleImputer", {"strategy": "mean", "add_indicator": True},
-        #    "sklearn.preprocessing", "StandardScaler"],
-        #    ["sklearn.impute", "SimpleImputer", {"strategy": "constant", "fill_value": None, "add_indicator": True},
-        #     "sklearn.preprocessing", "OneHotEncoder", {"handle_unknown": "ignore", "sparse_output": False, "categories": 'auto', "drop": 'if_binary', "min_frequency": 0.01},
-        #         "sklearn.preprocessing", "StandardScaler"],
-        #     ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]], # classifier has to be last list
-        # ],
         [
-            [["sklearn.impute", "SimpleImputer"],
-            ["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50}]],
-        ],
-        },
-        'pydraml4':
-        {'clf_info': 
-        [
-        [["sklearn.preprocessing", "StandardScaler"],
-            ["sklearn.linear_model","RidgeCV",{"fit_intercept": True,"normalize": True}]], # classifier has to be last list
+        ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50, "random_state": 42}],
         ],
         },
         }
@@ -2256,7 +2212,7 @@ def features():
                 "filename": 'all-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', '_Complete', '_Incomplete', 
                                  'START_DATE', 'Days_Baseline', 'Year', 'missing', 'present',
-                                 '_Invalid', '_Valid'], # cols to drop from dataframe
+                                 '_Invalid', '_Valid', 'Basic_ID'], # cols to drop from dataframe
                 "cols_to_filter": None
                 },      
                 'features-child-connors':

@@ -1,6 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore")
 import os
+import glob
 from hbn.scripts import secondlevel_model, make_firstlevel_model, make_specs
 from hbn.scripts import make_model_summary
 from hbn.models import train_model as model
@@ -16,12 +17,20 @@ def run():
     release = 'Release11_Apr2024'
     cache_dir = None
 
+    import shutil
+
     # make specs
     # make_specs.run()
 
     # define cache directory
     if cache_dir is None:
         cache_dir = os.path.expanduser('~') + '/.cache/pydra-ml/cache-wf/'
+
+        if os.path.isdir(cache_dir):
+            shutil.rmtree(cache_dir)
+        if os.path.isdir(out_dir):
+            shutil.rmtree(out_dir)
+
 
     # make model
     make_firstlevel_model.run(    
@@ -43,18 +52,18 @@ def run():
                 cache_dir=cache_dir
                 )
 
-    # # get results file
-    # results = glob.glob(f'{out_dir}/*out*/*results*.pkl')[0] # should just be one file
+    # get results file
+    results = glob.glob(f'{out_dir}/*out*/*results*.pkl')[0] # should just be one file
 
-    # # second level - make summary
-    # make_model_summary.run(
-    #                 results, # fullpath to results (.pkl)
-    #                 model_spec,
-    #                 out_dir=out_dir,
-    #                 methods=['feature'] # feature interpretability based on feature or permuation importances
-    #                 )
+    # second level - make summary
+    make_model_summary.run(
+                    results, # fullpath to results (.pkl)
+                    model_spec,
+                    out_dir=out_dir,
+                    methods=['feature'] # feature interpretability based on feature or permuation importances
+                    )
 
-    # shutil.rmtree(cache_dir)
+    shutil.rmtree(cache_dir)
 
 
 if __name__ == '__main__':
