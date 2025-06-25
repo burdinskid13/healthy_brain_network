@@ -2,14 +2,16 @@ import warnings
 warnings.filterwarnings("ignore")
 import os
 import glob
+import pandas as pd
 from hbn.scripts import secondlevel_model, make_firstlevel_model, make_specs
 from hbn.scripts import make_model_summary
 from hbn.models import train_model as model
 from hbn.constants import Defaults
+import shutil
 
 def run():
     # define directories
-    feature_spec='features-all-questions-spec.json'
+    feature_spec='features-cbcl-spec.json' #'features-all-questions-spec.json'
     participant_spec="participants-adhd-all-male-spec.json"
     pydraml_spec='pydraml3-spec.json'
     target_spec='target-Diagnosis-ADHD-spec.json'
@@ -17,10 +19,8 @@ def run():
     release = 'Release11_Apr2024'
     cache_dir = None
 
-    import shutil
-
     # make specs
-    # make_specs.run()
+    make_specs.run()
 
     # define cache directory
     if cache_dir is None:
@@ -64,6 +64,13 @@ def run():
                     )
 
     shutil.rmtree(cache_dir)
+
+    # check summary results
+    df = pd.read_csv(os.path.join(out_dir, 'model-summary.csv'))
+
+    # get data and print summary
+    df1 = df[df['data']=='model-data']
+    print(df1[['roc_auc_score', 'f1_score', 'precision_score', 'recall_score']].mean())
 
 
 if __name__ == '__main__':

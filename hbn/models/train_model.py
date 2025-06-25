@@ -127,7 +127,11 @@ def get_model_metrics(results, spec_info):
         df = pd.DataFrame(np.array(res[1].output.score), columns=spec_info['metrics'])
         df['data'] = data
         df['splits'] = df.index
-        df['clf'] = res[0]['ml_wf.clf_info'][-1][1] # get classifier name (should always be the last list element in list)
+        try:
+            _, class_name, _ =  res[0]['ml_wf.clf_info']
+        except:
+            _, class_name =  res[0]['ml_wf.clf_info']
+        df['clf'] = class_name
 
         # check for feature selection
         strategy = None

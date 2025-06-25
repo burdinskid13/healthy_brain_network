@@ -15,10 +15,11 @@ def pydraml():
         "permute" : [True, False],
         "group_var" : None,
         "n_splits" : 10,
+        'split_method': 'stratified_kfold', # 'group_shuffle_split' is the other option
         "test_size" : .2,
         "permute" : [True, False],
         "oversample": True,
-        "feature_selection": True,
+        "feature_selection": True, # this is in beta
         "feature_selection_strategy": 'intersection', # 'intersection or 'union'
         "gen_feature_importance" : True,
         "gen_permutation_importance" : True,
@@ -28,14 +29,14 @@ def pydraml():
         "nsamples" : "auto",
         "l1_reg" : "aic",
         "plot_top_n_shap": 10,
-        "metrics" : ['roc_auc_score'] 
+        "metrics" : ['roc_auc_score', 'f1_score', 'precision_score', 'recall_score'] 
         }
 
     spec_info = {
         'pydraml3':
         {'clf_info': 
         [
-        ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50, "random_state": 42}],
+        ["sklearn.ensemble", "RandomForestClassifier", {"n_estimators": 50, "random_state": 42, "class_weight": 'balanced'}], # 'class_weight': None
         ],
         },
         }
@@ -2251,17 +2252,11 @@ def features():
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
                 "cols_to_filter": ['Identifiers', 'CELF_Full_5to8', 'CELF_Full_9to21', 'CELF_Meta', 'EVT', 'PPVT', 'GFTA', 'CTOPP', 'TOWRE', 'CELF', 'PreInt_Demos_Fam,Child_Race_cat']
                 }, 
-                'features-parent-cbcl':
+                'features-cbcl':
                 {
-                "filename": 'parent-features-Question.csv', 
+                "filename": 'all-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'CBCL', 'CBCL_Pre', 'PreInt_Demos_Fam,Child_Race_cat']
-                }, 
-                'features-teacher-cbcl':
-                {
-                "filename": 'parent-features-Question.csv', 
-                "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', 'START_DATE', 'Study', 'Days_Baseline', 'Year', 'missing', 'present'], # cols to drop from dataframe
-                "cols_to_filter": ['Identifiers', 'TRF', 'TRF_Pre', 'PreInt_Demos_Fam,Child_Race_cat']
+                "cols_to_filter": ['Identifiers', 'CBCL', 'CBCL_Pre', 'TRF', 'YSR']
                 }, 
                 'features-parent-anxiety':
                 {
