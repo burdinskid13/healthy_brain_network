@@ -69,10 +69,17 @@ def run(
 
     # loop over results and get feature and permuation importances
     for res in data:
+
+        # get clf etc.
+        try:
+            _, clf, _ =  res[0]['ml_wf.clf_info']
+        except:
+            _, clf =  res[0]['ml_wf.clf_info']
+
         # only if data are not permuted
         if not res[0]['ml_wf.permute']:
             for method in methods:
-                df = train_model.feature_interpretability(results=res[1], spec_info=spec_info, method=method)
+                df = train_model.feature_interpretability(results=res[1], clf=clf)
                 if not df.empty: # only save if dataframe is not empty
                     df['model'] = model_name
                     df = add_columns(df, info=spec_info)
@@ -80,7 +87,7 @@ def run(
                     print('feature summary saved to disk')
 
     # get model summary (and save to disk)
-    model_dataframe = train_model.get_model_metrics(results=data, spec_info=spec_info)
+    model_dataframe = train_model.get_model_metrics(results=data, spec_info=spec_info, clf=clf)
     
     if not model_dataframe.empty: # only save if dataframe is not empty
         model_dataframe['model'] = model_name

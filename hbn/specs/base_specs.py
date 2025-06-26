@@ -18,7 +18,7 @@ def pydraml():
         'split_method': 'stratified_kfold', # 'group_shuffle_split' is the other option
         "test_size" : .2,
         "permute" : [True, False],
-        "oversample": True,
+        "oversampling_method": 'smote', # 'smote', 'random_over','smote_tomek', 'smote_enn' or None
         "feature_selection": True, # this is in beta
         "feature_selection_strategy": 'intersection', # 'intersection or 'union'
         "gen_feature_importance" : True,

@@ -48,12 +48,9 @@ def train(
     wf = gen_workflow(spec_info, cache_dir=cache_dir)
     run_workflow(wf, "cf", {'n_procs': 1})
 
-def feature_interpretability(results, spec_info, method='feature'):
+def feature_interpretability(results, clf):
     import pandas as pd
     import numpy as np
-
-    # get clf
-    clf = results.output.model.steps[1][0]
 
     # also get model featuers directly from the source
     feature_names = np.array(results.output.feature_names)
@@ -71,12 +68,6 @@ def feature_interpretability(results, spec_info, method='feature'):
     df1['feature_importances'] = feature_importances
     df1['feature_importances_names'] = feature_names
     df1['clf'] = clf
-
-    # df2 = order_across_splits(results=results, method=method)
-    # df3 = model_based_importance(results=results)
-
-    # # concat into features dataframe
-    # df_features = pd.concat([df1, df2, df3], axis=1)
 
     return df1
 
@@ -102,7 +93,7 @@ def load_results(results, spec_file):
     return results, spec_info
 
 
-def get_model_metrics(results, spec_info):
+def get_model_metrics(results, spec_info, clf):
     """get model metrics for `results`. code has only been tested on results which have one classifier.
 
     Args: 
@@ -127,18 +118,14 @@ def get_model_metrics(results, spec_info):
         df = pd.DataFrame(np.array(res[1].output.score), columns=spec_info['metrics'])
         df['data'] = data
         df['splits'] = df.index
-        try:
-            _, class_name, _ =  res[0]['ml_wf.clf_info']
-        except:
-            _, class_name =  res[0]['ml_wf.clf_info']
-        df['clf'] = class_name
+        df['clf'] = clf
 
         # check for feature selection
         strategy = None
         if spec_info['feature_selection']:
             strategy = spec_info['feature_selection_strategy']
         df['feature_selection_strategy'] = strategy
-        df['feature_selection'] = spec_info['feature_selection']
+        df['oversampling_method'] = spec_info['oversampling_method']
         df['number_of_features'] = len(res[1].output.feature_names)
 
         df_all = pd.concat([df_all, df])

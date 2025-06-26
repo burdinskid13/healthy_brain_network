@@ -31,7 +31,6 @@ def run():
         if os.path.isdir(out_dir):
             shutil.rmtree(out_dir)
 
-
     # make model
     make_firstlevel_model.run(    
                         feature_spec=os.path.join(Defaults.MODEL_SPECS_DIR, feature_spec),
@@ -42,8 +41,8 @@ def run():
                         out_dir=out_dir
                         )
 
-    # train firstlevel model
-    features = os.path.join(out_dir, f'features-train.csv')
+    # # train firstlevel model
+    # features = os.path.join(out_dir, f'features-train.csv')
     model_spec = os.path.join(out_dir, f'model_spec-train.json')
     model.train(
                 model_spec=model_spec,
@@ -52,7 +51,7 @@ def run():
                 cache_dir=cache_dir
                 )
 
-    # get results file
+    # # get results file
     results = glob.glob(f'{out_dir}/*out*/*results*.pkl')[0] # should just be one file
 
     # second level - make summary
