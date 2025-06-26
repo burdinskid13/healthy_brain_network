@@ -42,7 +42,7 @@ def run():
                         )
 
     # # train firstlevel model
-    # features = os.path.join(out_dir, f'features-train.csv')
+    features = os.path.join(out_dir, f'features-train.csv')
     model_spec = os.path.join(out_dir, f'model_spec-train.json')
     model.train(
                 model_spec=model_spec,
