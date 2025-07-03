@@ -3,7 +3,7 @@
 #SBATCH --job-name=summarize_models
 #
 # Partition:
-#SBATCH --partition=use-everything
+#SBATCH --partition=mit_normal
 #
 # Nodes:
 #SBATCH -N 1 # one node

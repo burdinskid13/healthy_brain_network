@@ -4,20 +4,19 @@
 #SBATCH --job-name=run_phenotypic_models
 #
 # Partition:
-#SBATCH --partition=mit_normal
+#SBATCH --partition=ou_bcs_normal
 #
 # Nodes:
 #SBATCH -N 1 # one node
-#SBATCH --exclude=node[028-029,101,142,145,279]
 #
 # Tasks:
-#SBATCH -c 1 # was 16 hyperthreaded cores 
+#SBATCH -c 16 # was 16 hyperthreaded cores 
 #
 # Memory:
-#SBATCH --mem=5G
+#SBATCH --mem=15G
 #
 # Wall clock limit:
-#SBATCH --time=02:00:00
+#SBATCH --time=03:00:00
 # 
 # Email Updates:
 #SBATCH --mail-user=maedbh@mit.edu
@@ -37,7 +36,7 @@ pydraml=(${args[-1]})
 ### SET DIRECTORIES - YOU MAY HAVE TO CHANGE VIRTUAL ENVIRONMENT PATH###
 source ~/.bash_profile # set paths
 source ~/.bashrc # set paths
-source /om2/user/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
+source /orcd/data/satra/001/users/$(whoami)/bin/miniconda3/bin/activate healthy-brain-network
 
 # test -- write out output
 # set -x
@@ -54,7 +53,7 @@ echo "specs are saved in ${spec_dir}, data are saved in ${data_dir}"
 echo "base directory is: ${base_dir}"
 
 # Define scratch directory
-scratch=/om2/scratch/tmp/$(whoami)/HBN_Models/ # assign working directory
+scratch=/orcd/scratch/bcs/001/$(whoami)/HBN_Models/ # assign working directory
 export SUBJECT_SPEC_DIR=$scratch
 
 # Define python scripts

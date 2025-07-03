@@ -1,0 +1,25 @@
+features-all-questions-spec.json, target-Diagnosis-ADHD-Subtype-spec.json, pydraml3-spec.json, participants-adhd-combined_type-male-spec.json,will be saved to: /orcd/data/satra/001/users/maedbh/hbn_data/interim/models/Release11_Apr2024/july_adhd_dx_subtypes/
+specs are saved in /orcd/data/satra/001/users/maedbh/healthy_brain_network/model_specs, data are saved in /orcd/data/satra/001/users/maedbh/hbn_data/interim/phenotypes/Release11_Apr2024
+base directory is: /orcd/data/satra/001/users/maedbh/healthy_brain_network
+created pydraml specs, saved to /orcd/data/satra/001/users/maedbh/healthy_brain_network/model_specs
+created participant specs, saved to /orcd/data/satra/001/users/maedbh/healthy_brain_network/model_specs
+created feature specs, saved to /orcd/data/satra/001/users/maedbh/healthy_brain_network/model_specs
+created target specs, saved to /orcd/data/satra/001/users/maedbh/healthy_brain_network/model_specs
+run phenotypic models
+created pydraml specs, saved to /orcd/data/satra/001/users/maedbh/healthy_brain_network/model_specs
+created participant specs, saved to /orcd/data/satra/001/users/maedbh/healthy_brain_network/model_specs
+created feature specs, saved to /orcd/data/satra/001/users/maedbh/healthy_brain_network/model_specs
+created target specs, saved to /orcd/data/satra/001/users/maedbh/healthy_brain_network/model_specs
+combined features and targets
+filtered participants
+created new file: features-train.csv and model spec file: model_spec-train.json in /orcd/scratch/bcs/001/maedbh/HBN_Models//2025-07-03_05-52-08-91
+created new file: features-test.csv and model spec file: model_spec-test.json in /orcd/scratch/bcs/001/maedbh/HBN_Models//2025-07-03_05-52-08-91
+changing directory to /orcd/scratch/bcs/001/maedbh/HBN_Models//2025-07-03_05-52-08-91 and running /orcd/scratch/bcs/001/maedbh/HBN_Models//2025-07-03_05-52-08-91/model_spec-train.json
+feature summary saved to disk
+model summary saved to disk
+roc_auc_score      0.947631
+f1_score           0.801383
+precision_score    0.785753
+recall_score       0.838095
+dtype: float64
+Copied data from /orcd/scratch/bcs/001/maedbh/HBN_Models//2025-07-03_05-52-08-91 to /orcd/data/satra/001/users/maedbh/hbn_data/interim/models/Release11_Apr2024/july_adhd_dx_subtypes/

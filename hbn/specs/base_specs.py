@@ -2213,7 +2213,9 @@ def features():
                 "filename": 'all-features-Question.csv', 
                 "cols_to_drop": ['Administration', 'Data_entry', 'EID', 'Season', '_Complete', '_Incomplete', 
                                  'START_DATE', 'Days_Baseline', 'Year', 'missing', 'present',
-                                 '_Invalid', '_Valid', 'Basic_ID'], # cols to drop from dataframe
+                                 '_Invalid', '_Valid', 'Basic_ID', 'comorbidities', 
+                                 'PreInt_TxHx', 'PreInt_EduHx,EI', 'PreInt_EduHx,IEP',
+                                 'PreInt_EduHx,learning_disability', 'EEG_Track', 'Basic_Demos', 'EHQ'], # cols to drop from dataframe
                 "cols_to_filter": None
                 },      
                 'features-child-connors':
