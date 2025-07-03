@@ -2,54 +2,46 @@
 participants=($@)
 
 # Model outname
-model_outname=december_adhd_dx/
+model_outname=july_adhd_dx_subtypes/
 
 ### SET DIRECTORIES ###
-base=/om2/user/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
+base=/orcd/data/satra/001/users/$(whoami)/healthy_brain_network # PUT YOUR REPO HERE
 spec_dir=$base/model_specs # MODEL SPECS ARE STORED HERE
 bash_scripts=$base/hpc_scripts/ # BASH SCRIPTS ARE HERE
-data_dir=/om2/user/$(whoami)/hbn_data/interim/phenotypes # INTERIM DATA ARE STORED HERE
-model_dir=/om2/user/$(whoami)/hbn_data/interim/models/$model_outname # MODEL OUTPUT IS STORED HERE
+data_dir=/orcd/data/satra/001/users/$(whoami)/hbn_data/interim/phenotypes/Release11_Apr2024 # INTERIM DATA ARE STORED HERE
+model_dir=/orcd/data/satra/001/users/$(whoami)/hbn_data/interim/models/Release11_Apr2024/$model_outname # MODEL OUTPUT IS STORED HERE
 
 ### SET VARIABLES ###
 pydraml=pydraml3-spec.json # pydraml base
-target=target-Diagnosis-ADHD-spec.json # target spec
-# target=target-Diagnosis-ADHD-Subtype-spec.json # target spec
-# target=target-Diagnosis-Depression-spec.json # target spec
+# target=target-Diagnosis-ADHD-spec.json # target spec
+target=target-Diagnosis-ADHD-Subtype-spec.json # target spec
 
 features=(
     "features-all-questions-spec.json" 
     )
  
-participants=(
-    # "participants-adhd-only-male-spec.json" \
-    "participants-adhd-only-female-spec.json" \
-    # "participants-adhd-only-prepubertal-spec.json" \
-    # "participants-adhd-only-postpubertal-spec.json" \
-    # "participants-adhd-only-female-prepubertal-spec.json" \
-    # "participants-adhd-only-male-prepubertal-spec.json" \
-    # "participants-adhd-only-female-postpubertal-spec.json" \
-    # "participants-adhd-only-male-postpubertal-spec.json" \
-    )
-
 # participants=(
-    # "participants-adhd-combined_type-male-spec.json" \
-    # "participants-adhd-inattentive_type-female-spec.json" \
-    # "participants-adhd-combined_type-female-spec.json" \
-    # "participants-adhd-inattentive_type-male-spec.json" \
-    # "participants-adhd-combined_type-prepubertal-spec.json" \
-    # "participants-adhd-combined_type-postpubertal-spec.json" \
-    # "participants-adhd-inattentive_type-prepubertal-spec.json" \
-    # participants-adhd-inattentive_type-postpubertal-spec.json \
-    # "participants-adhd-combined_type-male-prepubertal-spec.json" \
-    # "participants-adhd-combined_type-male-postpubertal-spec.json" \
-    # "participants-adhd-inattentive_type-male-prepubertal-spec.json" \
-    # participants-adhd-inattentive_type-male-postpubertal-spec.json \
-    # "participants-adhd-combined_type-female-prepubertal-spec.json" \
-    # "participants-adhd-combined_type-female-postpubertal-spec.json" \
-    # "participants-adhd-inattentive_type-female-prepubertal-spec.json" \
-    # participants-adhd-inattentive_type-female-postpubertal-spec.json \
-    # )
+#     "participants-adhd-all-male-spec.json" \
+#     "participants-adhd-all-female-spec.json" \
+#     "participants-adhd-all-female-prepubertal-spec.json" \
+#     "participants-adhd-all-male-prepubertal-spec.json" \
+#     "participants-adhd-all-female-postpubertal-spec.json" \
+#     "participants-adhd-all-male-postpubertal-spec.json" \
+#     )
+participants=(
+    "participants-adhd-combined_type-male-spec.json" \
+    "participants-adhd-combined_type-female-spec.json" \
+    "participants-adhd-inattentive_type-male-spec.json" \
+    "participants-adhd-inattentive_type-female-spec.json" \
+    "participants-adhd-combined_type-male-prepubertal-spec.json" \
+    "participants-adhd-combined_type-female-prepubertal-spec.json" \
+    "participants-adhd-inattentive_type-male-prepubertal-spec.json" \
+    "participants-adhd-inattentive_type-female-prepubertal-spec.json" \
+    "participants-adhd-combined_type-male-postpubertal-spec.json" \
+    "participants-adhd-combined_type-female-postpubertal-spec.json" \
+    "participants-adhd-inattentive_type-male-postpubertal-spec.json" \
+    "participants-adhd-inattentive_type-female-postpubertal-spec.json" \
+    )
 
 mkdir -p $model_dir
 

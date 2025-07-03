@@ -179,93 +179,6 @@ def _index_dataframe_by_columns_values(dataframe, columns, values_list):
     return dataframe_filtered
 
 
-def column_transform(
-    dataframe,
-    clf_info,
-    cols_to_ignore=None,
-    ):
-    """Column Transformation on `dataframe` using classifier information passed in by `clf_info`, `cols_to_ignore` in dataframe are ignored
-
-    Args: 
-        dataframe (pd dataframe): pandas dataframe, `cols_to_ignore` should be in `dataframe`. output from `get_features`
-        clf_info (dict of classifier): example is {"numeric": [["sklearn.impute", "SimpleImputer", {"strategy": "mean"}], ["sklearn.preprocessing", "StandardScaler", {}]]}
-        cols_to_ignore (list of str or None): default is None.
-    Returns:
-        `df_transformed` (pd dataframe): first columns are `cols_to_ignore` if they are not None.
-    """
-    from sklearn.pipeline import Pipeline
-    from sklearn.compose import ColumnTransformer
-    from sklearn.compose import make_column_selector as selector
-    from sklearn.utils.validation import check_is_fitted
-    import pandas as pd
-
-    ## functionality borrowed from pydra-ml
-    def to_instance(clf_info):
-        mod = __import__(clf_info[0], fromlist=[clf_info[1]])
-        params = {}
-        if len(clf_info) > 2:
-            params = clf_info[2]
-        clf = getattr(mod, clf_info[1])(**params)
-        if len(clf_info) == 4:
-            from sklearn.model_selection import GridSearchCV
-
-            clf = GridSearchCV(clf, param_grid=clf_info[3])
-        return clf
-
-    def make_pipeline(clf_info):
-        if isinstance(clf_info[0], list):
-            # Process as a pipeline constructor
-            steps = []
-            for val in clf_info:
-                step = to_instance(val)
-                steps.append((val[1], step))
-            pipe = Pipeline(steps)
-        else:
-            clf = to_instance(clf_info)
-            from sklearn.preprocessing import StandardScaler
-            pipe = Pipeline([("std", StandardScaler()), (clf_info[1], clf)])
-        return pipe
-
-    # drop `cols_to_ignore`
-    dataframe_final = pd.DataFrame()
-    if cols_to_ignore is not None:
-        dataframe_final = dataframe.drop(cols_to_ignore, axis=1)
-        dataframe_to_ignore = dataframe[cols_to_ignore].reset_index(drop=True)
-
-    # set up numeric pipeline
-    transformers = []
-    for key in clf_info.keys():
-        pipe = make_pipeline(clf_info=clf_info[key])
-        if key == 'numeric':
-            transformers.append((key, pipe, selector(dtype_include="number")))
-        elif key == 'category':
-            transformers.append((key, pipe, selector(dtype_exclude="number")))
-
-    # column transformer
-    preprocesser = ColumnTransformer(transformers=transformers,
-                verbose_feature_names_out=True,
-                #remainder='passthrough'
-                )
-    
-    # delete duplicated columns
-    dataframe_final = dataframe_final.loc[:,~dataframe_final.columns.duplicated()].copy()
-
-    # fit and transform
-    arr_transformed = preprocesser.fit_transform(dataframe_final)
-
-    # get transformed feature names (on fitted transformers only)
-    feature_names = preprocesser.get_feature_names_out()
-
-    # make pandas dataframe from transformed data
-    df_transformed = pd.DataFrame(arr_transformed, columns=feature_names)
-
-    # add `col_to_ignore` back in
-    if cols_to_ignore is not None:
-        df_transformed = pd.concat([dataframe_to_ignore, df_transformed], axis=1)
-
-    return df_transformed
-
-
 def _drop_long_string_columns(df):
     """
     Checks the string length of each column in a pandas dataframe and drops columns that have string lengths longer than 259 characters.
@@ -308,10 +221,8 @@ def remove_mixed_nan_zero_columns(df):
 
 def preprocess(
         dataframe,
-        clf_info=None,
-        cols_to_ignore=None,
         cols_to_drop=None,
-        threshold=True,
+        threshold=.9,
         target_column=None,
         binarize_target=True
         ):
@@ -323,22 +234,14 @@ def preprocess(
         clf_info (dict of lists of scikit-learn classifiers or None): (optional) see `base_specs.features` for an example.
         cols_to_ignore (list of str or None): (optional) columns to ignore in preprocessing. Default is None.
         cols_to_drop (list of str or None): (optional) columns to drop in preprocessing. Default is None.
-        threshold (bool): threshold dataframe based on some fixed criterion. We are using 50% for columns and 20% for rows. If threshold is False, then only NaN entries are removed (no thresholding applied)
+        threshold (int or None): int to set threshold. for example, if set to .9, then features without 90% full data are removed. If threshold is None, then only NaN entries are removed (no thresholding applied)
         target_column (str): target column name. default is None
         binarize_target (bool): binarize target column if target_column is not None. default is True
     """
-
+    
     # drop features that have more than 10% missing values
-    if threshold:
-        dataframe = dataframe.dropna(thresh=dataframe.shape[0] * .10, axis='columns')
-
-    # preprocessing on features: column transformation
-    if clf_info is not None:
-        dataframe = column_transform(
-            dataframe=dataframe, 
-            clf_info=clf_info, 
-            cols_to_ignore=cols_to_ignore
-            )
+    if threshold is not None:
+        dataframe = dataframe.dropna(thresh=dataframe.shape[0] * threshold, axis='columns')
 
     # preprocessing on target: binarize `target`
     if binarize_target:

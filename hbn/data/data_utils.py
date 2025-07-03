@@ -38,34 +38,15 @@ def get_summary_df(fname):
 
         # make new columns for visualization
         df_summary['data'] = df_summary['data'].str.replace('model-', '')
-        if 'Age_round' in df_summary.columns:
-            df_summary['readers'] = df_summary['Age_round'].map({'6_7_8': 'early', 
-                                                                '9_10': 'emerging', 
-                                                                '11_12_13_14_15_16_17_18': 'expert',
-                                                                '6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_21': 'all'
-                                                                })
-            df_summary['development'] = df_summary['Age_round'].map({'5_6_7': '5-7',
-                                                                    '8_9_10': '8-10',
-                                                                    '11_12_13': '11-13',
-                                                                    '14_15_16': '14-16',
-                                                                    '17_18_19_20_21': '17-21',
-                                                                    '5_6_7_8_9_10_11_12_13_14_15_16_17': 'all',
-                                                                    '5_6_7_8_9': '5-9',
-                                                                    '10_11_12_13': '10-13',
-                                                                    '14_15_16_17_18': '14-18',
-                                                                    '5_6_7_8_9_10_11': '5-11',
-                                                                    '12_13_14_15_16_17': '12-17',
-                                                                    '5_6_7_8_9_10_11_12_13_14_15_16_17': 'all'
-                                                                    })
-        elif 'puberty' in df_summary.columns:
-            df_summary['development'] = df_summary['puberty'].map({'pre': 'pre-puberty', 'post': 'post-puberty'})
-            
         df_summary['features'] = df_summary['feat_spec_name'].str.replace('features-', '')
         df_summary = df_summary.rename(columns={'PreInt_Demos_Fam,Child_Race_cat': 'Race'})
 
         # if Race is NaN, assign 'all'
         if 'Race' not in df_summary.columns:
             df_summary['Race'] ='all'
+        
+        if 'puberty' not in df_summary.columns:
+            df_summary['puberty'] = 'all'
 
     return df_summary
 
@@ -74,29 +55,6 @@ def get_feature_df(fname):
     df_feat = pd.DataFrame()
     if os.path.isfile(fname):
         df_feat = pd.read_csv(fname, engine='python')
-
-        # make new columns for visualization
-        if 'Age_round' in df_feat.columns:
-            df_feat['readers'] = df_feat['Age_round'].map({'6_7_8': 'early', 
-                                                            '9_10': 'emerging', 
-                                                            '11_12_13_14_15_16_17_18': 'expert',
-                                                            '6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_21': 'all'
-                                                            })
-            df_feat['development'] = df_feat['Age_round'].map({'5_6_7': '5-7',
-                                                            '8_9_10': '8-10',
-                                                            '11_12_13': '11-13',
-                                                            '14_15_16': '14-16',
-                                                            '17_18_19_20_21': '17-21',
-                                                            '5_6_7_8_9': '5-9',
-                                                            '10_11_12_13': '10-13',
-                                                            '14_15_16_17_18': '14-18',
-                                                            '5_6_7_8_9_10_11': '5-11',
-                                                            '12_13_14_15_16_17': '12-17',
-                                                            '5_6_7_8_9_10_11_12_13_14_15_16_17': 'all'
-                                                            })
-        elif 'puberty' in df_feat.columns:
-            df_feat['development'] = df_feat['puberty'].map({'pre': 'pre-puberty', 'post': 'post-puberty'})
-            
         df_feat['features'] = df_feat['feat_spec_name'].str.replace('features-', '')
         df_feat['feature_names'] = df_feat['feature_importances_names'].str.split(',').str.get(1)
         df_feat = df_feat.rename(columns={'PreInt_Demos_Fam,Child_Race_cat': 'Race'})
@@ -104,15 +62,18 @@ def get_feature_df(fname):
         # if Race is NaN, assign 'all'
         if 'Race' not in df_feat.columns:
             df_feat['Race'] ='all'
+          
+        if 'puberty' not in df_feat.columns:
+            df_feat['puberty'] = 'all'
 
     return df_feat
 
-def load_model_results(model='reading_july'):
+def load_model_results(model='reading_july', release='Release11_Apr2024'):
     """load all model results for `model`: summary and feature importances, and optionally save out
     """
 
     # get all models run in `model`
-    models = glob.glob(os.path.join(Defaults.MODEL_DIR, model, '*', '*'))
+    models = glob.glob(os.path.join(Defaults.MODEL_DIR, release, model, '*'))
 
     summary_all = pd.DataFrame()
     feat_all = pd.DataFrame()
@@ -191,12 +152,12 @@ def load_topic_representation(model='reading_july'):
     return df_keys_all
 
 
-def load_model_features(model='reading_july'): 
+def load_model_features(model='reading_july', release='Release11_Apr2024'): 
     import os
     from hbn.visualization import utils as utils
     
     # load data for all models run in `model_parent`
-    _, features = load_model_results(model=model)
+    _, features = load_model_results(model=model, release=release)
 
     # remap diagnosis
     dx_cols = [col for col in features.columns if 'DX' in col]
