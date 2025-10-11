@@ -96,3 +96,6 @@ messages/
 
 # Mypy cache
 .mypy_cache/
+
+#vscode
+healthy_brain_network.code-workspace
