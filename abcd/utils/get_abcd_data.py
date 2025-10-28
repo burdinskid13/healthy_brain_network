@@ -189,3 +189,13 @@ def get_substance_use_interview_mid_year_youth_file():
 
 def get_nih_toolbox_youth_file():
     return (get_neurocognition_directory() / "nc_y_nihtb.csv").resolve()
+
+def get_ravlt_youth_file():
+    return (get_neurocognition_directory() / "nc_y_ravlt.csv").resolve()
+
+def get_lmt_youth_file():
+    return (get_neurocognition_directory() / "nc_y_lmt.csv").resolve()
+
+def get_wisc_youth_file():
+    return (get_neurocognition_directory() / "nc_y_wisc.csv").resolve()
+
